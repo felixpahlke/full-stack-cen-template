@@ -1,28 +1,19 @@
-import {
-  Box,
-  Button,
-  Container,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Heading,
-  Input,
-  useColorModeValue,
-} from "@chakra-ui/react"
-import { useMutation } from "@tanstack/react-query"
-import { type SubmitHandler, useForm } from "react-hook-form"
+import { useMutation } from "@tanstack/react-query";
+import { useForm, type SubmitHandler } from "react-hook-form";
 
-import { type ApiError, type UpdatePassword, UsersService } from "../../client"
-import useCustomToast from "../../hooks/useCustomToast"
-import { confirmPasswordRules, handleError, passwordRules } from "../../utils"
+import { UsersService, type ApiError, type UpdatePassword } from "../../client";
+import { confirmPasswordRules, handleError, passwordRules } from "../../utils";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface UpdatePasswordForm extends UpdatePassword {
-  confirm_password: string
+  confirm_password: string;
 }
 
 const ChangePassword = () => {
-  const color = useColorModeValue("inherit", "ui.light")
-  const showToast = useCustomToast()
   const {
     register,
     handleSubmit,
@@ -32,91 +23,72 @@ const ChangePassword = () => {
   } = useForm<UpdatePasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
-  })
+  });
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePassword) =>
-      UsersService.updatePasswordMe({ requestBody: data }),
+    mutationFn: (data: UpdatePassword) => UsersService.updatePasswordMe({ requestBody: data }),
     onSuccess: () => {
-      showToast("Success!", "Password updated successfully.", "success")
-      reset()
+      toast.success("Password updated successfully.");
+      reset();
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      handleError(err);
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<UpdatePasswordForm> = async (data) => {
-    mutation.mutate(data)
-  }
+    mutation.mutate(data);
+  };
 
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Change Password
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <FormControl isRequired isInvalid={!!errors.current_password}>
-            <FormLabel color={color} htmlFor="current_password">
-              Current Password
-            </FormLabel>
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Change Password</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
             <Input
+              label="Current Password"
               id="current_password"
-              {...register("current_password")}
-              placeholder="Password"
+              {...register("current_password", {
+                required: "Current password is required",
+              })}
               type="password"
-              w="auto"
             />
             {errors.current_password && (
-              <FormErrorMessage>
-                {errors.current_password.message}
-              </FormErrorMessage>
+              <p className="text-destructive text-sm">{errors.current_password.message}</p>
             )}
-          </FormControl>
-          <FormControl mt={4} isRequired isInvalid={!!errors.new_password}>
-            <FormLabel htmlFor="password">Set Password</FormLabel>
+          </div>
+          <div>
             <Input
-              id="password"
+              label="New Password"
+              id="new_password"
               {...register("new_password", passwordRules())}
-              placeholder="Password"
               type="password"
-              w="auto"
             />
             {errors.new_password && (
-              <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
+              <p className="text-destructive text-sm">{errors.new_password.message}</p>
             )}
-          </FormControl>
-          <FormControl mt={4} isRequired isInvalid={!!errors.confirm_password}>
-            <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
+          </div>
+          <div>
             <Input
+              label="Confirm Password"
               id="confirm_password"
               {...register("confirm_password", confirmPasswordRules(getValues))}
-              placeholder="Password"
               type="password"
-              w="auto"
             />
             {errors.confirm_password && (
-              <FormErrorMessage>
-                {errors.confirm_password.message}
-              </FormErrorMessage>
+              <p className="text-destructive text-sm">{errors.confirm_password.message}</p>
             )}
-          </FormControl>
-          <Button
-            variant="primary"
-            mt={4}
-            type="submit"
-            isLoading={isSubmitting}
-          >
-            Save
+          </div>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
-        </Box>
-      </Container>
-    </>
-  )
-}
-export default ChangePassword
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ChangePassword;

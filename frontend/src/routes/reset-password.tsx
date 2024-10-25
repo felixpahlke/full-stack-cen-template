@@ -1,24 +1,18 @@
-import {
-  Button,
-  Container,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Heading,
-  Input,
-  Text,
-} from "@chakra-ui/react"
-import { useMutation } from "@tanstack/react-query"
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
-import { type SubmitHandler, useForm } from "react-hook-form"
+import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, LoginService, type NewPassword } from "../client"
-import { isLoggedIn } from "../hooks/useAuth"
-import useCustomToast from "../hooks/useCustomToast"
-import { confirmPasswordRules, handleError, passwordRules } from "../utils"
+import { type ApiError, LoginService, type NewPassword } from "../client";
+import { isLoggedIn } from "../hooks/useAuth";
+import { confirmPasswordRules, handleError, passwordRules } from "../utils";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Logo } from "@/components/Common/Logo";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface NewPasswordForm extends NewPassword {
-  confirm_password: string
+  confirm_password: string;
 }
 
 export const Route = createFileRoute("/reset-password")({
@@ -27,96 +21,102 @@ export const Route = createFileRoute("/reset-password")({
     if (isLoggedIn()) {
       throw redirect({
         to: "/",
-      })
+        search: { page: 1 },
+      });
     }
   },
-})
+});
 
 function ResetPassword() {
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    reset,
-    formState: { errors },
-  } = useForm<NewPasswordForm>({
+  const form = useForm<NewPasswordForm>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
       new_password: "",
     },
-  })
-  const showToast = useCustomToast()
-  const navigate = useNavigate()
+  });
+  const { reset, handleSubmit, control, formState, getValues } = form;
+  const navigate = useNavigate();
 
   const resetPassword = async (data: NewPassword) => {
-    const token = new URLSearchParams(window.location.search).get("token")
-    if (!token) return
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (!token) return;
     await LoginService.resetPassword({
       requestBody: { new_password: data.new_password, token: token },
-    })
-  }
+    });
+  };
 
   const mutation = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      showToast("Success!", "Password updated successfully.", "success")
-      reset()
-      navigate({ to: "/login" })
+      toast.success("Password updated successfully.");
+      reset();
+      navigate({ to: "/login" });
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      handleError(err);
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<NewPasswordForm> = async (data) => {
-    mutation.mutate(data)
-  }
+    mutation.mutate(data);
+  };
 
   return (
-    <Container
-      as="form"
-      onSubmit={handleSubmit(onSubmit)}
-      h="100vh"
-      maxW="sm"
-      alignItems="stretch"
-      justifyContent="center"
-      gap={4}
-      centerContent
-    >
-      <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Reset Password
-      </Heading>
-      <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
-      </Text>
-      <FormControl mt={4} isInvalid={!!errors.new_password}>
-        <FormLabel htmlFor="password">Set Password</FormLabel>
-        <Input
-          id="password"
-          {...register("new_password", passwordRules())}
-          placeholder="Password"
-          type="password"
+    <Form {...form}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center space-y-6 p-4"
+      >
+        <Logo className="w-full" />
+
+        <h1 className="text-center text-2xl font-semibold">Reset Password</h1>
+        <p className="text-center">
+          Please enter your new password and confirm it to reset your password.
+        </p>
+
+        <FormField
+          control={control}
+          name="new_password"
+          rules={passwordRules()}
+          render={({ field, fieldState }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="New Password"
+                  type="password"
+                  className={fieldState.error ? "border-red-500" : ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.new_password && (
-          <FormErrorMessage>{errors.new_password.message}</FormErrorMessage>
-        )}
-      </FormControl>
-      <FormControl mt={4} isInvalid={!!errors.confirm_password}>
-        <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
-        <Input
-          id="confirm_password"
-          {...register("confirm_password", confirmPasswordRules(getValues))}
-          placeholder="Password"
-          type="password"
+
+        <FormField
+          control={control}
+          name="confirm_password"
+          rules={confirmPasswordRules(getValues)}
+          render={({ field, fieldState }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Confirm Password"
+                  type="password"
+                  className={fieldState.error ? "border-red-500" : ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.confirm_password && (
-          <FormErrorMessage>{errors.confirm_password.message}</FormErrorMessage>
-        )}
-      </FormControl>
-      <Button variant="primary" type="submit">
-        Reset Password
-      </Button>
-    </Container>
-  )
+
+        <Button type="submit" disabled={formState.isSubmitting || mutation.isPending}>
+          {formState.isSubmitting || mutation.isPending ? "Resetting..." : "Reset Password"}
+        </Button>
+      </form>
+    </Form>
+  );
 }

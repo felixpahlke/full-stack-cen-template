@@ -1,35 +1,31 @@
-import {
-  Button,
-  Container,
-  Heading,
-  Text,
-  useDisclosure,
-} from "@chakra-ui/react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import DeleteConfirmation from "./DeleteConfirmation"
+import DeleteConfirmation from "./DeleteConfirmation";
 
 const DeleteAccount = () => {
-  const confirmationModal = useDisclosure()
+  const [isOpen, setIsOpen] = useState(false);
+
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
 
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Delete Account
-        </Heading>
-        <Text>
-          Permanently delete your data and everything associated with your
-          account.
-        </Text>
-        <Button variant="danger" mt={4} onClick={confirmationModal.onOpen}>
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Delete Account</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-muted-foreground text-sm">
+          Permanently delete your data and everything associated with your account.
+        </p>
+        <Button variant="destructive" onClick={openModal}>
           Delete
         </Button>
-        <DeleteConfirmation
-          isOpen={confirmationModal.isOpen}
-          onClose={confirmationModal.onClose}
-        />
-      </Container>
-    </>
-  )
-}
-export default DeleteAccount
+        <DeleteConfirmation isOpen={isOpen} onClose={closeModal} />
+      </CardContent>
+    </Card>
+  );
+};
+
+export default DeleteAccount;

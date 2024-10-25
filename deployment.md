@@ -1,303 +1,167 @@
-# FastAPI Project - Deployment
+# Full-Stack CEN Template - Deployment
 
-You can deploy the project using Docker Compose to a remote server.
+This Readme will describe the deployment on OpenShift.
 
-This project expects you to have a Traefik proxy handling communication to the outside world and HTTPS certificates.
+## Our journey to a successful deployment 🏁
 
-You can use CI/CD (continuous integration and continuous deployment) systems to deploy automatically, there are already configurations to do it with GitHub Actions.
+The steps should be performed in this exact order.
 
-But you have to configure a couple things first. 🤓
+1. [Preparation](#preparation)
+2. [Deploying the Database](#database)
+3. [Deploying the Backend](#backend) ⚠️ It will run with errors until the [config map](#env-config-map) is finished (which we can only finish in the end).
+4. [Deploying the Frontend](#frontend)
+5. [Finish up the Env Config Map](#env-config-map)
+6. [Setup a deployment hook](#setup-a-deployment-hook)
 
 ## Preparation
 
-* Have a remote server ready and available.
-* Configure the DNS records of your domain to point to the IP of the server you just created.
-* Configure a wildcard subdomain for your domain, so that you can have multiple subdomains for different services, e.g. `*.fastapi-project.example.com`. This will be useful for accessing different components, like `dashboard.fastapi-project.example.com`, `api.fastapi-project.example.com`, `traefik.fastapi-project.example.com`, `adminer.fastapi-project.example.com`, etc. And also for `staging`, like `dashboard.staging.fastapi-project.example.com`, `adminer.staging..fastapi-project.example.com`, etc.
-* Install and configure [Docker](https://docs.docker.com/engine/install/) on the remote server (Docker Engine, not Docker Desktop).
+1. If not already done, have this codebase pushed to your Gitlab/Github repo
+2. Create AccessToken/DeploymentKey for your project in Gitlab/Github
+3. Get OpenShift Instance, Open the Console and access the "Developer View"
+4. Create a new project in OpenShift
+5. Put the AccessToken in OpenShift as a Secret (Source Secret)
+   - Username is empty
+   - Password is the token
 
-## Public Traefik
+![Source Secret](img/openshif-deployment-source-secret.png)
 
-We need a Traefik proxy to handle incoming connections and HTTPS certificates.
+## Database
 
-You need to do these next steps only once.
+1. In you project click "+Add" → Developer Catalog → Database → PostgreSQL → Instantiate Template
+2. Fill out the Template according to the Screeshot, **MAKE SURE TO CHANGE THE PASSWORD** of the PostgreSQL User.
+3. Click "Create"
+4. If you are not automatically redirected, you can monitor the instanciation progress in "Topology".
 
-### Traefik Docker Compose
+![Database](img/openshift-postgres-deployment.png)
 
-* Create a remote directory to store your Traefik Docker Compose file:
+## Backend
 
-```bash
-mkdir -p /root/code/traefik-public/
+1. In you project click "+Add" → import from git
+2. Input your repo-url and open "Advanced Git Options"
+3. Then enter `/backend` as Context dir
+4. Select the Source Secret, that you have set up before in [Preperation](#preperation)
+
+![advanced options (backend)](<img/openshift-deployment-config(1).png>)
+
+5. Select Dockerfile as Import Strategy
+6. Define the Name of the Dockerfile to `Dockerfile`
+7. Name your Application (Name for everything alltogether) and this particular Service (the backend)
+
+![application (backend)](<img/openshift-deployment-config(2).png>)
+
+8. Set the port to `8000`
+9. If not already set choose "create route"
+
+![ports (backend)](<img/openshift-deployment-config(3).png>)
+
+10. Click "Create" and - again, monitor the deployment progress in "Topology"
+11. Move your database container into the application group (with "⇧shift" + drag&drop)
+
+**<mark>Don't worry, deployment will run with errors at this point, since config map is not set yet - we will solve this later</mark>**
+
+## Frontend
+
+We start with the deployment of the frontend. The steps are basically similar to the deployment steps of the backend, but we will go through every step needed, to make sure we got everything right!
+
+1. In you project click "+Add" → import from git
+2. Input your repo-url and open "Advanced Git Options"
+3. Then enter `/frontend` as Context dir
+4. Select the Source Secret, that you have set up before in [Preperation](#preperation)
+
+
+5. Select Dockerfile as Import Strategy
+6. Define the Name of the Dockerfile to `Dockerfile`
+7. Use the same Application (Name for everything alltogether) and set a new name for this particular Service (the frontend)
+
+![application (frontend)](<img/openshift-frontend-deployment-config(2).png>)
+
+8. Set the port to `8080`
+9. If not already set choose "create route"
+
+![ports (frontend)](<img/openshift-frontend-deployment-config(3).png>)
+
+10. Click "Create" and - again, monitor the deployment progress in "Topology"
+
+You can either wait for the first successful build, or directly open the BuildConfig of the Frontend Deployment, where we have to tell the frontend under which URL it can find it's backend.
+
+11. To do so, we copy the backend URL to our clipboard. This specific URL can be found trough the Topology view.
+
+![Copy Backend URL](img/openshift-access-backend-url.png)
+
+12. After we copied the URL we open up the BuildConfig of our frontend.
+
+![access buildconfig (frontend)](img/openshift-access-frontend-bc.png)
+
+
+13. In the top bar of the BuildConfig, we switch the view from Details to Environment.
+14. There we provide the BC with a new Name-Value pair. The name has to be set to `VITE_API_URL` and the Value is the copied URL from our backend.
+
+![access buildconfig (frontend)](img/openshift-frontend-buildconfig.png)
+
+15. We click on "Save" → head back to the Topology view → Click on the frontend-node → under Builds click on "Start Build".
+16. After the second build is complete, the frontend knows under which URL the backend can be accessed.
+
+🙌 In the end, the frontend is running without any errors. Now we have to finalize all the environment variables that the backend needs, to be able to fully function.
+
+## Env Config Map
+
+For the backend to fully function it needs these 12 environment variables we have to define within a ConfigMap in OS.
+
+```yaml
+POSTGRES_PASSWORD: <ichangedthis>
+STACK_NAME: <your_stack_name>
+FIRST_SUPERUSER_PASSWORD: <changethis>
+POSTGRES_DB: app
+BACKEND_CORS_ORIGINS: "<the frontend URL of the deployment>"
+POSTGRES_PORT: "5432"
+POSTGRES_SERVER: postgresql
+SECRET_KEY: <changethis>
+PROJECT_NAME: <your_project_name>
+POSTGRES_USER: postgres
+ENVIRONMENT: production
+FIRST_SUPERUSER: <myexampleadmin@email.com>
 ```
 
-Copy the Traefik Docker Compose file to your server. You could do it by running the command `rsync` in your local terminal:
+1. We start with opening the ConfigMaps tab → on the top right corner we click on "Create ConfigMap".
+2. We will provide it with an according name, e.g. `backend-envs` and start filling it with the defined 12 env variables.
 
-```bash
-rsync -a docker-compose.traefik.yml root@your-server.example.com:/root/code/traefik-public/
-```
+![backend env config map](<img/openshift-env-config-map(1).png>)
 
-### Traefik Public Network
+3. Save your config and go back to Topology and click on your backends "Deployment"
+4. Go to Environment and link your Env Config Map with "Add all from ConfigMap or Secret"
 
-This Traefik will expect a Docker "public network" named `traefik-public` to communicate with your stack(s).
+![backend acces deployment](img/openshift-backend-access-deployment.png)
 
-This way, there will be a single public Traefik proxy that handles the communication (HTTP and HTTPS) with the outside world, and then behind that, you could have one or more stacks with different domains, even if they are on the same single server.
+![link config map](/img/openshift-backend-link-configmap.png)
 
-To create a Docker "public network" named `traefik-public` run the following command in your remote server:
 
-```bash
-docker network create traefik-public
-```
 
-### Traefik Environment Variables
+## Adminer
 
-The Traefik Docker Compose file expects some environment variables to be set in your terminal before starting it. You can do it by running the following commands in your remote server.
+Deploy the Adminer Service... It's for monitoring and debugging the database.
 
-* Create the username for HTTP Basic Auth, e.g.:
+1. Click "+Add" → "Container Images"
 
-```bash
-export USERNAME=admin
-```
+Image name from external registry:
 
-* Create an environment variable with the password for HTTP Basic Auth, e.g.:
+`docker.io/library/adminer`
 
-```bash
-export PASSWORD=changethis
-```
+2. Click "Create"
+3. Click the route of your Adminer Deployment
+4. Login to Adminer
 
-* Use openssl to generate the "hashed" version of the password for HTTP Basic Auth and store it in an environment variable:
+![adminer login](img/adminer-login.png)
 
-```bash
-export HASHED_PASSWORD=$(openssl passwd -apr1 $PASSWORD)
-```
 
-To verify that the hashed password is correct, you can print it:
+## Setup a Deployment Hook
 
-```bash
-echo $HASHED_PASSWORD
-```
+How we can setup the Deployment Hook for some kind of "Continuos Delivery" between the main branch of our GitHub/GitLab Project and OS-Deployment.
 
-* Create an environment variable with the domain name for your server, e.g.:
+1. Go to your Backend's build config
+2. Copy the **"Generic Webhook"** adress (works for GitLab too)
 
-```bash
-export DOMAIN=fastapi-project.example.com
-```
+![copy generic webhook](img/webhook(1).png)
 
-* Create an environment variable with the email for Let's Encrypt, e.g.:
+3. Create a new Webhook in Gitlab / Github and paste your Webhook URL
 
-```bash
-export EMAIL=admin@example.com
-```
-
-**Note**: you need to set a different email, an email `@example.com` won't work.
-
-### Start the Traefik Docker Compose
-
-Go to the directory where you copied the Traefik Docker Compose file in your remote server:
-
-```bash
-cd /root/code/traefik-public/
-```
-
-Now with the environment variables set and the `docker-compose.traefik.yml` in place, you can start the Traefik Docker Compose running the following command:
-
-```bash
-docker compose -f docker-compose.traefik.yml up -d
-```
-
-## Deploy the FastAPI Project
-
-Now that you have Traefik in place you can deploy your FastAPI project with Docker Compose.
-
-**Note**: You might want to jump ahead to the section about Continuous Deployment with GitHub Actions.
-
-## Environment Variables
-
-You need to set some environment variables first.
-
-Set the `ENVIRONMENT`, by default `local` (for development), but when deploying to a server you would put something like `staging` or `production`:
-
-```bash
-export ENVIRONMENT=production
-```
-
-Set the `DOMAIN`, by default `localhost` (for development), but when deploying you would use your own domain, for example:
-
-```bash
-export DOMAIN=fastapi-project.example.com
-```
-
-You can set several variables, like:
-
-* `PROJECT_NAME`: The name of the project, used in the API for the docs and emails.
-* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `fastapi-project-example-com` and `staging-fastapi-project-example-com`.
-* `BACKEND_CORS_ORIGINS`: A list of allowed CORS origins separated by commas.
-* `SECRET_KEY`: The secret key for the FastAPI project, used to sign tokens.
-* `FIRST_SUPERUSER`: The email of the first superuser, this superuser will be the one that can create new users.
-* `FIRST_SUPERUSER_PASSWORD`: The password of the first superuser.
-* `SMTP_HOST`: The SMTP server host to send emails, this would come from your email provider (E.g. Mailgun, Sparkpost, Sendgrid, etc).
-* `SMTP_USER`: The SMTP server user to send emails.
-* `SMTP_PASSWORD`: The SMTP server password to send emails.
-* `EMAILS_FROM_EMAIL`: The email account to send emails from.
-* `POSTGRES_SERVER`: The hostname of the PostgreSQL server. You can leave the default of `db`, provided by the same Docker Compose. You normally wouldn't need to change this unless you are using a third-party provider.
-* `POSTGRES_PORT`: The port of the PostgreSQL server. You can leave the default. You normally wouldn't need to change this unless you are using a third-party provider.
-* `POSTGRES_PASSWORD`: The Postgres password.
-* `POSTGRES_USER`: The Postgres user, you can leave the default.
-* `POSTGRES_DB`: The database name to use for this application. You can leave the default of `app`.
-* `SENTRY_DSN`: The DSN for Sentry, if you are using it.
-
-## GitHub Actions Environment Variables
-
-There are some environment variables only used by GitHub Actions that you can configure:
-
-* `LATEST_CHANGES`: Used by the GitHub Action [latest-changes](https://github.com/tiangolo/latest-changes) to automatically add release notes based on the PRs merged. It's a personal access token, read the docs for details.
-* `SMOKESHOW_AUTH_KEY`: Used to handle and publish the code coverage using [Smokeshow](https://github.com/samuelcolvin/smokeshow), follow their instructions to create a (free) Smokeshow key.
-
-### Generate secret keys
-
-Some environment variables in the `.env` file have a default value of `changethis`.
-
-You have to change them with a secret key, to generate secret keys you can run the following command:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-Copy the content and use that as password / secret key. And run that again to generate another secure key.
-
-### Deploy with Docker Compose
-
-With the environment variables in place, you can deploy with Docker Compose:
-
-```bash
-docker compose -f docker-compose.yml up -d
-```
-
-For production you wouldn't want to have the overrides in `docker-compose.override.yml`, that's why we explicitly specify `docker-compose.yml` as the file to use.
-
-## Continuous Deployment (CD)
-
-You can use GitHub Actions to deploy your project automatically. 😎
-
-You can have multiple environment deployments.
-
-There are already two environments configured, `staging` and `production`. 🚀
-
-### Install GitHub Actions Runner
-
-* On your remote server, if you are running as the `root` user, create a user for your GitHub Actions:
-
-```bash
-adduser github
-```
-
-* Add Docker permissions to the `github` user:
-
-```bash
-usermod -aG docker github
-```
-
-* Temporarily switch to the `github` user:
-
-```bash
-su - github
-```
-
-* Go to the `github` user's home directory:
-
-```bash
-cd
-```
-
-* [Install a GitHub Action self-hosted runner following the official guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners#adding-a-self-hosted-runner-to-a-repository).
-
-* When asked about labels, add a label for the environment, e.g. `production`. You can also add labels later.
-
-After installing, the guide would tell you to run a command to start the runner. Nevertheless, it would stop once you terminate that process or if your local connection to your server is lost.
-
-To make sure it runs on startup and continues running, you can install it as a service. To do that, exit the `github` user and go back to the `root` user:
-
-```bash
-exit
-```
-
-After you do it, you would be on the `root` user again. And you will be on the previous directory, belonging to the `root` user.
-
-* Go to the `actions-runner` directory inside of the `github` user's home directory:
-
-```bash
-cd /home/github/actions-runner
-```
-
-* Install the self-hosted runner as a service with the user `github`:
-
-```bash
-./svc.sh install github
-```
-
-* Start the service:
-
-```bash
-./svc.sh start
-```
-
-* Check the status of the service:
-
-```bash
-./svc.sh status
-```
-
-You can read more about it in the official guide: [Configuring the self-hosted runner application as a service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service).
-
-### Set Secrets
-
-On your repository, configure secrets for the environment variables you need, the same ones described above, including `SECRET_KEY`, etc. Follow the [official GitHub guide for setting repository secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository).
-
-The current Github Actions workflows expect these secrets:
-
-* `DOMAIN_PRODUCTION`
-* `DOMAIN_STAGING`
-* `STACK_NAME_PRODUCTION`
-* `STACK_NAME_STAGING`
-* `EMAILS_FROM_EMAIL`
-* `FIRST_SUPERUSER`
-* `FIRST_SUPERUSER_PASSWORD`
-* `POSTGRES_PASSWORD`
-* `SECRET_KEY`
-* `LATEST_CHANGES`
-* `SMOKESHOW_AUTH_KEY`
-
-## GitHub Action Deployment Workflows
-
-There are GitHub Action workflows in the `.github/workflows` directory already configured for deploying to the environments (GitHub Actions runners with the labels):
-
-* `staging`: after pushing (or merging) to the branch `master`.
-* `production`: after publishing a release.
-
-If you need to add extra environments you could use those as a starting point.
-
-## URLs
-
-Replace `fastapi-project.example.com` with your domain.
-
-### Main Traefik Dashboard
-
-Traefik UI: `https://traefik.fastapi-project.example.com`
-
-### Production
-
-Frontend: `https://dashboard.fastapi-project.example.com`
-
-Backend API docs: `https://api.fastapi-project.example.com/docs`
-
-Backend API base URL: `https://api.fastapi-project.example.com`
-
-Adminer: `https://adminer.fastapi-project.example.com`
-
-### Staging
-
-Frontend: `https://dashboard.staging.fastapi-project.example.com`
-
-Backend API docs: `https://api.staging.fastapi-project.example.com/docs`
-
-Backend API base URL: `https://api.staging.fastapi-project.example.com`
-
-Adminer: `https://adminer.staging.fastapi-project.example.com`
+![paste webhook](img/webhook(2).png)

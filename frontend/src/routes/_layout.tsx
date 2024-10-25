@@ -1,9 +1,7 @@
-import { Flex, Spinner } from "@chakra-ui/react"
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import Sidebar from "../components/Common/Sidebar"
-import UserMenu from "../components/Common/UserMenu"
-import useAuth, { isLoggedIn } from "../hooks/useAuth"
+import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { Navbar } from "../components/Common/Navbar";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -11,25 +9,26 @@ export const Route = createFileRoute("/_layout")({
     if (!isLoggedIn()) {
       throw redirect({
         to: "/login",
-      })
+      });
     }
   },
-})
+});
 
 function Layout() {
-  const { isLoading } = useAuth()
+  const { isLoading } = useAuth();
 
   return (
-    <Flex maxW="large" h="auto" position="relative">
-      <Sidebar />
+    <div className="relative">
+      <Navbar />
       {isLoading ? (
-        <Flex justify="center" align="center" height="100vh" width="full">
-          <Spinner size="xl" color="ui.main" />
-        </Flex>
+        <div className="flex h-[calc(100dvh-80px)] w-full items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2"></div>
+        </div>
       ) : (
-        <Outlet />
+        <div className="mx-auto flex max-w-screen-xl px-8">
+          <Outlet />
+        </div>
       )}
-      <UserMenu />
-    </Flex>
-  )
+    </div>
+  );
 }

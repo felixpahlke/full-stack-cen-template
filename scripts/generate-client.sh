@@ -10,4 +10,4 @@ node frontend/modify-openapi-operationids.js
 mv openapi.json frontend/
 cd frontend
 npm run generate-client
-npx biome format --write ./src/client
+npx prettier --write ./src/client

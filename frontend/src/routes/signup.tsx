@@ -1,26 +1,13 @@
-import {
-  Button,
-  Container,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Image,
-  Input,
-  Link,
-  Text,
-} from "@chakra-ui/react"
-import {
-  Link as RouterLink,
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router"
-import { type SubmitHandler, useForm } from "react-hook-form"
-
-import Logo from "/assets/images/fastapi-logo.svg"
-import type { UserRegister } from "../client"
-import useAuth, { isLoggedIn } from "../hooks/useAuth"
-import { confirmPasswordRules, emailPattern, passwordRules } from "../utils"
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import type { UserRegister } from "../client";
+import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
+import { Form, FormField, FormControl, FormItem, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
+import { Logo } from "@/components/Common/Logo";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -28,23 +15,18 @@ export const Route = createFileRoute("/signup")({
     if (isLoggedIn()) {
       throw redirect({
         to: "/",
-      })
+      });
     }
   },
-})
+});
 
 interface UserRegisterForm extends UserRegister {
-  confirm_password: string
+  confirm_password: string;
 }
 
 function SignUp() {
-  const { signUpMutation } = useAuth()
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<UserRegisterForm>({
+  const { signUpMutation } = useAuth();
+  const form = useForm({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
@@ -53,112 +35,107 @@ function SignUp() {
       password: "",
       confirm_password: "",
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
-    signUpMutation.mutate(data)
-  }
+    signUpMutation.mutate(data);
+  };
 
   return (
     <>
-      <Flex flexDir={{ base: "column", md: "row" }} justify="center" h="100vh">
-        <Container
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          h="100vh"
-          maxW="sm"
-          alignItems="stretch"
-          justifyContent="center"
-          gap={4}
-          centerContent
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center space-y-6 p-4"
         >
-          <Image
-            src={Logo}
-            alt="FastAPI logo"
-            height="auto"
-            maxW="2xs"
-            alignSelf="center"
-            mb={4}
-          />
-          <FormControl id="full_name" isInvalid={!!errors.full_name}>
-            <FormLabel htmlFor="full_name" srOnly>
-              Full Name
-            </FormLabel>
-            <Input
-              id="full_name"
-              minLength={3}
-              {...register("full_name", { required: "Full Name is required" })}
-              placeholder="Full Name"
-              type="text"
-            />
-            {errors.full_name && (
-              <FormErrorMessage>{errors.full_name.message}</FormErrorMessage>
-            )}
-          </FormControl>
-          <FormControl id="email" isInvalid={!!errors.email}>
-            <FormLabel htmlFor="username" srOnly>
-              Email
-            </FormLabel>
-            <Input
-              id="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: emailPattern,
-              })}
-              placeholder="Email"
-              type="email"
-            />
-            {errors.email && (
-              <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-            )}
-          </FormControl>
-          <FormControl id="password" isInvalid={!!errors.password}>
-            <FormLabel htmlFor="password" srOnly>
-              Password
-            </FormLabel>
-            <Input
-              id="password"
-              {...register("password", passwordRules())}
-              placeholder="Password"
-              type="password"
-            />
-            {errors.password && (
-              <FormErrorMessage>{errors.password.message}</FormErrorMessage>
-            )}
-          </FormControl>
-          <FormControl
-            id="confirm_password"
-            isInvalid={!!errors.confirm_password}
-          >
-            <FormLabel htmlFor="confirm_password" srOnly>
-              Confirm Password
-            </FormLabel>
+          <Logo className="w-full" />
 
-            <Input
-              id="confirm_password"
-              {...register("confirm_password", confirmPasswordRules(getValues))}
-              placeholder="Repeat Password"
-              type="password"
-            />
-            {errors.confirm_password && (
-              <FormErrorMessage>
-                {errors.confirm_password.message}
-              </FormErrorMessage>
+          <FormField
+            control={form.control}
+            name="full_name"
+            rules={{ required: "Full Name is required", minLength: 3 }}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Full Name"
+                    className={fieldState.error ? "border-red-500" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </FormControl>
-          <Button variant="primary" type="submit" isLoading={isSubmitting}>
-            Sign Up
-          </Button>
-          <Text>
-            Already have an account?{" "}
-            <Link as={RouterLink} to="/login" color="blue.500">
-              Log In
-            </Link>
-          </Text>
-        </Container>
-      </Flex>
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            rules={{
+              required: "Email is required",
+              pattern: emailPattern,
+            }}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Email"
+                    className={fieldState.error ? "border-cds-text-error" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            rules={passwordRules()}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="Password"
+                    className={fieldState.error ? "border-cds-text-error" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirm_password"
+            rules={confirmPasswordRules(form.getValues)}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="Repeat Password"
+                    className={fieldState.error ? "border-red-500" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit">{form.formState.isSubmitting ? "loading..." : "Sign Up"}</Button>
+
+          <div className="flex w-full justify-center gap-2">
+            Already have an account? <Link to="/login">Log In</Link>
+          </div>
+        </form>
+      </Form>
     </>
-  )
+  );
 }
 
-export default SignUp
+export default SignUp;

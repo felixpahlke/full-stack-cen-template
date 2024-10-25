@@ -1,59 +1,60 @@
+import { Link } from "@tanstack/react-router";
+import { FiLogOut, FiUser } from "react-icons/fi";
+
+import useAuth from "../../hooks/useAuth";
 import {
-  Box,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-} from "@chakra-ui/react"
-import { Link } from "@tanstack/react-router"
-import { FaUserAstronaut } from "react-icons/fa"
-import { FiLogOut, FiUser } from "react-icons/fi"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { UserAvatar } from "@carbon/icons-react";
 
-import useAuth from "../../hooks/useAuth"
+interface UserMenuProps {
+  className?: string;
+}
 
-const UserMenu = () => {
-  const { logout } = useAuth()
+const UserMenu = ({ className }: UserMenuProps) => {
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
-    logout()
-  }
+    logout();
+  };
 
   return (
     <>
       {/* Desktop */}
-      <Box
-        display={{ base: "none", md: "block" }}
-        position="fixed"
-        top={4}
-        right={4}
-      >
-        <Menu>
-          <MenuButton
-            as={IconButton}
-            aria-label="Options"
-            icon={<FaUserAstronaut color="white" fontSize="18px" />}
-            bg="ui.main"
-            isRound
-            data-testid="user-menu"
-          />
-          <MenuList>
-            <MenuItem icon={<FiUser fontSize="18px" />} as={Link} to="settings">
-              My profile
-            </MenuItem>
-            <MenuItem
-              icon={<FiLogOut fontSize="18px" />}
-              onClick={handleLogout}
-              color="ui.danger"
-              fontWeight="bold"
+      <div className={cn("abolute right-4 hidden sm:block", className)}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-cds-text-primary"
+              aria-label="User menu"
+              data-testid="user-menu"
             >
+              <UserAvatar className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="flex items-center">
+                <FiUser className="mr-2 h-4 w-4" />
+                My profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="text-ui-danger font-bold">
+              <FiLogOut className="mr-2 h-4 w-4" />
               Log out
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      </Box>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </>
-  )
-}
+  );
+};
 
-export default UserMenu
+export default UserMenu;

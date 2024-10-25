@@ -1,38 +1,43 @@
-import {
-  Badge,
-  Container,
-  Heading,
-  Radio,
-  RadioGroup,
-  Stack,
-  useColorMode,
-} from "@chakra-ui/react"
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTheme } from "../Theme/ThemeProvider";
 
 const Appearance = () => {
-  const { colorMode, toggleColorMode } = useColorMode()
+  const { theme, setTheme } = useTheme();
+
+  const handleThemeChange = (value: string) => {
+    setTheme(value as "light" | "dark" | "system");
+  };
 
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Appearance
-        </Heading>
-        <RadioGroup onChange={toggleColorMode} value={colorMode}>
-          <Stack>
-            {/* TODO: Add system default option */}
-            <Radio value="light" colorScheme="teal">
-              Light Mode
-              <Badge ml="1" colorScheme="teal">
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Appearance</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <RadioGroup value={theme} onValueChange={handleThemeChange} className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="light" id="light" />
+            <Label htmlFor="light">Light Mode</Label>
+            {theme === "light" && (
+              <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-1 text-xs">
                 Default
-              </Badge>
-            </Radio>
-            <Radio value="dark" colorScheme="teal">
-              Dark Mode
-            </Radio>
-          </Stack>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="dark" id="dark" />
+            <Label htmlFor="dark">Dark Mode</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="system" id="system" />
+            <Label htmlFor="system">System Default</Label>
+          </div>
         </RadioGroup>
-      </Container>
-    </>
-  )
-}
-export default Appearance
+      </CardContent>
+    </Card>
+  );
+};
+
+export default Appearance;

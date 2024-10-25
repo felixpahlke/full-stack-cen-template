@@ -1,48 +1,42 @@
-import {
-  Button,
-  Checkbox,
-  Flex,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-} from "@chakra-ui/react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { type SubmitHandler, useForm } from "react-hook-form"
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type UserCreate, UsersService } from "../../client"
-import type { ApiError } from "../../client/core/ApiError"
-import useCustomToast from "../../hooks/useCustomToast"
-import { emailPattern, handleError } from "../../utils"
+import { type UserCreate, UsersService } from "../../client";
+import type { ApiError } from "../../client/core/ApiError";
+import { emailPattern, handleError } from "../../utils";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface AddUserProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface UserCreateForm extends UserCreate {
-  confirm_password: string
+  confirm_password: string;
 }
 
 const AddUser = ({ isOpen, onClose }: AddUserProps) => {
-  const queryClient = useQueryClient()
-  const showToast = useCustomToast()
-  const {
-    register,
-    handleSubmit,
-    reset,
-    getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<UserCreateForm>({
-    mode: "onBlur",
-    criteriaMode: "all",
+  const queryClient = useQueryClient();
+  const form = useForm<UserCreateForm>({
     defaultValues: {
       email: "",
       full_name: "",
@@ -51,132 +45,148 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       is_superuser: false,
       is_active: false,
     },
-  })
+  });
 
   const mutation = useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
+    mutationFn: (data: UserCreate) => UsersService.createUser({ requestBody: data }),
     onSuccess: () => {
-      showToast("Success!", "User created successfully.", "success")
-      reset()
-      onClose()
+      toast.success("User created successfully.");
+      form.reset();
+      onClose();
     },
     onError: (err: ApiError) => {
-      handleError(err, showToast)
+      handleError(err);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<UserCreateForm> = (data) => {
-    mutation.mutate(data)
-  }
+    mutation.mutate(data);
+  };
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <ModalOverlay />
-        <ModalContent as="form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalHeader>Add User</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl isRequired isInvalid={!!errors.email}>
-              <FormLabel htmlFor="email">Email</FormLabel>
-              <Input
-                id="email"
-                {...register("email", {
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add User</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="">
+            <div className="space-y-8 px-4 pb-8">
+              <FormField
+                control={form.control}
+                name="email"
+                rules={{
                   required: "Email is required",
                   pattern: emailPattern,
-                })}
-                placeholder="Email"
-                type="email"
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Email" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.email && (
-                <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-              )}
-            </FormControl>
-            <FormControl mt={4} isInvalid={!!errors.full_name}>
-              <FormLabel htmlFor="name">Full name</FormLabel>
-              <Input
-                id="name"
-                {...register("full_name")}
-                placeholder="Full name"
-                type="text"
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Full name" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.full_name && (
-                <FormErrorMessage>{errors.full_name.message}</FormErrorMessage>
-              )}
-            </FormControl>
-            <FormControl mt={4} isRequired isInvalid={!!errors.password}>
-              <FormLabel htmlFor="password">Set Password</FormLabel>
-              <Input
-                id="password"
-                {...register("password", {
+              <FormField
+                control={form.control}
+                name="password"
+                rules={{
                   required: "Password is required",
                   minLength: {
                     value: 8,
                     message: "Password must be at least 8 characters",
                   },
-                })}
-                placeholder="Password"
-                type="password"
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Set Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Password" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.password && (
-                <FormErrorMessage>{errors.password.message}</FormErrorMessage>
-              )}
-            </FormControl>
-            <FormControl
-              mt={4}
-              isRequired
-              isInvalid={!!errors.confirm_password}
-            >
-              <FormLabel htmlFor="confirm_password">Confirm Password</FormLabel>
-              <Input
-                id="confirm_password"
-                {...register("confirm_password", {
+              <FormField
+                control={form.control}
+                name="confirm_password"
+                rules={{
                   required: "Please confirm your password",
                   validate: (value) =>
-                    value === getValues().password ||
-                    "The passwords do not match",
-                })}
-                placeholder="Password"
-                type="password"
+                    value === form.getValues().password || "The passwords do not match",
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Confirm password" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.confirm_password && (
-                <FormErrorMessage>
-                  {errors.confirm_password.message}
-                </FormErrorMessage>
-              )}
-            </FormControl>
-            <Flex mt={4}>
-              <FormControl>
-                <Checkbox {...register("is_superuser")} colorScheme="teal">
-                  Is superuser?
-                </Checkbox>
-              </FormControl>
-              <FormControl>
-                <Checkbox {...register("is_active")} colorScheme="teal">
-                  Is active?
-                </Checkbox>
-              </FormControl>
-            </Flex>
-          </ModalBody>
-          <ModalFooter gap={3}>
-            <Button variant="primary" type="submit" isLoading={isSubmitting}>
-              Save
-            </Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
-  )
-}
+              <div className="flex space-x-4">
+                <FormField
+                  control={form.control}
+                  name="is_superuser"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Is superuser?</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Is active?</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Saving..." : "Save"}
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
-export default AddUser
+export default AddUser;
