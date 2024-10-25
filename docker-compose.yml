@@ -102,6 +102,8 @@ services:
       npm run dev
       --
       --host 0.0.0.0
+    environment:
+      - VITE_API_URL=http://localhost:8000
     develop:
       watch:
         - path: ./frontend
