@@ -60,16 +60,16 @@ oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-sec
 7. Create DB
 
 ```bash
-oc new-app --template=postgresql-persistent --param=POSTGRESQL_DATABASE=app --param=POSTGRESQL_USER=test --param=POSTGRESQL_PASSWORD=test1234
+oc new-app --template=postgresql-persistent --param=POSTGRESQL_DATABASE=app --param=POSTGRESQL_USER=<postgres-user> --param=POSTGRESQL_PASSWORD=<postgres-password>
 ```
 
-8. Create Extension in Postgres DB
+<!-- 8. Create Extension in Postgres DB
 
 ```bash
 oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -d app -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-```
+``` -->
 
-9. Expose the Frontend
+8. Expose the Frontend
 
 <!-- tls settings? -->
 
@@ -77,7 +77,7 @@ oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}')
 oc create route edge frontend --service=frontend --port=8080
 ```
 
-10. Get Webhook URL
+9. Get Webhook URL
 
 ```bash
 oc get route frontend -o jsonpath='{.spec.host}'

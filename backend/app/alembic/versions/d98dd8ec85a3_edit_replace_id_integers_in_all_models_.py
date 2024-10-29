@@ -9,6 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from sqlalchemy.dialects import postgresql
+from uuid import uuid4
 
 
 # revision identifiers, used by Alembic.
@@ -19,18 +20,15 @@ depends_on = None
 
 
 def upgrade():
-    # Ensure uuid-ossp extension is available
-    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+    # Create new UUID columns
+    op.add_column('user', sa.Column('new_id', postgresql.UUID(as_uuid=True)))
+    op.add_column('item', sa.Column('new_id', postgresql.UUID(as_uuid=True)))
+    op.add_column('item', sa.Column('new_owner_id', postgresql.UUID(as_uuid=True)))
 
-    # Create a new UUID column with a default UUID value
-    op.add_column('user', sa.Column('new_id', postgresql.UUID(as_uuid=True), default=sa.text('uuid_generate_v4()')))
-    op.add_column('item', sa.Column('new_id', postgresql.UUID(as_uuid=True), default=sa.text('uuid_generate_v4()')))
-    op.add_column('item', sa.Column('new_owner_id', postgresql.UUID(as_uuid=True), nullable=True))
-
-    # Populate the new columns with UUIDs
-    op.execute('UPDATE "user" SET new_id = uuid_generate_v4()')
-    op.execute('UPDATE item SET new_id = uuid_generate_v4()')
-    op.execute('UPDATE item SET new_owner_id = (SELECT new_id FROM "user" WHERE "user".id = item.owner_id)')
+    # Use Python to generate UUIDs
+    op.execute(f"UPDATE \"user\" SET new_id = '{uuid4()}'")
+    op.execute(f"UPDATE item SET new_id = '{uuid4()}'")
+    op.execute(f"UPDATE item SET new_owner_id = (SELECT new_id FROM \"user\" WHERE \"user\".id = item.owner_id)")
 
     # Set the new_id as not nullable
     op.alter_column('user', 'new_id', nullable=False)
