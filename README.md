@@ -85,31 +85,75 @@ _This Template is based on [full-stack-fastapi-template](https://github.com/fast
 
 ## How To Use It
 
-You can **just clone** this repository
-
-```bash
-git clone https://github.com/kulimantang/full-stack-cen-template.git
-```
-
-cd into the folder & delete it's `.git` folder
-
-```bash
-cd full-stack-cen-template
-
-rm -rf .git
-```
-
-and push it into your own project you created within GitHub/GitLab.
-
-```bash
-git init --initial-branch=main
-git remote add origin <your_repository_url_here>
-git add .
-git commit -m "Initial commit"
-git push --set-upstream origin main
-```
+You can **just fork or clone** this repository and use it as is.
 
 ✨ It just works. ✨
+
+### How to Use a Your Own Repository
+
+If you want to have a private repository you can do the following:
+
+- Create a new Git repo, for example `my-full-stack`.
+- Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
+
+```bash
+git clone git@github.com:kulimantang/full-stack-cen-template.git my-full-stack
+```
+
+- Enter into the new directory:
+
+```bash
+cd my-full-stack
+```
+
+- Set the new origin to your new repository, copy it from the GitHub interface, for example:
+
+```bash
+git remote set-url origin git@github.com:my-username/my-full-stack.git
+```
+
+- Add this repo as another "remote" to allow you to get updates later:
+
+```bash
+git remote add upstream git@github.com:kulimantang/full-stack-cen-template.git
+```
+
+- Push the code to your new repository:
+
+```bash
+git push -u origin main
+```
+
+### Update From the Original Template
+
+After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
+
+- Make sure you added the original repository as a remote, you can check it with:
+
+```bash
+git remote -v
+
+origin    git@github.com:my-username/my-full-stack.git (fetch)
+origin    git@github.com:my-username/my-full-stack.git (push)
+upstream    git@github.com:kulimantang/full-stack-cen-template.git (fetch)
+upstream    git@github.com:kulimantang/full-stack-cen-template.git (push)
+```
+
+- Pull the latest changes without merging:
+
+```bash
+git pull --no-commit upstream main
+```
+
+This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
+
+- If there are conflicts, solve them in your editor.
+
+- Once you are done, commit the changes:
+
+```bash
+git merge --continue
+```
 
 ## Development
 
