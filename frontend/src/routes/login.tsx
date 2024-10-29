@@ -4,7 +4,13 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
-import { Form, FormField, FormControl, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormControl,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -53,7 +59,10 @@ function Login() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col space-y-4"
+        >
           <Logo className="mb-3 w-full" />
           <FormField
             control={form.control}
@@ -88,8 +97,14 @@ function Login() {
                 <FormControl>
                   <>
                     <div className="flex justify-between">
-                      <Label className="text-xs text-cds-text-secondary">Password</Label>
-                      <Link to="/recover-password" className="text-xs" tabIndex={6}>
+                      <Label className="text-xs text-cds-text-secondary">
+                        Password
+                      </Label>
+                      <Link
+                        to="/recover-password"
+                        className="text-xs"
+                        tabIndex={6}
+                      >
                         Forgot password?
                       </Link>
                     </div>
@@ -97,7 +112,9 @@ function Login() {
                       {...field}
                       type={show ? "text" : "password"}
                       placeholder="Password"
-                      className={fieldState.error ? "border-cds-text-error" : ""}
+                      className={
+                        fieldState.error ? "border-cds-text-error" : ""
+                      }
                       tabIndex={2}
                     />
                     <Button
@@ -113,7 +130,9 @@ function Login() {
                   </>
                 </FormControl>
                 <FormMessage />
-                {error && !fieldState.error && <FormMessage>{error}</FormMessage>}
+                {error && !fieldState.error && (
+                  <FormMessage>{error}</FormMessage>
+                )}
               </FormItem>
             )}
           />
