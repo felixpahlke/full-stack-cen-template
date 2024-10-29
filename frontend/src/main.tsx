@@ -16,8 +16,6 @@ OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || "";
 };
 
-console.log(OpenAPI.BASE);
-
 const queryClient = new QueryClient();
 
 const router = createRouter({ routeTree });
