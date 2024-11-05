@@ -57,8 +57,10 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmation Required</AlertDialogTitle>
             <AlertDialogDescription>
-              All your account data will be <strong>permanently deleted.</strong> If you are sure,
-              please click <strong>"Confirm"</strong> to proceed. This action cannot be undone.
+              All your account data will be{" "}
+              <strong>permanently deleted.</strong> If you are sure, please
+              click <strong>"Confirm"</strong> to proceed. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
@@ -68,7 +70,11 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
               </Button>
             </AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Button variant="destructive" type="submit" disabled={isSubmitting}>
+              <Button
+                variant="destructive"
+                type="submit"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Deleting..." : "Confirm"}
               </Button>
             </AlertDialogAction>

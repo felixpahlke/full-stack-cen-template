@@ -5,7 +5,13 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { type ApiError, LoginService } from "../client";
 import { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern, handleError } from "../utils";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Logo } from "@/components/Common/Logo";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,7 +50,9 @@ function RecoverPassword() {
   const mutation = useMutation({
     mutationFn: recoverPassword,
     onSuccess: () => {
-      toast.success("We sent an email with a link to get back into your account.");
+      toast.success(
+        "We sent an email with a link to get back into your account.",
+      );
       reset();
     },
     onError: (err: ApiError) => {
@@ -64,7 +72,9 @@ function RecoverPassword() {
       >
         <Logo className="w-full" />
 
-        <h1 className="text-center text-2xl font-semibold">Password Recovery</h1>
+        <h1 className="text-center text-2xl font-semibold">
+          Password Recovery
+        </h1>
         <p className="text-center">
           A password recovery email will be sent to the registered account.
         </p>
@@ -91,8 +101,13 @@ function RecoverPassword() {
           )}
         />
 
-        <Button type="submit" disabled={formState.isSubmitting || mutation.isPending}>
-          {formState.isSubmitting || mutation.isPending ? "Sending..." : "Continue"}
+        <Button
+          type="submit"
+          disabled={formState.isSubmitting || mutation.isPending}
+        >
+          {formState.isSubmitting || mutation.isPending
+            ? "Sending..."
+            : "Continue"}
         </Button>
       </form>
     </Form>

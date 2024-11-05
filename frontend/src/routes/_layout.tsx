@@ -25,7 +25,7 @@ function Layout() {
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2"></div>
         </div>
       ) : (
-        <div className="mx-auto mt-[47px] flex max-w-screen-xl px-8">
+        <div className="max-w-screen-xl mx-auto mt-[47px] flex px-8">
           <Outlet />
         </div>
       )}

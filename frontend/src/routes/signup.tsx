@@ -3,7 +3,13 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
-import { Form, FormField, FormControl, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormControl,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
@@ -127,7 +133,9 @@ function SignUp() {
             )}
           />
 
-          <Button type="submit">{form.formState.isSubmitting ? "loading..." : "Sign Up"}</Button>
+          <Button type="submit">
+            {form.formState.isSubmitting ? "loading..." : "Sign Up"}
+          </Button>
 
           <div className="flex w-full justify-center gap-2">
             Already have an account? <Link to="/login">Log In</Link>

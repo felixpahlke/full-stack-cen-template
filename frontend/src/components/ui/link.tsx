@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Link as RouterLink, LinkProps as RouterLinkProps } from "@tanstack/react-router";
+import {
+  Link as RouterLink,
+  LinkProps as RouterLinkProps,
+} from "@tanstack/react-router";
 
 interface LinkProps extends RouterLinkProps {
   className?: string;

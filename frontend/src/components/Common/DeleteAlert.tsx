@@ -49,7 +49,9 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
       onClose();
     },
     onError: () => {
-      toast.error(`An error occurred while deleting the ${type.toLowerCase()}.`);
+      toast.error(
+        `An error occurred while deleting the ${type.toLowerCase()}.`,
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -82,7 +84,11 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Button variant="destructive" onClick={handleSubmit(onSubmit)} disabled={isSubmitting}>
+            <Button
+              variant="destructive"
+              onClick={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+            >
               Delete
             </Button>
           </AlertDialogAction>

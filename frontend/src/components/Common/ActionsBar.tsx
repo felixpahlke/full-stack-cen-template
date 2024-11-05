@@ -17,7 +17,7 @@ const ActionBar = ({ type, addModalAs }: NavbarProps) => {
       <div className="flex gap-4 py-8">
         <Button
           variant="default"
-          className="gap-1 text-sm md:text-base"
+          className="md:text-base gap-1 text-sm"
           onClick={() => setIsModalOpen(true)}
         >
           <Plus className="h-4 w-4" /> Add {type}

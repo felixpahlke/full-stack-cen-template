@@ -48,7 +48,8 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UserCreate) => UsersService.createUser({ requestBody: data }),
+    mutationFn: (data: UserCreate) =>
+      UsersService.createUser({ requestBody: data }),
     onSuccess: () => {
       toast.success("User created successfully.");
       form.reset();
@@ -99,7 +100,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                   <FormItem>
                     <FormLabel>Full name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Full name" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Full name"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -119,7 +124,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                   <FormItem>
                     <FormLabel>Set Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="Password" type="password" {...field} />
+                      <Input
+                        placeholder="Password"
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,13 +140,18 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 rules={{
                   required: "Please confirm your password",
                   validate: (value) =>
-                    value === form.getValues().password || "The passwords do not match",
+                    value === form.getValues().password ||
+                    "The passwords do not match",
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="Confirm password" type="password" {...field} />
+                      <Input
+                        placeholder="Confirm password"
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -150,7 +164,10 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>Is superuser?</FormLabel>
@@ -164,7 +181,10 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>Is active?</FormLabel>

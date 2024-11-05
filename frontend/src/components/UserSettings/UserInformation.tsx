@@ -2,7 +2,12 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
-import { type ApiError, type UserPublic, type UserUpdateMe, UsersService } from "../../client";
+import {
+  type ApiError,
+  type UserPublic,
+  type UserUpdateMe,
+  UsersService,
+} from "../../client";
 import useAuth from "../../hooks/useAuth";
 import { emailPattern, handleError } from "../../utils";
 
@@ -36,7 +41,8 @@ const UserInformation = () => {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UserUpdateMe) => UsersService.updateUserMe({ requestBody: data }),
+    mutationFn: (data: UserUpdateMe) =>
+      UsersService.updateUserMe({ requestBody: data }),
     onSuccess: () => {
       toast.success("User updated successfully.");
     },
@@ -67,9 +73,15 @@ const UserInformation = () => {
           <div>
             <Label htmlFor="name">Full name</Label>
             {editMode ? (
-              <Input id="name" {...register("full_name", { maxLength: 30 })} type="text" />
+              <Input
+                id="name"
+                {...register("full_name", { maxLength: 30 })}
+                type="text"
+              />
             ) : (
-              <p className={`py-2 ${!currentUser?.full_name ? "text-muted-foreground" : ""}`}>
+              <p
+                className={`py-2 ${!currentUser?.full_name ? "text-muted-foreground" : ""}`}
+              >
                 {currentUser?.full_name || "N/A"}
               </p>
             )}
@@ -88,7 +100,9 @@ const UserInformation = () => {
             ) : (
               <p className="py-2">{currentUser?.email}</p>
             )}
-            {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
+            {errors.email && (
+              <p className="text-destructive text-sm">{errors.email.message}</p>
+            )}
           </div>
           <div className="flex gap-3">
             <Button
@@ -100,7 +114,11 @@ const UserInformation = () => {
               {editMode ? "Save" : "Edit"}
             </Button>
             {editMode && (
-              <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+              <Button
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
             )}

@@ -27,7 +27,11 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild disabled={disabled}>
-          <Button variant="ghost" className="h-8 w-8 justify-center p-0" disabled={disabled}>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 justify-center p-0"
+            disabled={disabled}
+          >
             <span className="sr-only">Open menu</span>
             <MoreVertical className="h-4 w-4" />
           </Button>

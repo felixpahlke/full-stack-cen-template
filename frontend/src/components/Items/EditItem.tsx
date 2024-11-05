@@ -1,7 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, type ItemPublic, type ItemUpdate, ItemsService } from "../../client";
+import {
+  type ApiError,
+  type ItemPublic,
+  type ItemUpdate,
+  ItemsService,
+} from "../../client";
 import { handleError } from "../../utils";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +42,8 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: ItemUpdate) => ItemsService.updateItem({ id: item.id, requestBody: data }),
+    mutationFn: (data: ItemUpdate) =>
+      ItemsService.updateItem({ id: item.id, requestBody: data }),
     onSuccess: () => {
       toast.success("Item updated successfully.");
       form.reset();
@@ -72,7 +78,11 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Title" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Title"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -85,7 +95,11 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="Description" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Description"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

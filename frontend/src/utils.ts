@@ -26,7 +26,10 @@ export const passwordRules = (isRequired = true) => {
   return rules;
 };
 
-export const confirmPasswordRules = (getValues: () => any, isRequired = true) => {
+export const confirmPasswordRules = (
+  getValues: () => any,
+  isRequired = true,
+) => {
   const rules: any = {
     validate: (value: string) => {
       const password = getValues().password || getValues().new_password;

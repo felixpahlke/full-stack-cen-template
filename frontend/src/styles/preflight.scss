@@ -13,36 +13,34 @@
  * Ref: https://tailwindcss.com/docs/preflight
  */
 
-
-
 :where(*:not([class^="cds--"])),
 :where(*:not([class^="cds--"])::before),
 :where(*:not([class^="cds--"])::after) {
-    box-sizing: border-box;
-    border-width: 0;
-    border-style: solid;
-    border-color: currentcolor;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentcolor;
 }
 
 :where(html) {
-    line-height: 1.5;
-    text-size-adjust: 100%;
-    tab-size: 4;
+  line-height: 1.5;
+  text-size-adjust: 100%;
+  tab-size: 4;
 }
 
 :where(body) {
-    margin: 0;
-    line-height: inherit;
+  margin: 0;
+  line-height: inherit;
 }
 
 :where(hr:not([class^="cds--"])) {
-    height: 0;
-    color: inherit;
-    border-top-width: 1px;
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
 }
 
 :where(abbr:where([title]):not([class^="cds--"])) {
-    text-decoration: underline dotted;
+  text-decoration: underline dotted;
 }
 
 :where(h1:not([class^="cds--"])),
@@ -51,61 +49,53 @@
 :where(h4:not([class^="cds--"])),
 :where(h5:not([class^="cds--"])),
 :where(h6:not([class^="cds--"])) {
-    font-size: inherit;
-    font-weight: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 :where(a:not([class^="cds--"])) {
-    color: inherit;
-    text-decoration: inherit;
+  color: inherit;
+  text-decoration: inherit;
 }
 
 :where(b:not([class^="cds--"])),
 :where(strong:not([class^="cds--"])) {
-    font-weight: bolder;
+  font-weight: bolder;
 }
 
 :where(code:not([class^="cds--"])),
 :where(kbd:not([class^="cds--"])),
 :where(samp:not([class^="cds--"])),
 :where(pre:not([class^="cds--"])) {
-    font-family:
-        "fontFamily.mono",
-        ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Monaco,
-        Consolas,
-        "Liberation Mono",
-        "Courier New",
-        monospace;
-    font-size: 1em;
+  font-family: "fontFamily.mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1em;
 }
 
 :where(small:not([class^="cds--"])) {
-    font-size: 80%;
+  font-size: 80%;
 }
 
 :where(sub:not([class^="cds--"])),
 :where(sup:not([class^="cds--"])) {
-    font-size: 75%;
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline;
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
 }
 
 :where(sub:not([class^="cds--"])) {
-    bottom: -0.25em;
+  bottom: -0.25em;
 }
 
 :where(sup:not([class^="cds--"])) {
-    top: -0.5em;
+  top: -0.5em;
 }
 
 :where(table:not([class^="cds--"])) {
-    text-indent: 0;
-    border-color: inherit;
-    border-collapse: collapse;
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
 }
 
 :where(button:not([class^="cds--"])),
@@ -113,62 +103,62 @@
 :where(optgroup:not([class^="cds--"])),
 :where(select:not([class^="cds--"])),
 :where(textarea:not([class^="cds--"])) {
-    font-family: inherit;
-    font-size: 100%;
-    font-weight: inherit;
-    line-height: inherit;
-    color: inherit;
-    margin: 0;
-    padding: 0;
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
 }
 
 :where(button:not([class^="cds--"])),
 :where(select:not([class^="cds--"])) {
-    text-transform: none;
+  text-transform: none;
 }
 
 :where(button:not([class^="cds--"])),
 :where([type="button"]:not([class^="cds--"])),
 :where([type="reset"]:not([class^="cds--"])),
 :where([type="submit"]:not([class^="cds--"])) {
-    appearance: button;
-    background-color: transparent;
-    background-image: none;
+  appearance: button;
+  background-color: transparent;
+  background-image: none;
 }
 
 :where(:-moz-focusring:not([class^="cds--"])) {
-    outline: auto;
+  outline: auto;
 }
 
 :where(:-moz-ui-invalid:not([class^="cds--"])) {
-    box-shadow: none;
+  box-shadow: none;
 }
 
 :where(progress:not([class^="cds--"])) {
-    vertical-align: baseline;
+  vertical-align: baseline;
 }
 
 :where(::-webkit-inner-spin-button:not([class^="cds--"])),
 :where(::-webkit-outer-spin-button:not([class^="cds--"])) {
-    height: auto;
+  height: auto;
 }
 
 :where([type="search"]:not([class^="cds--"])) {
-    appearance: textfield;
-    outline-offset: -2px;
+  appearance: textfield;
+  outline-offset: -2px;
 }
 
 :where(::-webkit-search-decoration:not([class^="cds--"])) {
-    appearance: none;
+  appearance: none;
 }
 
 :where(::-webkit-file-upload-button:not([class^="cds--"])) {
-    appearance: button;
-    font: inherit;
+  appearance: button;
+  font: inherit;
 }
 
 :where(summary:not([class^="cds--"])) {
-    display: list-item;
+  display: list-item;
 }
 
 :where(blockquote:not([class^="cds--"])),
@@ -184,43 +174,43 @@
 :where(figure:not([class^="cds--"])),
 :where(p:not([class^="cds--"])),
 :where(pre:not([class^="cds--"])) {
-    margin: 0;
+  margin: 0;
 }
 
 :where(fieldset:not([class^="cds--"])) {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 :where(legend:not([class^="cds--"])) {
-    padding: 0;
+  padding: 0;
 }
 
 :where(ol:not([class^="cds--"])),
 :where(ul:not([class^="cds--"])),
 :where(menu:not([class^="cds--"])) {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 :where(textarea:not([class^="cds--"])) {
-    resize: vertical;
+  resize: vertical;
 }
 
 :where(input::placeholder:not([class^="cds--"])),
 :where(textarea::placeholder:not([class^="cds--"])) {
-    opacity: 1;
-    color: #9ca3af;
+  opacity: 1;
+  color: #9ca3af;
 }
 
 :where(button:not([class^="cds--"])),
 :where([role="button"]:not([class^="cds--"])) {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 :where(:disabled:not([class^="cds--"])) {
-    cursor: default;
+  cursor: default;
 }
 
 :where(img:not([class^="cds--"])),
@@ -231,12 +221,12 @@
 :where(iframe:not([class^="cds--"])),
 :where(embed:not([class^="cds--"])),
 :where(object:not([class^="cds--"])) {
-    display: block;
-    vertical-align: middle;
+  display: block;
+  vertical-align: middle;
 }
 
 :where(img:not([class^="cds--"])),
 :where(video:not([class^="cds--"])) {
-    max-width: 100%;
-    height: auto;
+  max-width: 100%;
+  height: auto;
 }

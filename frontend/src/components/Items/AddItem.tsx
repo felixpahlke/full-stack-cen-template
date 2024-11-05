@@ -38,7 +38,8 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: ItemCreate) => ItemsService.createItem({ requestBody: data }),
+    mutationFn: (data: ItemCreate) =>
+      ItemsService.createItem({ requestBody: data }),
     onSuccess: () => {
       toast.success("Item created successfully.");
       form.reset();
@@ -85,7 +86,11 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
                 <FormItem className="px-4">
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="Description" {...field} value={field.value || ""} />
+                    <Input
+                      placeholder="Description"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

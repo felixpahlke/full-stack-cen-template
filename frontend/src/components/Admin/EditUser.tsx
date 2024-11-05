@@ -1,7 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { type ApiError, type UserPublic, type UserUpdate, UsersService } from "../../client";
+import {
+  type ApiError,
+  type UserPublic,
+  type UserUpdate,
+  UsersService,
+} from "../../client";
 import { emailPattern, handleError } from "../../utils";
 
 import { Button } from "@/components/ui/button";
@@ -102,7 +107,11 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                   <FormItem>
                     <FormLabel>Full name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Full name" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Full name"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -137,13 +146,18 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 name="confirm_password"
                 rules={{
                   validate: (value) =>
-                    value === form.getValues().password || "The passwords do not match",
+                    value === form.getValues().password ||
+                    "The passwords do not match",
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="Confirm password" type="password" {...field} />
+                      <Input
+                        placeholder="Confirm password"
+                        type="password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -156,7 +170,10 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>Is superuser?</FormLabel>
@@ -170,7 +187,10 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>Is active?</FormLabel>

@@ -5,7 +5,13 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { type ApiError, LoginService, type NewPassword } from "../client";
 import { isLoggedIn } from "../hooks/useAuth";
 import { confirmPasswordRules, handleError, passwordRules } from "../utils";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Logo } from "@/components/Common/Logo";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -113,8 +119,13 @@ function ResetPassword() {
           )}
         />
 
-        <Button type="submit" disabled={formState.isSubmitting || mutation.isPending}>
-          {formState.isSubmitting || mutation.isPending ? "Resetting..." : "Reset Password"}
+        <Button
+          type="submit"
+          disabled={formState.isSubmitting || mutation.isPending}
+        >
+          {formState.isSubmitting || mutation.isPending
+            ? "Resetting..."
+            : "Reset Password"}
         </Button>
       </form>
     </Form>

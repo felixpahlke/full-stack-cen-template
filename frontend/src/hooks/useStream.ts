@@ -14,7 +14,12 @@ interface StreamProps<T> {
   onSuccess?: (text?: string) => void;
 }
 
-export const useStream = <T>({ getStream, onMessage, onError, onSuccess }: StreamProps<T>) => {
+export const useStream = <T>({
+  getStream,
+  onMessage,
+  onError,
+  onSuccess,
+}: StreamProps<T>) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -34,7 +39,10 @@ export const useStream = <T>({ getStream, onMessage, onError, onSuccess }: Strea
       abortControllerRef.current = new AbortController();
 
       try {
-        const stream_source = await getStream(input, abortControllerRef.current.signal);
+        const stream_source = await getStream(
+          input,
+          abortControllerRef.current.signal,
+        );
 
         if (!stream_source.ok) {
           if (!stopRef.current) {
@@ -48,7 +56,9 @@ export const useStream = <T>({ getStream, onMessage, onError, onSuccess }: Strea
 
         if (stream_source.body) {
           setIsLoading(false);
-          const reader = stream_source.body.pipeThrough(new TextDecoderStream()).getReader();
+          const reader = stream_source.body
+            .pipeThrough(new TextDecoderStream())
+            .getReader();
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
@@ -94,5 +104,13 @@ export const useStream = <T>({ getStream, onMessage, onError, onSuccess }: Strea
     setIsError(false);
   };
 
-  return { start, stop, text: text.trim(), isLoading, isError, isSuccess, isProcessing };
+  return {
+    start,
+    stop,
+    text: text.trim(),
+    isLoading,
+    isError,
+    isSuccess,
+    isProcessing,
+  };
 };

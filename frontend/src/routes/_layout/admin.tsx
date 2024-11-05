@@ -171,7 +171,7 @@ function UsersTable() {
 function Admin() {
   return (
     <div className="w-full">
-      <h1 className="py-12 text-center text-2xl font-bold md:text-left">
+      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
         Users Management
       </h1>
 
