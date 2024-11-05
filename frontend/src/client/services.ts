@@ -40,7 +40,9 @@ export class LoginService {
    * @returns Token Successful Response
    * @throws ApiError
    */
-  public static loginAccessToken(data: TDataLoginAccessToken): CancelablePromise<Token> {
+  public static loginAccessToken(
+    data: TDataLoginAccessToken,
+  ): CancelablePromise<Token> {
     const { formData } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -72,7 +74,9 @@ export class LoginService {
    * @returns Message Successful Response
    * @throws ApiError
    */
-  public static recoverPassword(data: TDataRecoverPassword): CancelablePromise<Message> {
+  public static recoverPassword(
+    data: TDataRecoverPassword,
+  ): CancelablePromise<Message> {
     const { email } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -92,7 +96,9 @@ export class LoginService {
    * @returns Message Successful Response
    * @throws ApiError
    */
-  public static resetPassword(data: TDataResetPassword): CancelablePromise<Message> {
+  public static resetPassword(
+    data: TDataResetPassword,
+  ): CancelablePromise<Message> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -162,7 +168,9 @@ export class UsersService {
    * @returns UsersPublic Successful Response
    * @throws ApiError
    */
-  public static readUsers(data: TDataReadUsers = {}): CancelablePromise<UsersPublic> {
+  public static readUsers(
+    data: TDataReadUsers = {},
+  ): CancelablePromise<UsersPublic> {
     const { limit = 100, skip = 0 } = data;
     return __request(OpenAPI, {
       method: "GET",
@@ -183,7 +191,9 @@ export class UsersService {
    * @returns UserPublic Successful Response
    * @throws ApiError
    */
-  public static createUser(data: TDataCreateUser): CancelablePromise<UserPublic> {
+  public static createUser(
+    data: TDataCreateUser,
+  ): CancelablePromise<UserPublic> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -228,7 +238,9 @@ export class UsersService {
    * @returns UserPublic Successful Response
    * @throws ApiError
    */
-  public static updateUserMe(data: TDataUpdateUserMe): CancelablePromise<UserPublic> {
+  public static updateUserMe(
+    data: TDataUpdateUserMe,
+  ): CancelablePromise<UserPublic> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "PATCH",
@@ -247,7 +259,9 @@ export class UsersService {
    * @returns Message Successful Response
    * @throws ApiError
    */
-  public static updatePasswordMe(data: TDataUpdatePasswordMe): CancelablePromise<Message> {
+  public static updatePasswordMe(
+    data: TDataUpdatePasswordMe,
+  ): CancelablePromise<Message> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "PATCH",
@@ -266,7 +280,9 @@ export class UsersService {
    * @returns UserPublic Successful Response
    * @throws ApiError
    */
-  public static registerUser(data: TDataRegisterUser): CancelablePromise<UserPublic> {
+  public static registerUser(
+    data: TDataRegisterUser,
+  ): CancelablePromise<UserPublic> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -285,7 +301,9 @@ export class UsersService {
    * @returns UserPublic Successful Response
    * @throws ApiError
    */
-  public static readUserById(data: TDataReadUserById): CancelablePromise<UserPublic> {
+  public static readUserById(
+    data: TDataReadUserById,
+  ): CancelablePromise<UserPublic> {
     const { userId } = data;
     return __request(OpenAPI, {
       method: "GET",
@@ -305,7 +323,9 @@ export class UsersService {
    * @returns UserPublic Successful Response
    * @throws ApiError
    */
-  public static updateUser(data: TDataUpdateUser): CancelablePromise<UserPublic> {
+  public static updateUser(
+    data: TDataUpdateUser,
+  ): CancelablePromise<UserPublic> {
     const { requestBody, userId } = data;
     return __request(OpenAPI, {
       method: "PATCH",
@@ -405,7 +425,9 @@ export class ItemsService {
    * @returns ItemsPublic Successful Response
    * @throws ApiError
    */
-  public static readItems(data: TDataReadItems = {}): CancelablePromise<ItemsPublic> {
+  public static readItems(
+    data: TDataReadItems = {},
+  ): CancelablePromise<ItemsPublic> {
     const { limit = 100, skip = 0 } = data;
     return __request(OpenAPI, {
       method: "GET",
@@ -426,7 +448,9 @@ export class ItemsService {
    * @returns ItemPublic Successful Response
    * @throws ApiError
    */
-  public static createItem(data: TDataCreateItem): CancelablePromise<ItemPublic> {
+  public static createItem(
+    data: TDataCreateItem,
+  ): CancelablePromise<ItemPublic> {
     const { requestBody } = data;
     return __request(OpenAPI, {
       method: "POST",
@@ -465,7 +489,9 @@ export class ItemsService {
    * @returns ItemPublic Successful Response
    * @throws ApiError
    */
-  public static updateItem(data: TDataUpdateItem): CancelablePromise<ItemPublic> {
+  public static updateItem(
+    data: TDataUpdateItem,
+  ): CancelablePromise<ItemPublic> {
     const { id, requestBody } = data;
     return __request(OpenAPI, {
       method: "PUT",

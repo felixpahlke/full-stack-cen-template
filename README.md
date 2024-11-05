@@ -97,7 +97,7 @@ If you want to have a private repository you can do the following:
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone git@github.ibm.com:Felix-Pahlke/full-stack-cen-template.git my-full-stack
+git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -115,7 +115,7 @@ git remote set-url origin git@github.com:my-username/my-full-stack.git
 - Add this repo as another "remote" to allow you to get updates later:
 
 ```bash
-git remote add upstream git@github.ibm.com:Felix-Pahlke/full-stack-cen-template.git
+git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
 ```
 
 - Push the code to your new repository:
@@ -135,8 +135,8 @@ git remote -v
 
 origin    git@github.com:my-username/my-full-stack.git (fetch)
 origin    git@github.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:Felix-Pahlke/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:Felix-Pahlke/full-stack-cen-template.git (push)
+upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (fetch)
+upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
 ```
 
 - Pull the latest changes without merging:
