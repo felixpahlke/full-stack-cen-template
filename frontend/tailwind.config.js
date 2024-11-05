@@ -11,6 +11,9 @@ export default {
     "./src/**/*.{ts,tsx}",
   ],
   theme: {
+    screens: {
+      lg: "1055px",
+    },
     extend: {
       fontFamily: {
         sans: ["IBM Plex Sans", "system-ui", "ui-sans-serif", "sans-serif"],

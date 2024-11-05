@@ -49,6 +49,16 @@ export function ThemeProvider({
     setActualTheme(theme as Exclude<Theme, "system">);
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.classList.remove(
+      "cds--white",
+      "cds--g10",
+      "cds--g90",
+      "cds--g100",
+    );
+    document.documentElement.classList.add(`cds--${actualTheme}`);
+  }, [actualTheme]);
+
   const value = {
     theme,
     actualTheme,

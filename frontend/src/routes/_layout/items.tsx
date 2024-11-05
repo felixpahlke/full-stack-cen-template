@@ -2,21 +2,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
+import {
+  DataTable,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+  TableBody,
+  TableCell,
+} from "@carbon/react";
+import { Button } from "@carbon/react";
 
 import { ItemsService } from "../../client";
 import ActionsMenu from "../../components/Common/ActionsMenu";
 import ActionBar from "../../components/Common/ActionsBar";
 import AddItem from "../../components/Items/AddItem";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const itemsSearchSchema = z.object({
   page: z.number().catch(1),
@@ -31,7 +31,8 @@ const PER_PAGE = 5;
 
 function getItemsQueryOptions({ page }: { page: number }) {
   return {
-    queryFn: () => ItemsService.readItems({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
+    queryFn: () =>
+      ItemsService.readItems({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
     queryKey: ["items", { page }],
   };
 }
@@ -40,7 +41,8 @@ function ItemsTable() {
   const queryClient = useQueryClient();
   const { page } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const setPage = (page: number) => navigate({ search: (prev) => ({ ...prev, page }) });
+  const setPage = (page: number) =>
+    navigate({ search: (prev) => ({ ...prev, page }) });
 
   const {
     data: items,
@@ -60,54 +62,80 @@ function ItemsTable() {
     }
   }, [page, queryClient, hasNextPage]);
 
+  const headers = [
+    { header: "ID", key: "id" },
+    { header: "Title", key: "title" },
+    { header: "Description", key: "description" },
+    { header: "Actions", key: "actions" },
+  ];
+
+  const rows =
+    items?.data.map((item) => ({
+      id: item.id,
+      title: <div className="max-w-[150px] truncate">{item.title}</div>,
+      description: (
+        <div
+          className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
+        >
+          {item.description || "N/A"}
+        </div>
+      ),
+      actions: <ActionsMenu type="Item" value={item} />,
+    })) || [];
+
   return (
     <>
-      <div className="border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          {isPending ? (
-            <TableBody>
+      <DataTable rows={rows} headers={headers}>
+        {({ rows, headers, getHeaderProps, getTableProps }) => (
+          <Table {...getTableProps()}>
+            <TableHead>
               <TableRow>
-                {new Array(4).fill(null).map((_, index) => (
-                  <TableCell key={index}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
+                {headers.map((header) => (
+                  <TableHeader
+                    {...getHeaderProps({ header, isSortable: false })}
+                    key={header.key}
+                  >
+                    {header.header}
+                  </TableHeader>
                 ))}
               </TableRow>
-            </TableBody>
-          ) : (
+            </TableHead>
             <TableBody>
-              {items?.data.map((item) => (
-                <TableRow key={item.id} className={isPlaceholderData ? "opacity-50" : ""}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell className="max-w-[150px] truncate">{item.title}</TableCell>
-                  <TableCell
-                    className={`max-w-[150px] truncate ${!item.description ? "text-muted-foreground" : ""}`}
-                  >
-                    {item.description || "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <ActionsMenu type={"Item"} value={item} />
-                  </TableCell>
+              {isPending ? (
+                <TableRow>
+                  {headers.map((_, i) => (
+                    <TableCell key={i}>
+                      <div className="h-4 w-full animate-pulse bg-gray-200" />
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
+              ) : (
+                rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.cells.map((cell, i) => (
+                      <TableCell key={i}>{cell.value}</TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
             </TableBody>
-          )}
-        </Table>
-      </div>
+          </Table>
+        )}
+      </DataTable>
       <div className="mt-4 flex items-center justify-end gap-4">
-        <Button onClick={() => setPage(page - 1)} disabled={!hasPreviousPage}>
+        <Button
+          kind="secondary"
+          onClick={() => setPage(page - 1)}
+          disabled={!hasPreviousPage}
+        >
           Previous
         </Button>
         <span>Page {page}</span>
-        <Button disabled={!hasNextPage} onClick={() => setPage(page + 1)}>
+        <Button
+          kind="primary"
+          disabled={!hasNextPage}
+          onClick={() => setPage(page + 1)}
+        >
           Next
         </Button>
       </div>
@@ -118,7 +146,9 @@ function ItemsTable() {
 function Items() {
   return (
     <div className="w-full">
-      <h1 className="py-12 text-center text-2xl font-bold md:text-left">Items Management</h1>
+      <h1 className="py-12 text-center text-2xl font-bold md:text-left">
+        Items Management
+      </h1>
 
       <ActionBar type={"Item"} addModalAs={AddItem} />
       <ItemsTable />

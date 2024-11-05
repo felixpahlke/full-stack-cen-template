@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
-import { Navbar } from "../components/Common/Navbar";
+import { Header } from "../components/Common/Header";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -19,13 +19,13 @@ function Layout() {
 
   return (
     <div className="relative">
-      <Navbar />
+      <Header />
       {isLoading ? (
-        <div className="flex h-[calc(100dvh-80px)] w-full items-center justify-center">
+        <div className="mt-[47px] flex h-[calc(100dvh-47px)] w-full items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2"></div>
         </div>
       ) : (
-        <div className="mx-auto flex max-w-screen-xl px-8">
+        <div className="mx-auto mt-[47px] flex max-w-screen-xl px-8">
           <Outlet />
         </div>
       )}

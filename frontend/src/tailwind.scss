@@ -1,4 +1,4 @@
-@import "preflight.css";
+@import "preflight.scss";
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   * {
-    @apply border-cds-border-subtle;
+    @apply border-solid border-cds-border-subtle;
   }
   body {
     @apply bg-cds-background text-cds-text-primary;

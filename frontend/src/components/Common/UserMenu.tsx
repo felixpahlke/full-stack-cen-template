@@ -26,7 +26,7 @@ const UserMenu = ({ className }: UserMenuProps) => {
   return (
     <>
       {/* Desktop */}
-      <div className={cn("abolute right-4 hidden sm:block", className)}>
+      <div className={cn("abolute right-4 hidden lg:block", className)}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -41,12 +41,18 @@ const UserMenu = ({ className }: UserMenuProps) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link to="/settings" className="flex items-center">
+              <Link
+                to="/settings"
+                className="flex items-center text-cds-text-primary"
+              >
                 <FiUser className="mr-2 h-4 w-4" />
                 My profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleLogout} className="text-ui-danger font-bold">
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-ui-danger font-bold"
+            >
               <FiLogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
