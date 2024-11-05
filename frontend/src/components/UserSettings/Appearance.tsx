@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme } from "../Theme/ThemeProvider";
+import { Tag } from "@carbon/react";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();
@@ -25,9 +26,9 @@ const Appearance = () => {
             <RadioGroupItem value="white" id="light" />
             <Label htmlFor="light">Light Mode</Label>
             {theme === "white" && (
-              <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-1 text-xs">
+              <Tag type="blue" size="sm">
                 Default
-              </span>
+              </Tag>
             )}
           </div>
           <div className="flex items-center space-x-2">

@@ -26,7 +26,8 @@ const ChangePassword = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePassword) => UsersService.updatePasswordMe({ requestBody: data }),
+    mutationFn: (data: UpdatePassword) =>
+      UsersService.updatePasswordMe({ requestBody: data }),
     onSuccess: () => {
       toast.success("Password updated successfully.");
       reset();
@@ -57,7 +58,9 @@ const ChangePassword = () => {
               type="password"
             />
             {errors.current_password && (
-              <p className="text-destructive text-sm">{errors.current_password.message}</p>
+              <p className="text-sm text-cds-text-error">
+                {errors.current_password.message}
+              </p>
             )}
           </div>
           <div>
@@ -68,7 +71,9 @@ const ChangePassword = () => {
               type="password"
             />
             {errors.new_password && (
-              <p className="text-destructive text-sm">{errors.new_password.message}</p>
+              <p className="text-sm text-cds-text-error">
+                {errors.new_password.message}
+              </p>
             )}
           </div>
           <div>
@@ -79,7 +84,9 @@ const ChangePassword = () => {
               type="password"
             />
             {errors.confirm_password && (
-              <p className="text-destructive text-sm">{errors.confirm_password.message}</p>
+              <p className="text-sm text-cds-text-error">
+                {errors.confirm_password.message}
+              </p>
             )}
           </div>
           <Button type="submit" disabled={isSubmitting}>
