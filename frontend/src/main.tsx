@@ -6,8 +6,8 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { OpenAPI } from "./client";
 
-import "@/globals.scss";
-import "@/tailwind.scss";
+import "./styles/globals.scss";
+import "./styles/tailwind.scss";
 import { ThemeProvider } from "./components/Theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 

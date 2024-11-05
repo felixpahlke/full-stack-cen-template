@@ -59,19 +59,8 @@ const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => {
-  const [container, setContainer] = React.useState<Element | null>(null);
-
-  React.useEffect(() => {
-    const foundContainer =
-      document.querySelector(".cds--90") ||
-      document.querySelector(".cds--white") ||
-      document.querySelector(".cds--g10") ||
-      document.querySelector(".cds--g100");
-    setContainer(foundContainer);
-  }, []);
-
   return (
-    <DropdownMenuPrimitive.Portal container={container}>
+    <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}
