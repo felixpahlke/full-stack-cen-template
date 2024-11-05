@@ -17,7 +17,7 @@ _Recommended:_
 Formatters: (**important because** - otherwise a single change of one line of code could lead to a rather large git commit if you use different formatters.)
 
 - [Prettier](https://prettier.io/docs/en/editors)
-- [Black formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) _(and set it as your default formatter for python)_
+- [ruff formatter](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) _(and set it as your default formatter for python)_
 
 ### Environment Variables
 

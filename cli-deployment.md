@@ -77,8 +77,16 @@ oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}')
 oc create route edge frontend --service=frontend --port=8080
 ```
 
-9. Get Webhook URL
+_NOTE_ This is not complete yet. UPCOMING:
+
+_until then you can use the openshift ui to do this (check out [deployment.md](deployment.md))_
+
+- [ ] Add Config Map to the Backend via CLI
+- [ ] Create Webhook Secrets for Frontend & Backend vor CI/CD
+- [ ] Get Webhook URL
+
+<!-- 9. Get Webhook URL
 
 ```bash
 oc get route frontend -o jsonpath='{.spec.host}'
-```
+``` -->
