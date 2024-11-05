@@ -32,13 +32,8 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const themeContainer = React.useMemo(() => {
-    const selector = ".cds--90, .cds--white, .cds--g10, .cds--g100";
-    return document.querySelector(selector);
-  }, []);
-
   return (
-    <DialogPortal container={themeContainer}>
+    <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
@@ -70,7 +65,7 @@ const DialogHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { label?: string }) => (
   <div
-    className={cn("flex flex-col px-4 pb-2 pt-4 sm:text-left", className)}
+    className={cn("sm:text-left flex flex-col px-4 pb-2 pt-4", className)}
     {...props}
   >
     {label && (
