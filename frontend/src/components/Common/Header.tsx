@@ -1,9 +1,7 @@
-import { useState } from "react";
 import UserMenu from "./UserMenu";
 import useAuth from "../../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserPublic } from "../../client";
-import { Logo } from "./Logo";
 import {
   Header as CarbonHeader,
   HeaderName,

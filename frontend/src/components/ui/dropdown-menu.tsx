@@ -3,7 +3,6 @@ import { CheckmarkFilled, ChevronRight } from "@carbon/icons-react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 import { cn } from "@/lib/utils";
-import { CloudCog } from "lucide-react";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 

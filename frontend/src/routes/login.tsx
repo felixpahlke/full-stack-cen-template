@@ -13,7 +13,6 @@ import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
 import { Logo } from "@/components/Common/Logo";
-import { useState } from "react";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -27,7 +26,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const [show, setShow] = useState(false);
   const { loginMutation, error, resetError } = useAuth();
   const form = useForm({
     mode: "onBlur",
