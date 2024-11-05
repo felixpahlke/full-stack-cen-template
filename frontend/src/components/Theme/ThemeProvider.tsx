@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { Theme as CarbonTheme } from "@carbon/react";
 
-type Theme = "dark" | "light" | "system";
+type Theme = "g10" | "g90" | "g100" | "white" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -10,13 +11,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  actualTheme: Theme;
+  actualTheme: Exclude<Theme, "system">;
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
-  actualTheme: "light",
+  actualTheme: "white",
   setTheme: () => null,
 };
 
@@ -25,32 +26,27 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "vite-ui-theme",
+  storageKey = "carbon-theme",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-  const [actualTheme, setActualTheme] = useState<Theme>("light");
+  const [actualTheme, setActualTheme] =
+    useState<Exclude<Theme, "system">>("white");
 
   useEffect(() => {
-    const root = window.document.documentElement;
-
-    root.classList.remove("light", "dark");
-
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
-        ? "dark"
-        : "light";
+        ? "g90"
+        : "white";
 
-      root.classList.add(systemTheme);
       setActualTheme(systemTheme);
       return;
     }
 
-    root.classList.add(theme);
-    setActualTheme(theme);
+    setActualTheme(theme as Exclude<Theme, "system">);
   }, [theme]);
 
   const value = {
@@ -64,7 +60,7 @@ export function ThemeProvider({
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      {children}
+      <CarbonTheme theme={actualTheme}>{children}</CarbonTheme>
     </ThemeProviderContext.Provider>
   );
 }

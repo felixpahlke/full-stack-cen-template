@@ -1,23 +1,19 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import {
+  Button,
+  Form,
+  Link,
+  PasswordInput,
+  Stack,
+  TextInput,
+} from "@carbon/react";
 
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
-import {
-  Form,
-  FormField,
-  FormControl,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { BsEye, BsEyeSlash } from "react-icons/bs";
 import { Logo } from "@/components/Common/Logo";
-import { Link } from "@/components/ui/link";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -42,11 +38,7 @@ function Login() {
     },
   });
 
-  // console.log(form.formState.isSubmitting);
-
   const onSubmit: SubmitHandler<AccessToken> = async (data) => {
-    // if (form.formState.isSubmitting) return;
-
     resetError();
 
     try {
@@ -58,94 +50,48 @@ function Login() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col space-y-4"
-        >
+      <Form onSubmit={form.handleSubmit(onSubmit)}>
+        <Stack gap={6}>
           <Logo className="mb-3 w-full" />
-          <FormField
-            control={form.control}
-            name="username"
-            rules={{
+
+          <TextInput
+            id="username"
+            labelText="Email"
+            placeholder="Email"
+            invalid={!!form.formState.errors.username}
+            invalidText={form.formState.errors.username?.message}
+            {...form.register("username", {
               required: "Username is required",
               pattern: emailPattern,
-            }}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    label="Email"
-                    placeholder="Email"
-                    className={fieldState.error ? "border-cds-text-error" : ""}
-                    tabIndex={1}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            })}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            rules={{
-              required: "Password is required",
-            }}
-            render={({ field, fieldState }) => (
-              <FormItem className="relative">
-                <FormControl>
-                  <>
-                    <div className="flex justify-between">
-                      <Label className="text-xs text-cds-text-secondary">
-                        Password
-                      </Label>
-                      <Link
-                        to="/recover-password"
-                        className="text-xs"
-                        tabIndex={6}
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <Input
-                      {...field}
-                      type={show ? "text" : "password"}
-                      placeholder="Password"
-                      className={
-                        fieldState.error ? "border-cds-text-error" : ""
-                      }
-                      tabIndex={2}
-                    />
-                    <Button
-                      variant={"ghost"}
-                      size={"icon"}
-                      type="button"
-                      className="absolute right-0 top-6 !m-0 h-10 w-10 hover:bg-transparent"
-                      onClick={() => setShow(!show)}
-                      tabIndex={3}
-                    >
-                      {show ? <BsEyeSlash /> : <BsEye />}
-                    </Button>
-                  </>
-                </FormControl>
-                <FormMessage />
-                {error && !fieldState.error && (
-                  <FormMessage>{error}</FormMessage>
-                )}
-              </FormItem>
-            )}
-          />
-          <Button type="submit" tabIndex={4}>
-            {form.formState.isSubmitting ? "loading..." : "Log In"}
-          </Button>
-          <div className="flex w-full justify-center gap-2">
-            Don't have an account?{" "}
-            <Link tabIndex={5} to="/signup">
-              Sign up
+
+          <div>
+            <PasswordInput
+              id="password"
+              placeholder="Password"
+              labelText="Password"
+              hidePasswordLabel="Hide password"
+              showPasswordLabel="Show password"
+              invalid={!!form.formState.errors.password || !!error}
+              invalidText={form.formState.errors.password?.message || error}
+              {...form.register("password", {
+                required: "Password is required",
+              })}
+            />{" "}
+            <Link href="/recover-password" className="mt-2 text-sm">
+              Forgot password?
             </Link>
-          </div>{" "}
-        </form>
+          </div>
+
+          <Button type="submit" className="w-full max-w-full">
+            {form.formState.isSubmitting ? "Loading..." : "Log In"}
+          </Button>
+
+          <div className="flex w-full justify-center gap-2">
+            Don't have an account? <Link href="/signup">Sign up</Link>
+          </div>
+        </Stack>
       </Form>
     </div>
   );

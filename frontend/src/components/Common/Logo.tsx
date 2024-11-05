@@ -7,7 +7,11 @@ interface LogoProps {
   logoSize?: "sm" | "md" | "lg";
 }
 
-export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps) => {
+export const Logo = ({
+  className,
+  logoSize = "md",
+  logoOnly = false,
+}: LogoProps) => {
   const { actualTheme } = useTheme();
 
   return (
@@ -19,7 +23,7 @@ export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps
           "w-16": logoSize === "lg",
         })}
         src={
-          actualTheme === "dark"
+          actualTheme === "g90" || actualTheme === "g100"
             ? "/assets/images/ibm-bee-white.png"
             : "/assets/images/ibm-bee-black.png"
         }

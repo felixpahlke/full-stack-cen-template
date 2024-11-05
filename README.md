@@ -8,7 +8,7 @@
   - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
 - 🚀 [React](https://react.dev) for the frontend.
   - 💃 Using TypeScript, hooks, Vite, and other parts of a modern frontend stack.
-  - 🎨 [Carboncn UI](https://www.carboncn.dev/) for the frontend components. You can also use [Carbon](https://carbondesignsystem.com/)
+  - 🎨 [Carboncn UI](https://www.carboncn.dev/) & [Carbon](https://carbondesignsystem.com/) for the frontend components.
   - 🤖 An automatically generated frontend client.
   - 🦇 Dark mode support.
 - 🐋 [Docker Compose](https://www.docker.com) & [Rancher Desktop](https://rancherdesktop.io/) for development.

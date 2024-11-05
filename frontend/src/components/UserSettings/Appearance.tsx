@@ -7,7 +7,7 @@ const Appearance = () => {
   const { theme, setTheme } = useTheme();
 
   const handleThemeChange = (value: string) => {
-    setTheme(value as "light" | "dark" | "system");
+    setTheme(value as "white" | "g90" | "system");
   };
 
   return (
@@ -16,18 +16,22 @@ const Appearance = () => {
         <CardTitle>Appearance</CardTitle>
       </CardHeader>
       <CardContent>
-        <RadioGroup value={theme} onValueChange={handleThemeChange} className="space-y-4">
+        <RadioGroup
+          value={theme}
+          onValueChange={handleThemeChange}
+          className="space-y-4"
+        >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="light" id="light" />
+            <RadioGroupItem value="white" id="light" />
             <Label htmlFor="light">Light Mode</Label>
-            {theme === "light" && (
+            {theme === "white" && (
               <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-1 text-xs">
                 Default
               </span>
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="dark" id="dark" />
+            <RadioGroupItem value="g90" id="dark" />
             <Label htmlFor="dark">Dark Mode</Label>
           </div>
           <div className="flex items-center space-x-2">

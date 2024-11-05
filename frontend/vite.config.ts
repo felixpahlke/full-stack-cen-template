@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "~@ibm": path.resolve(__dirname, "node_modules/@ibm"),
     },
   },
 });

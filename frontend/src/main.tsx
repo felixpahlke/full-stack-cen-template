@@ -6,7 +6,8 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { OpenAPI } from "./client";
 
-import "@/globals.css";
+import "@/globals.scss";
+import "@/tailwind.scss";
 import { ThemeProvider } from "./components/Theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -27,7 +28,7 @@ declare module "@tanstack/react-router" {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="g90">
       <Toaster richColors />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />

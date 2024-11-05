@@ -206,7 +206,8 @@ export default {
                   DEFAULT: "var(--cds-ai-popover-caret-bottom)",
                   background: {
                     DEFAULT: "var(--cds-ai-popover-caret-bottom-background)",
-                    actions: "var(--cds-ai-popover-caret-bottom-background-actions)",
+                    actions:
+                      "var(--cds-ai-popover-caret-bottom-background-actions)",
                   },
                 },
                 center: "var(--cds-ai-popover-caret-center)",
@@ -309,7 +310,8 @@ export default {
               hover: "var(--cds-notification-action-hover)",
               "tertiary-inverse": {
                 DEFAULT: "var(--cds-notification-action-tertiary-inverse)",
-                active: "var(--cds-notification-action-tertiary-inverse-active)",
+                active:
+                  "var(--cds-notification-action-tertiary-inverse-active)",
                 hover: "var(--cds-notification-action-tertiary-inverse-hover)",
                 text: "var(--cds-notification-action-tertiary-inverse-text)",
                 "text-on-color-disabled":
