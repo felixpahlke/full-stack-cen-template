@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_layout/admin")({
   validateSearch: (search) => usersSearchSchema.parse(search),
 });
 
-const PER_PAGE = 5;
+const PER_PAGE = 10;
 
 function getUsersQueryOptions({ page }: { page: number }) {
   return {
@@ -54,6 +54,8 @@ function UsersTable() {
     ...getUsersQueryOptions({ page }),
     placeholderData: (prevData) => prevData,
   });
+
+  const totalPages = Math.ceil((users?.count ?? 0) / PER_PAGE);
 
   const hasNextPage = !isPlaceholderData && users?.data.length === PER_PAGE;
   const hasPreviousPage = page > 1;
@@ -155,7 +157,9 @@ function UsersTable() {
         >
           Previous
         </Button>
-        <span>Page {page}</span>
+        <span>
+          Page {page} of {totalPages}
+        </span>
         <Button
           kind="primary"
           disabled={!hasNextPage}
