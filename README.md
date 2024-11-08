@@ -106,53 +106,31 @@ git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git 
 cd my-full-stack
 ```
 
-- Set the new origin to your new repository, copy it from the GitHub interface, for example:
+- Remove the old Git history and start fresh:
 
 ```bash
-git remote set-url origin git@github.com:my-username/my-full-stack.git
+rm -rf .git
 ```
 
-- Add this repo as another "remote" to allow you to get updates later:
+- Initialize a new Git repo:
 
 ```bash
-git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
+git init
+git add .
+git commit -m "Initial commit"
+git branch -m main
+```
+
+- Add the new remote repository as origin:
+
+```bash
+git remote add origin git@github.com:my-username/my-full-stack.git
 ```
 
 - Push the code to your new repository:
 
 ```bash
 git push -u origin main
-```
-
-### Update From the Original Template
-
-After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
-
-- Make sure you added the original repository as a remote, you can check it with:
-
-```bash
-git remote -v
-
-origin    git@github.com:my-username/my-full-stack.git (fetch)
-origin    git@github.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
-```
-
-- Pull the latest changes without merging:
-
-```bash
-git pull --no-commit upstream main
-```
-
-This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
-
-- If there are conflicts, solve them in your editor.
-
-- Once you are done, commit the changes:
-
-```bash
-git merge --continue
 ```
 
 ## Development
