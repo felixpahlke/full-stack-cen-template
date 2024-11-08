@@ -89,7 +89,7 @@ You can **just fork or clone** this repository and use it as is.
 
 ✨ It just works. ✨
 
-### How to Use a Your Own Repository
+### How to Use as Your Own Repository
 
 If you want to have a private repository you can do the following:
 
