@@ -23,7 +23,19 @@ const useAuth = () => {
   const queryClient = useQueryClient();
   const { data: user, isLoading } = useQuery<UserPublic | null, Error>({
     queryKey: ["currentUser"],
-    queryFn: UsersService.readUserMe,
+    queryFn: async () => {
+      try {
+        return await UsersService.readUserMe();
+      } catch (err) {
+        if (err instanceof AxiosError && err.response?.status === 404) {
+          // If user not found (404), log them out
+          localStorage.removeItem("access_token");
+          navigate({ to: "/login" });
+          return null;
+        }
+        throw err; // Re-throw other errors
+      }
+    },
     enabled: isLoggedIn(),
   });
 

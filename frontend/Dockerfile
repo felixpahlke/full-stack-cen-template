@@ -9,10 +9,10 @@ RUN npm install
 
 COPY ./ /app/
 
-ARG VITE_API_URL=${VITE_API_URL}
-
 
 FROM base as build-stage
+
+ARG VITE_API_URL=${VITE_API_URL}
 
 RUN npm run build
 

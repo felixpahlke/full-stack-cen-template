@@ -83,17 +83,16 @@ _This Template is based on [full-stack-fastapi-template](https://github.com/fast
   </tbody>
 </table>
 
-## How To Use It
+### How to Use It
 
-You can **just fork or clone** this repository and use it as is.
+1. Setup with create-cen-app and choose "full-stack-cen-template"
 
-✨ It just works. ✨
+```bash
+npm create cen-app@latest
+```
 
-### How to Use as Your Own Repository
+2. Or if you just want to clone it:
 
-If you want to have a private repository you can do the following:
-
-- Create a new Git repo, for example `my-full-stack`.
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
@@ -121,6 +120,7 @@ git commit -m "Initial commit"
 git branch -m main
 ```
 
+- Create a new Git repo, for example `my-full-stack`.
 - Add the new remote repository as origin:
 
 ```bash
