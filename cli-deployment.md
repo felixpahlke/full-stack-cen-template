@@ -27,6 +27,16 @@ Login to OpenShift (you can get the token from the OpenShift UI)
 oc login --token=<token> --server=<server-url>
 ```
 
+### Use the script
+
+The following Steps in this Readme can be done with the script.
+
+```bash
+./scripts/deploy.sh
+```
+
+⬇ If you want to do it manually, follow the steps below. ⬇
+
 ### Preparation
 
 1. Create a new project
@@ -102,7 +112,6 @@ FRONTEND_URL=$(oc get route frontend -o jsonpath='{.spec.host}')
 
 oc create secret generic backend-envs \
     --from-literal=POSTGRES_PASSWORD=<changethis> \
-    --from-literal=STACK_NAME=<your_stack_name> \
     --from-literal=FIRST_SUPERUSER_PASSWORD=<changethis> \
     --from-literal=POSTGRES_DB=app \
     --from-literal=BACKEND_CORS_ORIGINS=https://$FRONTEND_URL \
@@ -138,6 +147,14 @@ echo ${BACKEND_BASE_URL/<secret>/$BACKEND_SECRET}
 ```
 
 - Put Webhook URLs in the GitLab/GitHub Repositories
+
+### Optional
+
+- Group the resources as one application
+
+```bash
+oc label deployment/frontend deployment/backend dc/postgresql app.kubernetes.io/part-of=<your-app-name>
+```
 
 <!-- 8. Create Extension in Postgres DB
 
