@@ -13,7 +13,21 @@ The steps should be performed in this exact order.
 5. [Finish up the Env Config Map](#env-config-map)
 6. [Setup a deployment hook](#setup-a-deployment-hook)
 
-## Preparation
+### Before you start
+
+Install the OpenShift CLI (if you haven't already)
+
+```bash
+brew install openshift-cli
+```
+
+Login to OpenShift (you can get the token from the OpenShift UI)
+
+```bash
+oc login --token=<token> --server=<server-url>
+```
+
+### Preparation
 
 1. Create a new project
 
@@ -43,46 +57,44 @@ cat $HOME/.ssh/ocp-key.pub
 
 copy, then add it to your GitLab/GitHub repository
 
-5. Deploy Backend
+### Deploying the Database
 
-<!-- look at env file for environment variables -->
-
-```bash
-oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret <ssh-git-url>
-```
-
-6. Deploy Frontend
-
-```bash
-oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-secret=git-secret <ssh-git-url>
-```
-
-7. Create DB
+- Create the Database
 
 ```bash
 oc new-app --template=postgresql-persistent --param=POSTGRESQL_USER=<postgres-user> --param=POSTGRESQL_PASSWORD=<postgres-password>
 
 ```
 
-8. Create Database in Postgres (May need to wait a while for the DB to be ready)
+- Create Database in Postgres (May need to wait a while for the DB to be ready)
 
 ```bash
 oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -c 'CREATE DATABASE app;'
 ```
 
-<!-- 8. Create Extension in Postgres DB
+### Deploying the Frontend
+
+- Create the Frontend
 
 ```bash
-oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -d app -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-``` -->
+oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-secret=git-secret <ssh-git-url>
+```
 
-9. Expose the Frontend
+- Expose the Frontend
 
 ```bash
 oc create route edge frontend --service=frontend --port=8080
 ```
 
-10. Setup Secret Map
+### Deploying the Backend
+
+- Create the Backend
+
+```bash
+oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret <ssh-git-url>
+```
+
+- Setup Secret Map
 
 ```bash
 
@@ -103,13 +115,15 @@ oc create secret generic backend-envs \
     --from-literal=FIRST_SUPERUSER=<myexampleadmin@email.com>
 ```
 
-11. Add the Config Map to the Backend
+- Add the Secret Map to the Backend
 
 ```bash
 oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
 ```
 
-12. Get Webhook URLs
+### Setup CI/CD
+
+- Get the Webhook URLs
 
 ```bash
 FRONTEND_BASE_URL=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
@@ -123,9 +137,10 @@ BACKEND_SECRET=$(oc get bc backend -o jsonpath='{.spec.triggers[*].generic.secre
 echo ${BACKEND_BASE_URL/<secret>/$BACKEND_SECRET}
 ```
 
-_NOTE_ This is not complete yet. UPCOMING:
+- Put Webhook URLs in the GitLab/GitHub Repositories
 
-_until then you can use the openshift ui to do this (check out [deployment.md](deployment.md))_
+<!-- 8. Create Extension in Postgres DB
 
-- [ ] Create Webhook Secrets for Frontend & Backend vor CI/CD
-- [ ] Get Webhook URL
+```bash
+oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -d app -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+``` -->
