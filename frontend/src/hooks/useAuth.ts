@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AxiosError } from "axios";
 import {
   type Body_login_login_access_token as AccessToken,
-  type ApiError,
+  ApiError,
   LoginService,
   type UserPublic,
   type UserRegister,
@@ -27,7 +27,7 @@ const useAuth = () => {
       try {
         return await UsersService.readUserMe();
       } catch (err) {
-        if (err instanceof AxiosError && err.response?.status === 404) {
+        if (err instanceof ApiError && err.status === 404) {
           // If user not found (404), log them out
           localStorage.removeItem("access_token");
           navigate({ to: "/login" });

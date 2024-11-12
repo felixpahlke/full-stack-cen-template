@@ -10,7 +10,7 @@
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) _(faster poetry alternative)_
 
-- [Rancher Desktop](https://docs.rancherdesktop.io/getting-started/installation/) _(Docker Desktop alternative)_
+- [open source docker runtime (e.g. colima)](https://github.com/abiosoft/colima/) _(Docker Desktop alternative)_
 
 _Recommended:_
 
@@ -30,6 +30,12 @@ mv .env.example .env
 For local development you don't have to necessarily edit the "changethis" passwords etc. Later when we move on to Deployment, we have to change it!
 
 ## Docker Compose
+
+- Start your docker runtime (colima)
+
+```bash
+colima start
+```
 
 - Start the local stack with Docker Compose (make sure you are )
 

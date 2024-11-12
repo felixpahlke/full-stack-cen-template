@@ -11,7 +11,9 @@ import "./styles/tailwind.scss";
 import { ThemeProvider } from "./components/Theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
+// this is set at build time
 OpenAPI.BASE = import.meta.env.VITE_API_URL;
+// --------------------------------
 OpenAPI.BASE = OpenAPI.BASE || "";
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || "";
