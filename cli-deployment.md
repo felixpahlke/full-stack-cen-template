@@ -32,7 +32,13 @@ oc login --token=<token> --server=<server-url>
 The following Steps in this Readme can be done with the script.
 
 ```bash
-./scripts/deploy.sh
+./scripts/oc-deploy.sh
+```
+
+you might have to change the permissions of the script
+
+```bash
+chmod +x scripts/oc-deploy.sh
 ```
 
 ⬇ If you want to do it manually, follow the steps below. ⬇
