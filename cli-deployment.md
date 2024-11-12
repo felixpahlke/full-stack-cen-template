@@ -60,7 +60,14 @@ oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-sec
 7. Create DB
 
 ```bash
-oc new-app --template=postgresql-persistent --param=POSTGRESQL_DATABASE=app --param=POSTGRESQL_USER=<postgres-user> --param=POSTGRESQL_PASSWORD=<postgres-password>
+oc new-app --template=postgresql-persistent --param=POSTGRESQL_USER=<postgres-user> --param=POSTGRESQL_PASSWORD=<postgres-password>
+
+```
+
+8. Create Database in Postgres (May need to wait a while for the DB to be ready)
+
+```bash
+oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -c 'CREATE DATABASE app;'
 ```
 
 <!-- 8. Create Extension in Postgres DB
@@ -69,24 +76,56 @@ oc new-app --template=postgresql-persistent --param=POSTGRESQL_DATABASE=app --pa
 oc exec -it $(oc get pods | grep postgresql | grep -v deploy | awk '{print $1}') -- psql -d app -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
 ``` -->
 
-8. Expose the Frontend
-
-<!-- tls settings? -->
+9. Expose the Frontend
 
 ```bash
 oc create route edge frontend --service=frontend --port=8080
+```
+
+10. Setup Secret Map
+
+```bash
+
+FRONTEND_URL=$(oc get route frontend -o jsonpath='{.spec.host}')
+
+oc create secret generic backend-envs \
+    --from-literal=POSTGRES_PASSWORD=<changethis> \
+    --from-literal=STACK_NAME=<your_stack_name> \
+    --from-literal=FIRST_SUPERUSER_PASSWORD=<changethis> \
+    --from-literal=POSTGRES_DB=app \
+    --from-literal=BACKEND_CORS_ORIGINS=https://$FRONTEND_URL \
+    --from-literal=POSTGRES_PORT=5432 \
+    --from-literal=POSTGRES_SERVER=postgresql \
+    --from-literal=SECRET_KEY=<changethis> \
+    --from-literal=PROJECT_NAME=<your_project_name> \
+    --from-literal=POSTGRES_USER=postgres \
+    --from-literal=ENVIRONMENT=production \
+    --from-literal=FIRST_SUPERUSER=<myexampleadmin@email.com>
+```
+
+11. Add the Config Map to the Backend
+
+```bash
+oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
+```
+
+12. Get Webhook URLs
+
+```bash
+FRONTEND_BASE_URL=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
+FRONTEND_SECRET=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
+echo ${FRONTEND_BASE_URL/<secret>/$FRONTEND_SECRET}
+```
+
+```bash
+BACKEND_BASE_URL=$(oc describe bc/backend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
+BACKEND_SECRET=$(oc get bc backend -o jsonpath='{.spec.triggers[*].generic.secret}')
+echo ${BACKEND_BASE_URL/<secret>/$BACKEND_SECRET}
 ```
 
 _NOTE_ This is not complete yet. UPCOMING:
 
 _until then you can use the openshift ui to do this (check out [deployment.md](deployment.md))_
 
-- [ ] Add Config Map to the Backend via CLI
 - [ ] Create Webhook Secrets for Frontend & Backend vor CI/CD
 - [ ] Get Webhook URL
-
-<!-- 9. Get Webhook URL
-
-```bash
-oc get route frontend -o jsonpath='{.spec.host}'
-``` -->
