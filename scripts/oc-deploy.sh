@@ -32,6 +32,24 @@ validate_name() {
     return 0
 }
 
+# Check OpenShift instance and login status
+print_status "Checking OpenShift instance and login status..."
+if ! oc whoami --show-server &>/dev/null || ! oc whoami &>/dev/null; then
+    print_error "Not logged into OpenShift. Please login first using:"
+    echo "oc login --token=<token> --server=<server-url>"
+    exit 1
+fi
+
+OPENSHIFT_SERVER=$(oc whoami --show-server)
+echo -e "${BLUE}You are about to deploy to:${NC}"
+echo -e "${TEAL}$OPENSHIFT_SERVER${NC}"
+read -p "Do you want to continue? (y/n): " CONTINUE
+
+if [[ ! $CONTINUE =~ ^[Yy]$ ]]; then
+    print_error "Deployment cancelled"
+    exit 1
+fi
+
 # Collect all required inputs
 echo
 echo -e "${BLUE}Welcome to the OpenShift Deployment Script!${NC}"
@@ -69,14 +87,6 @@ read -p "First superuser password: " FIRST_SUPERUSER_PASSWORD
 # Generate a secure random secret key
 SECRET_KEY=$(openssl rand -hex 32)
 print_success "Generated secure secret key for backend"
-
-# Login check
-print_status "Checking OpenShift login status..."
-if ! oc whoami &>/dev/null; then
-    print_error "Not logged into OpenShift. Please login first using:"
-    echo "oc login --token=<token> --server=<server-url>"
-    exit 1
-fi
 
 # Create project
 print_status "Creating new project..."
