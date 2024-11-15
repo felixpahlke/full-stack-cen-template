@@ -171,21 +171,6 @@ export const $Message = {
   },
 } as const;
 
-export const $NewPassword = {
-  properties: {
-    token: {
-      type: "string",
-      isRequired: true,
-    },
-    new_password: {
-      type: "string",
-      isRequired: true,
-      maxLength: 40,
-      minLength: 8,
-    },
-  },
-} as const;
-
 export const $Token = {
   properties: {
     access_token: {
@@ -304,6 +289,18 @@ export const $UserRegister = {
       minLength: 8,
     },
     full_name: {
+      type: "any-of",
+      contains: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    access_password: {
       type: "any-of",
       contains: [
         {

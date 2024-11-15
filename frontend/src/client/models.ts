@@ -37,11 +37,6 @@ export type Message = {
   message: string;
 };
 
-export type NewPassword = {
-  token: string;
-  new_password: string;
-};
-
 export type Token = {
   access_token: string;
   token_type?: string;
@@ -72,6 +67,7 @@ export type UserRegister = {
   email: string;
   password: string;
   full_name?: string | null;
+  access_password?: string | null;
 };
 
 export type UserUpdate = {

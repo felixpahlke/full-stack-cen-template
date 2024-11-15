@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 
+from app.core.config import settings
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
@@ -138,6 +139,11 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
     Create new user without the need to be logged in.
     """
+    if not settings.SIGNUP_ACCESS_PASSWORD.strip():
+        raise HTTPException(status_code=400, detail="Signup is not allowed")
+    if user_in.access_password != settings.SIGNUP_ACCESS_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid access password")
+
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(

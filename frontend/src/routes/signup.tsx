@@ -40,6 +40,7 @@ function SignUp() {
       full_name: "",
       password: "",
       confirm_password: "",
+      access_password: "",
     },
   });
 
@@ -125,6 +126,25 @@ function SignUp() {
                     {...field}
                     type="password"
                     placeholder="Repeat Password"
+                    className={fieldState.error ? "border-red-500" : ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="access_password"
+            rules={{ required: "Access Password is required" }}
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="Access Password"
                     className={fieldState.error ? "border-red-500" : ""}
                   />
                 </FormControl>
