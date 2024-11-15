@@ -14,7 +14,6 @@
 - 🐋 [Docker Compose](https://www.docker.com) & [colima](https://github.com/abiosoft/colima/) for development.
 - 🔒 Secure password hashing by default.
 - 🔑 JWT (JSON Web Token) authentication.
-- 📫 Email based password recovery.
 - 🚢 Deployment instructions using OpenShift.
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_

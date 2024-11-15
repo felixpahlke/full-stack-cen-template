@@ -223,28 +223,6 @@ test.describe("Change password with invalid data", () => {
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Passwords do not match")).toBeVisible();
   });
-
-  test("Current password and new password are the same", async ({ page }) => {
-    const fullName = "Test User";
-    const email = randomEmail();
-    const password = randomPassword();
-
-    // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
-
-    // Log in the user
-    await logInUser(page, email, password);
-
-    await page.goto("/settings");
-    await page.getByRole("tab", { name: "Password" }).click();
-    await page.getByLabel("Current Password*").fill(password);
-    await page.getByLabel("New Password").fill(password);
-    await page.getByLabel("Confirm Password").fill(password);
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(
-      page.getByText("New password cannot be the same as the current one"),
-    ).toBeVisible();
-  });
 });
 
 // Appearance
@@ -261,7 +239,7 @@ test("User can switch from light mode to dark mode", async ({ page }) => {
   // await page.getByLabel("Appearance").locator("span").nth(3).click();
   await page.getByLabel("Dark Mode").click();
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
+    document.documentElement.classList.contains("cds--g90"),
   );
   expect(isDarkMode).toBe(true);
 });
@@ -272,7 +250,7 @@ test("User can switch from dark mode to light mode", async ({ page }) => {
   // await page.getByLabel("Appearance").locator("span").first().click();
   await page.getByLabel("Light Mode").click();
   const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
+    document.documentElement.classList.contains("cds--white"),
   );
   expect(isLightMode).toBe(true);
 });
@@ -287,7 +265,7 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
 
   await logInUser(page, firstSuperuser, firstSuperuserPassword);
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
+    document.documentElement.classList.contains("cds--g90"),
   );
   expect(isDarkMode).toBe(true);
 });

@@ -46,12 +46,6 @@ services:
       - SECRET_KEY=${SECRET_KEY?Variable not set}
       - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
-      - SMTP_HOST=mailcatcher
-      - SMTP_PORT=1025
-      - SMTP_TLS=false
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - EMAILS_FROM_EMAIL=noreply@example.com
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -114,12 +108,6 @@ services:
             - dist
         - path: ./frontend/package.json
           action: rebuild
-
-  mailcatcher:
-    image: schickling/mailcatcher
-    ports:
-      - "1080:1080"
-      - "1025:1025"
 
 volumes:
   app-db-data:

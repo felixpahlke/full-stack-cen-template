@@ -77,9 +77,6 @@ function Login() {
                 required: "Password is required",
               })}
             />{" "}
-            <Link href="/recover-password" className="mt-2 text-sm">
-              Forgot password?
-            </Link>
           </div>
 
           <Button type="submit" className="w-full max-w-full">

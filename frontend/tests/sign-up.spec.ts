@@ -96,7 +96,7 @@ test("Sign up with existing email", async ({ page }) => {
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await page
-    .getByText("The user with this email already exists in the system")
+    .getByText("The user with this email already exists in the system.")
     .click();
 });
 

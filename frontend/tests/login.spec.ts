@@ -37,14 +37,6 @@ test("Log In button is visible", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Log In" })).toBeVisible();
 });
 
-test("Forgot Password link is visible", async ({ page }) => {
-  await page.goto("/login");
-
-  await expect(
-    page.getByRole("link", { name: "Forgot password?" }),
-  ).toBeVisible();
-});
-
 test("Log in with valid email and password ", async ({ page }) => {
   await page.goto("/login");
 

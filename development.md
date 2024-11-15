@@ -140,5 +140,3 @@ Automatic Interactive Docs (Swagger UI): http://localhost:8000/docs
 Automatic Alternative Docs (ReDoc): http://localhost:8000/redoc
 
 Adminer: http://localhost:8080
-
-MailCatcher: http://localhost:1080
