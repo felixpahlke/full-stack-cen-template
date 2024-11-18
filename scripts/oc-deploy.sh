@@ -41,7 +41,7 @@ if ! oc whoami --show-server &>/dev/null || ! oc whoami &>/dev/null; then
 fi
 
 OPENSHIFT_SERVER=$(oc whoami --show-server)
-echo -e "${BLUE}You are about to deploy to:${NC}"
+echo -e "${TEAL}You are about to deploy to:${NC}"
 echo -e "${TEAL}$OPENSHIFT_SERVER${NC}"
 read -p "Do you want to continue? (y/n): " CONTINUE
 
@@ -52,15 +52,15 @@ fi
 
 # Collect all required inputs
 echo
-echo -e "${BLUE}Welcome to the OpenShift Deployment Script!${NC}"
+echo -e "${TEAL}Welcome to the OpenShift Deployment Script!${NC}"
 echo -e "${GREEN}========================================${NC}"
-echo -e "${BLUE}Please provide the following information:${NC}"
+echo -e "${TEAL}Please provide the following information:${NC}"
 echo -e "${GREEN}----------------------------------------${NC}"
 echo
 
 # Project name with validation
 while true; do
-    read -p "Project name (lowercase letters, numbers and hyphens only): " PROJECT_NAME
+    read -p "Choose an OpenShift project name (lowercase letters, numbers and hyphens only): " PROJECT_NAME
     if validate_name "$PROJECT_NAME"; then
         break
     else
@@ -70,7 +70,7 @@ done
 
 # App name
 while true; do
-    read -p "Application name (lowercase letters, numbers and hyphens only): " APP_NAME
+    read -p "Choose an application name (lowercase letters, numbers and hyphens only): " APP_NAME
     if validate_name "$APP_NAME"; then
         break
     else
@@ -78,11 +78,11 @@ while true; do
     fi
 done
 
-read -p "Git Repository URL (ssh): " GIT_URL
-read -p "Postgres user: " POSTGRES_USER
-read -p "Postgres password: " POSTGRES_PASSWORD
-read -p "First superuser email: " FIRST_SUPERUSER
-read -p "First superuser password: " FIRST_SUPERUSER_PASSWORD
+read -p "Your Git Repository URL (ssh): " GIT_URL
+read -p "Choose a Postgres username: " POSTGRES_USER
+read -p "Choose a Postgres password: " POSTGRES_PASSWORD
+read -p "Choose a First superuser email: " FIRST_SUPERUSER
+read -p "Choose a First superuser password: " FIRST_SUPERUSER_PASSWORD
 
 # Generate a secure random secret key
 SECRET_KEY=$(openssl rand -hex 32)
