@@ -264,6 +264,19 @@ def test_register_user(client: TestClient, db: Session) -> None:
     password = random_lower_string()
     full_name = random_lower_string()
     data = {"email": username, "password": password, "full_name": full_name}
+
+    if not settings.SIGNUP_ACCESS_PASSWORD:
+        # If no access password is set, registration should fail
+        r = client.post(
+            f"{settings.API_V1_STR}/users/signup",
+            json=data,
+        )
+        assert r.status_code == 400
+        assert r.json()["detail"] == "Signup is not allowed"
+        return
+
+    # Test with correct access password
+    data["access_password"] = settings.SIGNUP_ACCESS_PASSWORD
     r = client.post(
         f"{settings.API_V1_STR}/users/signup",
         json=data,
@@ -289,6 +302,19 @@ def test_register_user_already_exists_error(client: TestClient) -> None:
         "password": password,
         "full_name": full_name,
     }
+
+    if not settings.SIGNUP_ACCESS_PASSWORD:
+        # If no access password is set, registration should fail
+        r = client.post(
+            f"{settings.API_V1_STR}/users/signup",
+            json=data,
+        )
+        assert r.status_code == 400
+        assert r.json()["detail"] == "Signup is not allowed"
+        return
+
+    # Test with correct access password
+    data["access_password"] = settings.SIGNUP_ACCESS_PASSWORD
     r = client.post(
         f"{settings.API_V1_STR}/users/signup",
         json=data,

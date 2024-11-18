@@ -5,6 +5,7 @@ export async function signUpNewUser(
   name: string,
   email: string,
   password: string,
+  accessPassword: string,
 ) {
   await page.goto("/signup");
 
@@ -12,6 +13,7 @@ export async function signUpNewUser(
   await page.getByPlaceholder("Email").fill(email);
   await page.getByPlaceholder("Password", { exact: true }).fill(password);
   await page.getByPlaceholder("Repeat Password").fill(password);
+  await page.getByPlaceholder("Access Password").fill(accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
   await expect(
     page.getByText("Your account has been created successfully"),

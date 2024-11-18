@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { firstSuperuser, firstSuperuserPassword } from "./config.ts";
+import {
+  firstSuperuser,
+  firstSuperuserPassword,
+  accessPassword,
+} from "./config.ts";
 import { randomEmail, randomPassword } from "./utils/random";
 import { logInUser, logOutUser, signUpNewUser } from "./utils/user";
 
@@ -32,7 +36,7 @@ test.describe("Edit user full name and email successfully", () => {
     const password = randomPassword();
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -56,7 +60,7 @@ test.describe("Edit user full name and email successfully", () => {
     const password = randomPassword();
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -83,7 +87,7 @@ test.describe("Edit user with invalid data", () => {
     const invalidEmail = "";
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -103,7 +107,7 @@ test.describe("Edit user with invalid data", () => {
     const updatedName = "Test User";
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -125,7 +129,7 @@ test.describe("Edit user with invalid data", () => {
     const updatedEmail = randomEmail();
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -153,7 +157,7 @@ test.describe("Change password successfully", () => {
     const NewPassword = randomPassword();
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -185,7 +189,7 @@ test.describe("Change password with invalid data", () => {
     const weakPassword = "weak";
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);
@@ -210,7 +214,7 @@ test.describe("Change password with invalid data", () => {
     const confirmPassword = randomPassword();
 
     // Sign up a new user
-    await signUpNewUser(page, fullName, email, password);
+    await signUpNewUser(page, fullName, email, password, accessPassword);
 
     // Log in the user
     await logInUser(page, email, password);

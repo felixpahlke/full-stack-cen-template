@@ -1,6 +1,7 @@
 import { type Page, expect, test } from "@playwright/test";
 
 import { randomEmail, randomPassword } from "./utils/random";
+import { accessPassword } from "./config";
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -14,11 +15,13 @@ const fillForm = async (
   email: string,
   password: string,
   confirm_password: string,
+  accessPassword: string,
 ) => {
   await page.getByPlaceholder("Full Name").fill(full_name);
   await page.getByPlaceholder("Email").fill(email);
   await page.getByPlaceholder("Password", { exact: true }).fill(password);
   await page.getByPlaceholder("Repeat Password").fill(confirm_password);
+  await page.getByPlaceholder("Access Password").fill(accessPassword);
 };
 
 const verifyInput = async (
@@ -59,7 +62,7 @@ test("Sign up with valid name, email, and password", async ({ page }) => {
   const password = randomPassword();
 
   await page.goto("/signup");
-  await fillForm(page, full_name, email, password, password);
+  await fillForm(page, full_name, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 });
 
@@ -72,6 +75,7 @@ test("Sign up with invalid email", async ({ page }) => {
     "invalid-email",
     "changethis",
     "changethis",
+    accessPassword,
   );
   await page.getByRole("button", { name: "Sign Up" }).click();
 
@@ -86,18 +90,20 @@ test("Sign up with existing email", async ({ page }) => {
   // Sign up with an email
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
+
+  await page.waitForURL("/login");
 
   // Sign up again with the same email
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
-  await page
-    .getByText("The user with this email already exists in the system.")
-    .click();
+  await expect(
+    page.getByText("The user with this email already exists in the system"),
+  ).toBeVisible();
 });
 
 test("Sign up with weak password", async ({ page }) => {
@@ -107,7 +113,7 @@ test("Sign up with weak password", async ({ page }) => {
 
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(
@@ -123,7 +129,7 @@ test("Sign up with mismatched passwords", async ({ page }) => {
 
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password2);
+  await fillForm(page, fullName, email, password, password2, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(page.getByText("Passwords do not match")).toBeVisible();
@@ -136,7 +142,7 @@ test("Sign up with missing full name", async ({ page }) => {
 
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(page.getByText("Full Name is required")).toBeVisible();
@@ -149,7 +155,7 @@ test("Sign up with missing email", async ({ page }) => {
 
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(page.getByText("Email is required")).toBeVisible();
@@ -162,7 +168,7 @@ test("Sign up with missing password", async ({ page }) => {
 
   await page.goto("/signup");
 
-  await fillForm(page, fullName, email, password, password);
+  await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
   await expect(page.getByText("Password is required")).toBeVisible();
