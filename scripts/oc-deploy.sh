@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 
 # Function to print colored status messages
 print_status() {
-    echo -e "${BLUE}==>${NC} $1"
+    echo -e "${TEAL}==>${NC} $1"
 }
 
 print_success() {
