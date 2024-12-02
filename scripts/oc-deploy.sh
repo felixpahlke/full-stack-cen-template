@@ -187,7 +187,7 @@ echo
 echo "Backend Webhook URL:"
 echo $BACKEND_WEBHOOK
 echo
-echo "Once Builds are completed, you can access the application at:"
+echo "Once Builds are completed (this can take a few minutes), you can access the application at:"
 echo "https://$FRONTEND_URL"
 echo
 print_status "Please add these webhook URLs to your GitLab/GitHub repository"
