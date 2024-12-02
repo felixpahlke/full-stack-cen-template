@@ -132,7 +132,7 @@ print_status "Creating application database..."
 sleep 2
 # More robust pod name detection
 POD_NAME=$(oc get pods -l name=postgresql -o jsonpath='{.items[0].metadata.name}')
-oc exec $POD_NAME -- psql -U $POSTGRES_USER -c 'CREATE DATABASE app;'
+oc exec $POD_NAME -- psql -c 'CREATE DATABASE app;'
 
 # Deploy Frontend
 print_status "Deploying frontend..."
