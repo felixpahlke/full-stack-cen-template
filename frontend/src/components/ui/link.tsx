@@ -12,7 +12,7 @@ export const Link = ({ className, ...props }: LinkProps) => {
   return (
     <RouterLink
       className={cn("text-cds-background-brand hover:underline", className)}
-      {...(props as any)}
+      {...props}
     />
   );
 };

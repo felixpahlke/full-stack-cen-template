@@ -38,6 +38,19 @@ function getUsersQueryOptions({ page }: { page: number }) {
   };
 }
 
+function Admin() {
+  return (
+    <div className="w-full">
+      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
+        Users Management
+      </h1>
+
+      <ActionsBar type={"User"} addModalAs={AddUser} />
+      <UsersTable />
+    </div>
+  );
+}
+
 function UsersTable() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
@@ -169,18 +182,5 @@ function UsersTable() {
         </Button>
       </div>
     </>
-  );
-}
-
-function Admin() {
-  return (
-    <div className="w-full">
-      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
-        Users Management
-      </h1>
-
-      <ActionsBar type={"User"} addModalAs={AddUser} />
-      <UsersTable />
-    </div>
   );
 }

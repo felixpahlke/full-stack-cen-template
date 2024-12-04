@@ -37,6 +37,19 @@ function getItemsQueryOptions({ page }: { page: number }) {
   };
 }
 
+function Items() {
+  return (
+    <div className="w-full">
+      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
+        Items Management
+      </h1>
+
+      <ActionBar type={"Item"} addModalAs={AddItem} />
+      <ItemsTable />
+    </div>
+  );
+}
+
 function ItemsTable() {
   const queryClient = useQueryClient();
   const { page } = Route.useSearch();
@@ -140,18 +153,5 @@ function ItemsTable() {
         </Button>
       </div>
     </>
-  );
-}
-
-function Items() {
-  return (
-    <div className="w-full">
-      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
-        Items Management
-      </h1>
-
-      <ActionBar type={"Item"} addModalAs={AddItem} />
-      <ItemsTable />
-    </div>
   );
 }
