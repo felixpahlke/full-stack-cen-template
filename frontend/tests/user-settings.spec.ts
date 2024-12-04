@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
+  accessPassword,
   firstSuperuser,
   firstSuperuserPassword,
-  accessPassword,
 } from "./config.ts";
 import { randomEmail, randomPassword } from "./utils/random";
 import { logInUser, logOutUser, signUpNewUser } from "./utils/user";

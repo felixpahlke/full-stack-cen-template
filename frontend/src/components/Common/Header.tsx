@@ -1,21 +1,21 @@
-import UserMenu from "./UserMenu";
-import useAuth from "../../hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
-import type { UserPublic } from "../../client";
 import {
   Header as CarbonHeader,
-  HeaderName,
-  HeaderGlobalBar,
-  HeaderNavigation,
-  HeaderMenuItem,
   HeaderContainer,
+  HeaderGlobalBar,
   HeaderMenuButton,
-  SkipToContent,
+  HeaderMenuItem,
+  HeaderName,
+  HeaderNavigation,
+  HeaderSideNavItems,
   SideNav,
   SideNavItems,
-  HeaderSideNavItems,
+  SkipToContent,
 } from "@carbon/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { UserPublic } from "../../client";
+import useAuth from "../../hooks/useAuth";
+import UserMenu from "./UserMenu";
 
 export function Header() {
   const { logout } = useAuth();

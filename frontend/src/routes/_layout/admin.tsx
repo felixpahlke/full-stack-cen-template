@@ -1,23 +1,23 @@
+import {
+  Button,
+  DataTable,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tag,
+} from "@carbon/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
-import {
-  DataTable,
-  Table,
-  TableHead,
-  TableRow,
-  TableHeader,
-  TableBody,
-  TableCell,
-  Tag,
-  Button,
-} from "@carbon/react";
 
 import { type UserPublic, UsersService } from "../../client";
 import AddUser from "../../components/Admin/AddUser";
-import ActionsMenu from "../../components/Common/ActionsMenu";
 import ActionsBar from "../../components/Common/ActionsBar";
+import ActionsMenu from "../../components/Common/ActionsMenu";
 
 const usersSearchSchema = z.object({
   page: z.number().catch(1),

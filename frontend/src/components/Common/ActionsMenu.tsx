@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { MoreVertical, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,6 +5,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Edit, MoreVertical, Trash } from "lucide-react";
+import { useState } from "react";
 
 import type { ItemPublic, UserPublic } from "../../client";
 import EditUser from "../Admin/EditUser";

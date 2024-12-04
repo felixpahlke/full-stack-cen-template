@@ -48,7 +48,7 @@ export const useStream = <T>({
           if (!stopRef.current) {
             // only set error if not cancelled
             setIsError(true);
-            onError && onError();
+            onError?.();
           }
           console.log("error in useStream");
           throw new Error(`HTTP error! status: ${stream_source.status}`);
@@ -64,7 +64,7 @@ export const useStream = <T>({
             if (done) {
               setIsSuccess(true);
               setIsProcessing(false);
-              onSuccess && onSuccess(text);
+              onSuccess?.(text);
               break;
             }
             if (stopRef.current) {
@@ -79,12 +79,12 @@ export const useStream = <T>({
             //   break;
             // }
             setText((prev) => prev + value);
-            onMessage && onMessage(value);
+            onMessage?.(value);
           }
         }
       } catch (e) {
         if (!stopRef.current) {
-          onError && onError(e);
+          onError?.(e);
           setIsError(true);
           console.error(e);
         }

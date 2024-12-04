@@ -1,16 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { FiLogOut, FiUser } from "react-icons/fi";
 
-import useAuth from "../../hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@carbon/icons-react";
+import useAuth from "../../hooks/useAuth";
 
 interface UserMenuProps {
   className?: string;

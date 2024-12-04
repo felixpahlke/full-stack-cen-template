@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AxiosError } from "axios";
+import { toast } from "sonner";
 import {
   type Body_login_login_access_token as AccessToken,
   ApiError,
@@ -11,7 +12,6 @@ import {
   type UserRegister,
   UsersService,
 } from "../client";
-import { toast } from "sonner";
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null;

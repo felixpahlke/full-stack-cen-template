@@ -8,8 +8,8 @@ import { OpenAPI } from "./client";
 
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
-import { ThemeProvider } from "./components/Theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "./components/Theme/ThemeProvider";
 
 // this is set at build time
 OpenAPI.BASE = import.meta.env.VITE_API_URL;

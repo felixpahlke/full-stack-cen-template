@@ -1,19 +1,19 @@
+import { Logo } from "@/components/Common/Logo";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Link } from "@/components/ui/link";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
-import {
-  Form,
-  FormField,
-  FormControl,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/components/ui/link";
-import { Logo } from "@/components/Common/Logo";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,

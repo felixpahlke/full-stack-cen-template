@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { UsersService, type ApiError, type UpdatePassword } from "../../client";
+import { type ApiError, type UpdatePassword, UsersService } from "../../client";
 import { confirmPasswordRules, handleError, passwordRules } from "../../utils";
 
 import { Button } from "@/components/ui/button";

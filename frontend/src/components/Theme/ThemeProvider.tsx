@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
 import { Theme as CarbonTheme } from "@carbon/react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "g10" | "g90" | "g100" | "white" | "system";
 

@@ -1,7 +1,7 @@
-import type { ComponentType, ElementType } from "react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import type { ComponentType, ElementType } from "react";
+import { useState } from "react";
 
 interface NavbarProps {
   type: string;

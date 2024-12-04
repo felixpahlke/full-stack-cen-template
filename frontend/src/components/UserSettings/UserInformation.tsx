@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   type ApiError,
@@ -12,9 +12,9 @@ import useAuth from "../../hooks/useAuth";
 import { emailPattern, handleError } from "../../utils";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const UserInformation = () => {

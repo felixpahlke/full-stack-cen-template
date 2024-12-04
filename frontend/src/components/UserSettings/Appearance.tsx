@@ -1,8 +1,8 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTheme } from "../Theme/ThemeProvider";
 import { Tag } from "@carbon/react";
+import { useTheme } from "../Theme/ThemeProvider";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();

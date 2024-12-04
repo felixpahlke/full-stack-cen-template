@@ -1,5 +1,3 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   Button,
   Form,
@@ -8,11 +6,13 @@ import {
   Stack,
   TextInput,
 } from "@carbon/react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
+import { Logo } from "@/components/Common/Logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
-import { Logo } from "@/components/Common/Logo";
 
 export const Route = createFileRoute("/login")({
   component: Login,
