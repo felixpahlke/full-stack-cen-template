@@ -8,7 +8,7 @@
 import { useCallback, useRef, useState } from "react";
 
 interface StreamProps<T> {
-  getStream: (input: T, signal: AbortSignal) => Promise<Response>;
+  getStream: ((params: T) => Promise<Response>) | (() => Promise<Response>);
   onMessage?: (m: string) => void;
   onError?: (error?: unknown) => void;
   onSuccess?: (text?: string) => void;
@@ -29,7 +29,7 @@ export const useStream = <T>({
   const abortControllerRef = useRef(new AbortController());
 
   const start = useCallback(
-    async (input: T) => {
+    async (params?: T) => {
       setIsLoading(true);
       setIsProcessing(true);
       setIsError(false);
@@ -39,16 +39,20 @@ export const useStream = <T>({
       abortControllerRef.current = new AbortController();
 
       try {
-        const stream_source = await getStream(
-          input,
-          abortControllerRef.current.signal,
-        );
+        const stream_source = await (
+          params ? getStream(params) : (getStream as () => Promise<Response>)()
+        ).then((response) => {
+          abortControllerRef.current.signal.addEventListener("abort", () => {
+            response.body?.cancel();
+          });
+          return response;
+        });
 
         if (!stream_source.ok) {
           if (!stopRef.current) {
             // only set error if not cancelled
             setIsError(true);
-            onError?.();
+            onError && onError();
           }
           console.log("error in useStream");
           throw new Error(`HTTP error! status: ${stream_source.status}`);
@@ -64,7 +68,7 @@ export const useStream = <T>({
             if (done) {
               setIsSuccess(true);
               setIsProcessing(false);
-              onSuccess?.(text);
+              onSuccess && onSuccess(text);
               break;
             }
             if (stopRef.current) {
@@ -79,12 +83,12 @@ export const useStream = <T>({
             //   break;
             // }
             setText((prev) => prev + value);
-            onMessage?.(value);
+            onMessage && onMessage(value);
           }
         }
       } catch (e) {
         if (!stopRef.current) {
-          onError?.(e);
+          onError && onError(e);
           setIsError(true);
           console.error(e);
         }
