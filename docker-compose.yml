@@ -100,12 +100,14 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8000
     volumes:
-      # going for volume mount instead of watch to sync routeTree.gen.ts changes
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/dist
+      - ./frontend/src/routeTree.gen.ts:/app/src/routeTree.gen.ts
     develop:
       watch:
+        - path: ./frontend
+          action: sync
+          target: /app
+          ignore:
+            - ./src/routeTree.gen.ts
         - path: ./frontend/package.json
           action: rebuild
 
