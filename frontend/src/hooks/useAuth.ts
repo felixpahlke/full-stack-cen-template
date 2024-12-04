@@ -27,7 +27,10 @@ const useAuth = () => {
       try {
         return await UsersService.readUserMe();
       } catch (err) {
-        if (err instanceof ApiError && err.status === 404) {
+        if (
+          err instanceof ApiError &&
+          (err.status === 404 || err.status === 403)
+        ) {
           // If user not found (404), log them out
           localStorage.removeItem("access_token");
           navigate({ to: "/login" });

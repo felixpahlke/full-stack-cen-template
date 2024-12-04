@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "fastapi[standard]<1.0.0,>=0.114.2",
+    "fastapi[standard]<1.0.0,>=0.115.6",
     "python-multipart<1.0.0,>=0.0.7",
     "passlib[bcrypt]<2.0.0,>=1.7.4",
     "tenacity<9.0.0,>=8.2.3",
@@ -22,9 +22,7 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "pytest<8.0.0,>=7.4.3",
-    "mypy<2.0.0,>=1.8.0",
     "ruff<1.0.0,>=0.2.2",
-    "pre-commit<4.0.0,>=3.6.2",
     "types-passlib<2.0.0.0,>=1.7.7.20240106",
     "coverage<8.0.0,>=7.4.3",
 ]
