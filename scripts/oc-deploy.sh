@@ -83,6 +83,7 @@ read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
 read -p "Choose a First superuser email: " FIRST_SUPERUSER
 read -p "Choose a First superuser password: " FIRST_SUPERUSER_PASSWORD
+read -p "Choose a Signup access password (leave empty if users should not be able to signup themselves): " SIGNUP_ACCESS_PASSWORD
 
 # Generate a secure random secret key
 SECRET_KEY=$(openssl rand -hex 32)
@@ -160,7 +161,8 @@ oc create secret generic backend-envs \
     --from-literal=PROJECT_NAME=$PROJECT_NAME \
     --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
-    --from-literal=FIRST_SUPERUSER=$FIRST_SUPERUSER
+    --from-literal=FIRST_SUPERUSER=$FIRST_SUPERUSER \
+    --from-literal=SIGNUP_ACCESS_PASSWORD=$SIGNUP_ACCESS_PASSWORD
 
 print_status "Applying backend environment..."
 oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
