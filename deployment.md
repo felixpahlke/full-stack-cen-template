@@ -1,6 +1,8 @@
 # Full-Stack CEN Template - Deployment
 
-This Readme will describe the deployment on OpenShift.
+## Before you begin
+
+❗️❗️❗️ This Readme will describe the deployment on OpenShift using the OpenShift **UI**. The faster and recommended way to deploy to OpenShift is using the [CLI Deployment](cli-deployment.md). ❗️❗️❗️
 
 ## Our journey to a successful deployment 🏁
 

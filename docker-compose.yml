@@ -35,9 +35,6 @@ services:
         restart: true
     env_file:
       - .env
-    environment:
-      - POSTGRES_SERVER=db
-
     healthcheck:
       test:
         [

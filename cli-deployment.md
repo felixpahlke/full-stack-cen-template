@@ -1,10 +1,15 @@
 # Full-Stack CEN Template - Deployment
 
-This Readme will describe the deployment on OpenShift.
+This Readme will describe the deployment on OpenShift using the OpenShift CLI.
 
 ## Our journey to a successful deployment 🏁
 
 The steps should be performed in this exact order.
+
+0. [Before you start](#before-you-start)
+1. [Use the script](#use-the-script)
+
+⬇️ Optional, if you are not using the script ⬇️
 
 1. [Preparation](#preparation)
 2. [Deploying the Database](#database)
@@ -15,13 +20,17 @@ The steps should be performed in this exact order.
 
 ### Before you start
 
-Install the OpenShift CLI (if you haven't already)
+- Install the OpenShift CLI (if you haven't already)
 
 ```bash
 brew install openshift-cli
 ```
 
-Login to OpenShift (you can get the token from the OpenShift UI)
+- Create a new repo and push the code to it
+
+- Have an OpenShift Instance ready and open the Console (OpenShift UI)
+
+- Login to OpenShift in your terminal (you can get the token from the OpenShift UI in the top right corner)
 
 ```bash
 oc login --token=<token> --server=<server-url>
@@ -45,7 +54,7 @@ chmod +x scripts/oc-deploy.sh
 
 ### Preparation
 
-1. Create a new project
+1. Create a new project in OpenShift
 
 ```bash
 oc new-project <your-project-name>
