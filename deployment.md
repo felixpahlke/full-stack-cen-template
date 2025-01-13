@@ -18,10 +18,10 @@ The steps should be performed in this exact order.
 ## Preparation
 
 1. If not already done, have this codebase pushed to your Gitlab/Github repo
-2. Create AccessToken/DeploymentKey for your project in Gitlab/Github
+2. Create AccessToken (Gitlab) for your project in Gitlab or create and ssh key (Github) (❗️❗️❗️Currently only tested with Gitlab AccessToken❗️❗️❗️)
 3. Get OpenShift Instance, Open the Console and access the "Developer View"
 4. Create a new project in OpenShift
-5. Put the AccessToken in OpenShift as a Secret (Source Secret)
+5. Put the AccessToken in OpenShift as a Secret (Source Secret) (❗️❗️❗️Currently only tested with Gitlab AccessToken❗️❗️❗️)
    - Username is empty
    - Password is the token
 
@@ -36,6 +36,14 @@ The steps should be performed in this exact order.
 
 ![Database](img/openshift-postgres-deployment.png)
 
+❗️Sometimes the database "app" is not created automatically, you can create it manually though.
+
+- In Topology click on your database Deployment and then click the running pod.
+- Click the "Terminal" tab.
+- type "psql"
+- with "\l" you can list all databases
+- with "CREATE DATABASE app;" you can create the database
+
 ## Backend
 
 1. In you project click "+Add" → import from git
@@ -48,6 +56,7 @@ The steps should be performed in this exact order.
 5. Select Dockerfile as Import Strategy
 6. Define the Name of the Dockerfile to `Dockerfile`
 7. Name your Application (Name for everything alltogether) and this particular Service (the backend)
+   ❗️❗️❗️ make sure to use `backend` as name for the service, otherwise the frontend will not be able to find it ❗️❗️❗️
 
 ![application (backend)](<img/openshift-deployment-config(2).png>)
 
