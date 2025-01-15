@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM registry.access.redhat.com/ubi9
 
 ENV PYTHONUNBUFFERED=1
 
@@ -6,7 +6,7 @@ WORKDIR /app/
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-COPY --from=ghcr.io/astral-sh/uv:0.4.15 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.5.18 /uv /bin/uv
 
 # Place executables in the environment at the front of the path
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#using-the-environment
@@ -42,6 +42,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 RUN if [ -f /app/scripts/prestart.sh ]; then chmod +x /app/scripts/prestart.sh; fi
+
+USER root
 
 COPY ./scripts/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

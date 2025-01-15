@@ -1,7 +1,9 @@
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM node:20 AS base
+FROM registry.access.redhat.com/ubi8/nodejs-20 AS base
 
 WORKDIR /app
+
+USER root
 
 COPY package*.json /app/
 
@@ -19,7 +21,7 @@ RUN npm run build
 
 # Stage 1, based on Nginx, to have only the compiled app, ready for production with Nginx
 # FROM nginx:1
-FROM nginxinc/nginx-unprivileged:stable-alpine
+FROM ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
 
 EXPOSE 8080
 COPY --from=build-stage /app/dist/ /usr/share/nginx/html
