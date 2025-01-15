@@ -32,6 +32,34 @@ validate_name() {
     return 0
 }
 
+# Function to validate email
+validate_email() {
+    local email=$1
+    if [[ ! $email =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+        return 1
+    fi
+    return 0
+}
+
+# Function to validate git SSH URL
+validate_git_url() {
+    local url=$1
+    # Check if URL starts with git@ or ssh:// and ends with .git
+    if [[ ! $url =~ ^(git@|ssh://).+\.git$ ]]; then
+        return 1
+    fi
+    return 0
+}
+
+# Check OpenShift client version
+print_status "Checking OpenShift client version..."
+OC_VERSION=$(oc version | grep "Client Version:" | awk '{print $3}' | cut -d'.' -f2)
+if [ -z "$OC_VERSION" ] || [ "$OC_VERSION" -lt "14" ]; then
+    print_error "OpenShift client version 4.14 or higher is required"
+    print_error "Current version: $(oc version | grep "Client Version:")"
+    exit 1
+fi
+
 # Check OpenShift instance and login status
 print_status "Checking OpenShift instance and login status..."
 if ! oc whoami --show-server &>/dev/null || ! oc whoami &>/dev/null; then
@@ -78,11 +106,39 @@ while true; do
     fi
 done
 
-read -p "Your Git Repository URL (ssh): " GIT_URL
+# Git URL with validation
+while true; do
+    read -p "Your Git Repository URL (ssh format, e.g. git@github.com:user/repo.git): " GIT_URL
+    if validate_git_url "$GIT_URL"; then
+        break
+    else
+        print_error "Invalid Git SSH URL. Must start with git@ or ssh:// and end with .git"
+    fi
+done
+
 read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
-read -p "Choose a First superuser email: " FIRST_SUPERUSER
-read -p "Choose a First superuser password: " FIRST_SUPERUSER_PASSWORD
+
+# Superuser email with validation
+while true; do
+    read -p "Choose a First superuser email: " FIRST_SUPERUSER
+    if validate_email "$FIRST_SUPERUSER"; then
+        break
+    else
+        print_error "Invalid email format. Please enter a valid email address."
+    fi
+done
+
+# Superuser password with length validation
+while true; do
+    read -p "Choose a First superuser password (minimum 8 characters): " FIRST_SUPERUSER_PASSWORD
+    if [ ${#FIRST_SUPERUSER_PASSWORD} -ge 8 ]; then
+        break
+    else
+        print_error "Password must be at least 8 characters long"
+    fi
+done
+
 read -p "Choose a Signup access password (leave empty if users should not be able to signup themselves): " SIGNUP_ACCESS_PASSWORD
 
 # Generate a secure random secret key
@@ -173,6 +229,28 @@ oc label deployment/frontend deployment/backend dc/postgresql app.kubernetes.io/
 
 # Setup CI/CD webhooks
 print_status "Getting webhook URLs..."
+
+# Create RoleBinding for webhook access
+print_status "Creating RoleBinding for webhook access..."
+cat << EOF | oc apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  name: webhook-access-unauthenticated
+  namespace: $PROJECT_NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "system:webhook"
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: "system:unauthenticated"
+EOF
+
+
 FRONTEND_BASE_URL=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
 FRONTEND_SECRET=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
 FRONTEND_WEBHOOK=${FRONTEND_BASE_URL/<secret>/$FRONTEND_SECRET}

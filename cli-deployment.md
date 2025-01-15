@@ -147,6 +147,30 @@ oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[
 
 ### Setup CI/CD
 
+- If you are on OpenShift 4.16 or higher you need to create a RoleBinding for webhook access
+
+_dont forget to replace `<your-project-name>` with your actual project name_
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  name: webhook-access-unauthenticated
+  namespace: <your-project-name>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "system:webhook"
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: "system:unauthenticated"
+EOF
+```
+
 - Get the Webhook URLs
 
 ```bash
