@@ -39,12 +39,24 @@ export const useStream = <T>({
       abortControllerRef.current = new AbortController();
 
       try {
-        const stream_source = await (
-          params ? getStream(params) : (getStream as () => Promise<Response>)()
-        ).then((response) => {
-          abortControllerRef.current.signal.addEventListener("abort", () => {
-            response.body?.cancel();
-          });
+        // Determine which version of getStream to call based on params
+        const streamRequest = params
+          ? getStream(params)
+          : (getStream as () => Promise<Response>)();
+
+        // Get the response and set up abort handling
+        const stream_source = await streamRequest.then((response) => {
+          // Set up cleanup for when abort is triggered
+          const abortHandler = () => {
+            if (response.body) {
+              response.body.cancel();
+            }
+          };
+
+          abortControllerRef.current.signal.addEventListener(
+            "abort",
+            abortHandler,
+          );
           return response;
         });
 
