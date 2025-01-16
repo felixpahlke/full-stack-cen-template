@@ -1,13 +1,79 @@
-include:
-  - ./backend/docker-compose.yml
-
 services:
+  db:
+    image: postgres:12
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    restart: "no"
+    depends_on:
+      - db
+    environment:
+      - ADMINER_DESIGN=pepa-linha-dark
+    ports:
+      - "8080:8080"
+
+  backend:
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8000/api/v1/utils/health-check/",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+    develop:
+      watch:
+        - path: ./backend
+          action: sync
+          target: /app
+          ignore:
+            - ./backend/.venv
+            - .venv
+        - path: ./backend/pyproject.toml
+          action: rebuild
+
   frontend:
     restart: "no"
     build:
       context: ./frontend
       args:
-        # - VITE_API_URL=http://localhost:8000
+        - VITE_API_URL=http://localhost:8000
         - NODE_ENV=development
       target: base
     ports:
@@ -16,8 +82,8 @@ services:
       npm run dev
       --
       --host 0.0.0.0
-    # environment:
-    #   - VITE_API_URL=http://localhost:8000
+    environment:
+      - VITE_API_URL=http://localhost:8000
     volumes:
       - ./frontend/src/routeTree.gen.ts:/app/src/routeTree.gen.ts
     develop:
@@ -36,23 +102,13 @@ services:
     ports:
       - "4180:4180"
     command:
-      - "--upstream=http://frontend:5173/"
-      - "--upstream=http://backend:8080/api/"
-      - "--upstream=http://lokal-token-printer:8080/token"
+      - "--upstream=http://frontend:5173"
       - "--provider=oidc"
       - "--email-domain=*"
       - "--pass-authorization-header"
       - "--insecure-oidc-allow-unverified-email"
       - "--http-address=:4180"
       - "--skip-provider-button"
-      - "--cookie-csrf-per-request=true"
-      - "--cookie-csrf-expire=5m"
-      - "--cookie-secure=false"
-
-  lokal-token-printer:
-    image: ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
-    volumes:
-      - ./lokal-token-printer-config.conf:/etc/nginx/conf.d/default.conf
 
 volumes:
   app-db-data:
