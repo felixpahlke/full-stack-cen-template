@@ -40,15 +40,6 @@ const UserMenu = ({ className }: UserMenuProps) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                to="/settings"
-                className="flex items-center text-cds-text-primary"
-              >
-                <FiUser className="mr-2 h-4 w-4" />
-                My profile
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleLogout}
               className="text-ui-danger font-bold"

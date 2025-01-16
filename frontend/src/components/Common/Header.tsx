@@ -16,6 +16,7 @@ import { Link } from "@tanstack/react-router";
 import type { UserPublic } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import UserMenu from "./UserMenu";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function Header() {
   const { logout } = useAuth();
@@ -66,6 +67,7 @@ export function Header() {
               ))}
             </HeaderNavigation>
             <HeaderGlobalBar>
+              <ThemeSwitcher />
               <UserMenu />
             </HeaderGlobalBar>
             <SideNav
@@ -81,8 +83,8 @@ export function Header() {
                       {item.title}
                     </HeaderMenuItem>
                   ))}
-                  <HeaderMenuItem href="/settings">
-                    User Settings
+                  <HeaderMenuItem>
+                    <ThemeSwitcher displayAs="sidenav" />
                   </HeaderMenuItem>
                   <HeaderMenuItem>
                     <button onClick={handleLogout} className="text-red-500">
