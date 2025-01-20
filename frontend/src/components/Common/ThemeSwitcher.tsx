@@ -41,7 +41,7 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger className="hidden lg:flex" asChild>
         <Button
           variant="ghost"
           size="icon"
