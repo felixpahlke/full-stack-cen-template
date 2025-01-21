@@ -51,6 +51,16 @@ validate_git_url() {
     return 0
 }
 
+# Function to validate API key length
+validate_api_key() {
+    local key=$1
+    local len=${#key}
+    if [[ $len -eq 16 ]] || [[ $len -eq 32 ]]; then
+        return 0
+    fi
+    return 1
+}
+
 # Check OpenShift client version
 print_status "Checking OpenShift client version..."
 OC_VERSION=$(oc version | grep "Client Version:" | awk '{print $3}' | cut -d'.' -f2)
@@ -141,6 +151,15 @@ done
 read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
 
+# API key with validation
+while true; do
+    read -p "Choose an API key (must be 16 or 32 characters long): " API_KEY
+    if validate_api_key "$API_KEY"; then
+        break
+    else
+        print_error "Invalid API key length. Must be exactly 16 or 32 characters."
+    fi
+done
 
 # Create SSH keys
 print_status "Creating SSH key pair in ~/.ssh/$PROJECT_NAME/..."
@@ -185,12 +204,14 @@ oc exec $POD_NAME -- psql -c 'CREATE DATABASE app;'
 print_status "Deploying backend..."
 oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret $GIT_URL
 
+print_status "Exposing backend service..."
+oc create route edge backend --service=backend --port=8000
+
 # Setup backend environment
 print_status "Setting up backend environment..."
 
 oc create secret generic backend-envs \
     --from-literal=POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    --from-literal=FIRST_SUPERUSER_PASSWORD=$FIRST_SUPERUSER_PASSWORD \
     --from-literal=POSTGRES_DB=app \
     --from-literal=BACKEND_CORS_ORIGINS="*" \
     --from-literal=POSTGRES_PORT=5432 \
@@ -198,6 +219,7 @@ oc create secret generic backend-envs \
     --from-literal=PROJECT_NAME=$PROJECT_NAME \
     --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
+    --from-literal=API_KEY=$API_KEY
 
 print_status "Applying backend environment..."
 oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
