@@ -68,48 +68,5 @@ services:
         - path: ./backend/pyproject.toml
           action: rebuild
 
-  frontend:
-    restart: "no"
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_URL=http://localhost:8000
-        - NODE_ENV=development
-      target: base
-    ports:
-      - "5173:5173"
-    command: >
-      npm run dev
-      --
-      --host 0.0.0.0
-    environment:
-      - VITE_API_URL=http://localhost:8000
-    volumes:
-      - ./frontend/src/routeTree.gen.ts:/app/src/routeTree.gen.ts
-    develop:
-      watch:
-        - path: ./frontend
-          action: sync
-          target: /app
-          ignore:
-            - ./src/routeTree.gen.ts
-        - path: ./frontend/package.json
-          action: rebuild
-  proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:latest
-    env_file:
-      - .env
-    ports:
-      - "4180:4180"
-    command:
-      - "--upstream=http://frontend:5173/"
-      - "--upstream=http://backend:8000/api"
-      - "--provider=oidc"
-      - "--email-domain=*"
-      - "--pass-authorization-header"
-      - "--insecure-oidc-allow-unverified-email"
-      - "--http-address=:4180"
-      - "--skip-provider-button"
-
 volumes:
   app-db-data:

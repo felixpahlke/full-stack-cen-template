@@ -119,31 +119,6 @@ done
 read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
 
-# Superuser email with validation
-while true; do
-    read -p "Choose a First superuser email: " FIRST_SUPERUSER
-    if validate_email "$FIRST_SUPERUSER"; then
-        break
-    else
-        print_error "Invalid email format. Please enter a valid email address."
-    fi
-done
-
-# Superuser password with length validation
-while true; do
-    read -p "Choose a First superuser password (minimum 8 characters): " FIRST_SUPERUSER_PASSWORD
-    if [ ${#FIRST_SUPERUSER_PASSWORD} -ge 8 ]; then
-        break
-    else
-        print_error "Password must be at least 8 characters long"
-    fi
-done
-
-read -p "Choose a Signup access password (leave empty if users should not be able to signup themselves): " SIGNUP_ACCESS_PASSWORD
-
-# Generate a secure random secret key
-SECRET_KEY=$(openssl rand -hex 32)
-print_success "Generated secure secret key for backend"
 
 # Create project
 print_status "Creating new project..."
@@ -191,41 +166,30 @@ sleep 2
 POD_NAME=$(oc get pods -l name=postgresql -o jsonpath='{.items[0].metadata.name}')
 oc exec $POD_NAME -- psql -c 'CREATE DATABASE app;'
 
-# Deploy Frontend
-print_status "Deploying frontend..."
-oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-secret=git-secret $GIT_URL
-
-print_status "Exposing frontend service..."
-oc create route edge frontend --service=frontend --port=8080
-
 # Deploy Backend
 print_status "Deploying backend..."
 oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret $GIT_URL
 
 # Setup backend environment
 print_status "Setting up backend environment..."
-FRONTEND_URL=$(oc get route frontend -o jsonpath='{.spec.host}')
 
 oc create secret generic backend-envs \
     --from-literal=POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
     --from-literal=FIRST_SUPERUSER_PASSWORD=$FIRST_SUPERUSER_PASSWORD \
     --from-literal=POSTGRES_DB=app \
-    --from-literal=BACKEND_CORS_ORIGINS=https://$FRONTEND_URL \
+    --from-literal=BACKEND_CORS_ORIGINS="*" \
     --from-literal=POSTGRES_PORT=5432 \
     --from-literal=POSTGRES_SERVER=postgresql \
-    --from-literal=SECRET_KEY=$SECRET_KEY \
     --from-literal=PROJECT_NAME=$PROJECT_NAME \
     --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
-    --from-literal=FIRST_SUPERUSER=$FIRST_SUPERUSER \
-    --from-literal=SIGNUP_ACCESS_PASSWORD=$SIGNUP_ACCESS_PASSWORD
 
 print_status "Applying backend environment..."
 oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
 
 # Group resources as one application
 print_status "Grouping resources as one application..."
-oc label deployment/frontend deployment/backend dc/postgresql app.kubernetes.io/part-of=$APP_NAME
+oc label deployment/backend dc/postgresql app.kubernetes.io/part-of=$APP_NAME
 
 # Setup CI/CD webhooks
 print_status "Getting webhook URLs..."
@@ -250,25 +214,14 @@ subjects:
     name: "system:unauthenticated"
 EOF
 
-
-FRONTEND_BASE_URL=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
-FRONTEND_SECRET=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
-FRONTEND_WEBHOOK=${FRONTEND_BASE_URL/<secret>/$FRONTEND_SECRET}
-
 BACKEND_BASE_URL=$(oc describe bc/backend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
 BACKEND_SECRET=$(oc get bc backend -o jsonpath='{.spec.triggers[*].generic.secret}')
 BACKEND_WEBHOOK=${BACKEND_BASE_URL/<secret>/$BACKEND_SECRET}
 
 print_success "Deployment completed successfully!"
 echo
-echo "Frontend Webhook URL:"
-echo $FRONTEND_WEBHOOK
-echo
 echo "Backend Webhook URL:"
 echo $BACKEND_WEBHOOK
 echo
-echo "Once Builds are completed (this can take a few minutes), you can access the application at:"
-echo "https://$FRONTEND_URL"
-echo
-print_status "Please add these webhook URLs to your GitLab/GitHub repository"
+print_status "Please add this webhook URL to your GitLab/GitHub repository"
 echo
