@@ -170,7 +170,7 @@ print_success "Generated secure secret key for backend"
 # Create SSH keys
 print_status "Creating SSH key pair in ~/.ssh/$PROJECT_NAME/..."
 mkdir -p $HOME/.ssh/$PROJECT_NAME
-ssh-keygen -N '' -f $HOME/.ssh/$PROJECT_NAME/ocp-key -q <<< y > /dev/null
+ssh-keygen -N '' -f $HOME/.ssh/$PROJECT_NAME/ocp-key -C "openshift-deploy-key" -q <<< y > /dev/null
 
 # Create OpenShift secret
 print_status "Creating OpenShift secret..."
