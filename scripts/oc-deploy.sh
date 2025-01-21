@@ -96,6 +96,28 @@ while true; do
     fi
 done
 
+# Check if project exists
+if oc get project "$PROJECT_NAME" &>/dev/null; then
+    print_status "Project '$PROJECT_NAME' already exists."
+    read -p "Do you want to switch to this project and continue deployment? (y/n): " USE_EXISTING
+    if [[ $USE_EXISTING =~ ^[Yy]$ ]]; then
+        oc project "$PROJECT_NAME" || {
+            print_error "Failed to switch to project"
+            exit 1
+        }
+    else
+        print_error "Deployment cancelled"
+        exit 1
+    fi
+else
+    # Create new project
+    print_status "Creating new project..."
+    oc new-project "$PROJECT_NAME" || {
+        print_error "Failed to create project"
+        exit 1
+    }
+fi
+
 # App name
 while true; do
     read -p "Choose an application name (lowercase letters, numbers and hyphens only): " APP_NAME
@@ -119,13 +141,6 @@ done
 read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
 
-
-# Create project
-print_status "Creating new project..."
-oc new-project $PROJECT_NAME || {
-    print_error "Failed to create project"
-    exit 1
-}
 
 # Create SSH keys
 print_status "Creating SSH key pair in ~/.ssh/$PROJECT_NAME/..."
