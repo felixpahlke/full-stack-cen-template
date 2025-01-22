@@ -17,56 +17,23 @@ services:
     ports:
       - "5432:5432"
 
-  adminer:
-    image: adminer
-    restart: "no"
-    depends_on:
-      - db
-    environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    ports:
-      - "8080:8080"
-
-  backend:
-    restart: "no"
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_SERVER=db
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "-f",
-          "http://localhost:8000/api/v1/utils/health-check/",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    build:
-      context: ./backend
-    ports:
-      - "8000:8000"
-    command:
-      - fastapi
-      - run
-      - --reload
-      - "app/main.py"
-    develop:
-      watch:
-        - path: ./backend
-          action: sync
-          target: /app
-          ignore:
-            - ./backend/.venv
-            - .venv
-        - path: ./backend/pyproject.toml
-          action: rebuild
+#  backend:
+#    restart: "on-failure"
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#        restart: true
+#    env_file:
+#      - .env
+#    build:
+#      context: ./backend
+#      dockerfile: ./build/Dockerfile
+#    ports:
+#      - "8080:8080"
+#    develop:
+#      watch:
+#        - action: rebuild
+#          path: ./**/*
 
   frontend:
     restart: "no"
@@ -103,7 +70,7 @@ services:
       - "4180:4180"
     command:
       - "--upstream=http://frontend:5173/"
-      - "--upstream=http://backend:8000/api"
+      - "--upstream=http://backend:8080/api"
       - "--upstream=http://lokal-token-printer:8080/token"
       - "--provider=oidc"
       - "--email-domain=*"
@@ -111,6 +78,9 @@ services:
       - "--insecure-oidc-allow-unverified-email"
       - "--http-address=:4180"
       - "--skip-provider-button"
+      - "--cookie-csrf-per-request=true"
+      - "--cookie-csrf-expire=5m"
+      - "--cookie-secure=false"
 
   lokal-token-printer:
     image: ghcr.io/nginxinc/nginx-unprivileged:stable-alpine

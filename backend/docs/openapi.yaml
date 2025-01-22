@@ -1,0 +1,271 @@
+openapi: 3.0.1
+info:
+  title: Full Stack FastAPI Project
+  version: 0.1.0
+servers:
+  - url: "/api"
+paths:
+  /v1/items:
+    get:
+      tags:
+        - items
+      summary: Read Items
+      description: Retrieve items.
+      operationId: read_items
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            title: Skip
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+            title: Limit
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemsPublic'
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    post:
+      tags:
+        - items
+      summary: Create Item
+      description: Create new item.
+      operationId: create_item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        409:
+          $ref: "#/components/responses/Conflict"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+  /v1/items/{id}:
+    get:
+      tags:
+        - items
+      summary: Read Item
+      description: Get item by ID.
+      operationId: read_item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Id
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    put:
+      tags:
+        - items
+      summary: Update Item
+      description: Update an item.
+      operationId: update_item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdate'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        404:
+          $ref: "#/components/responses/NotFound"
+        409:
+          $ref: "#/components/responses/Conflict"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    delete:
+      tags:
+        - items
+      summary: Delete Item
+      description: Delete an item.
+      operationId: delete_item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Id
+      responses:
+        204:
+          description: operation successfully
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+components:
+  schemas:
+    NewItem:
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Title
+        description:
+          type: string
+          maxLength: 255
+          title: description
+    Item:
+      allOf:
+        - $ref: '#/components/schemas/NewItem'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              title: Id
+            owner_id:
+              type: string
+              format: uuid
+              title: Owner Id
+          required:
+            - id
+            - owner_id
+      title: Item
+    ItemUpdate:
+      allOf:
+        - $ref: '#/components/schemas/NewItem'
+      type: object
+      title: ItemUpdate
+    ItemsPublic:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          title: Data
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+        - data
+        - count
+      title: ItemsPublic
+
+    Problem:
+      description: An RFC 9457 problem object
+      type: object
+      required:
+        - status
+        - title
+        - instance
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: A URI reference that identifies the problem type.
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: The HTTP status code generated by the origin server for this occurrence of the problem.
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+        instance:
+          type: string
+          format: uri-reference
+          description: A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced.
+    Violation:
+      type: object
+      properties:
+        field:
+          description: A human-readable reference specific to a field of the request.
+          type: string
+        message:
+          description: A human-readable explanation specific to this occurrence of the problem.
+          type: string
+      required:
+        - field
+        - message
+    ViolationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            violations:
+              type: array
+              items:
+                $ref: '#/components/schemas/Violation'
+          required:
+            - violations
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Conflict with the requested params and a existing resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnprocessableEntity:
+      description:  request content was correct, but it was unable to process the contained instructions
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ViolationProblem'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
