@@ -6,19 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type userContext struct{}
+const userContextKey = "user.context"
 
 type User struct {
-	ID    uuid.UUID
+	Id    uuid.UUID
 	Email string
 }
 
 func CreateUserContext(ctx context.Context, user User) context.Context {
-	return context.WithValue(ctx, userContext{}, user)
+	return context.WithValue(ctx, userContextKey, user)
 }
 
 func GetUserFromContext(ctx context.Context) (User, error) {
-	if u, ok := ctx.Value(userContext{}).(User); ok {
+	if u, ok := ctx.Value(userContextKey).(User); ok {
 		return u, nil
 	}
 	return User{}, fmt.Errorf("missing user context")

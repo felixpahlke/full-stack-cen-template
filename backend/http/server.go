@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"github.com/swaggest/swgui/v5emb"
 	"github.ibm.com/technology-garage-dach/full-stack-cen-template/backend/docs"
@@ -17,23 +16,13 @@ import (
 	"time"
 )
 
-type Server struct {
-	Port          int
-	BasePath      string
-	V1APIHandler  *v1.APIHandler
-	V1Middlewares []v1.MiddlewareFunc
-	CorsOptions   cors.Options
-}
-
-func (server *Server) Start() {
+func Start(port int, basePath string, apiHandler *v1.ApiHandler, middlewares ...v1.MiddlewareFunc) {
 	serveMux := http.NewServeMux()
-
-	corsHandler := cors.New(server.CorsOptions)
 
 	serveMux.HandleFunc("GET /openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/yaml")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(docs.OpenAPISpec)
+		w.Write(docs.OpenAPISpec)
 	})
 
 	serveMux.Handle("GET /swagger-ui/", v5emb.New("swagger-ui", "/openapi.yaml", "/swagger-ui/"))
@@ -44,7 +33,7 @@ func (server *Server) Start() {
 
 	v1.HandlerWithOptions(
 		v1.NewStrictHandlerWithOptions(
-			server.V1APIHandler,
+			apiHandler,
 			nil,
 			v1.StrictHTTPServerOptions{
 				RequestErrorHandlerFunc:  errorhandler.RequestErrorHandler(),
@@ -52,22 +41,22 @@ func (server *Server) Start() {
 			},
 		),
 		v1.StdHTTPServerOptions{
-			BaseURL:     server.BasePath,
+			BaseURL:     basePath,
 			BaseRouter:  serveMux,
-			Middlewares: server.V1Middlewares,
+			Middlewares: middlewares,
 		},
 	)
 
-	httpServer := http.Server{
-		Addr:         fmt.Sprintf(":%d", server.Port),
+	server := http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
-		Handler:      corsHandler.Handler(serveMux),
+		Handler:      serveMux,
 	}
 
 	go func() {
-		log.Info().Msgf("Starting server on %s", httpServer.Addr)
-		if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Info().Msgf("Starting server on %s", server.Addr)
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msg("error starting server")
 		}
 		log.Info().Msg("Stopped serving new connections")
@@ -80,7 +69,7 @@ func (server *Server) Start() {
 	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownRelease()
 
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatal().Err(err).Msg("HTTP shutdown error")
 	}
 	log.Info().Msg("Graceful shutdown complete")

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	problemJSONHeaderValue = "application/problem+json"
+	problemJsonHeaderValue = "application/problem+json"
 	contentTypeHeader      = "Content-Type"
 )
 
@@ -18,9 +18,9 @@ type ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 func ResponseErrorHandler() ErrorHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		problem := problemForResponseErr(err, r.URL.String())
-		w.Header().Set(contentTypeHeader, problemJSONHeaderValue)
+		w.Header().Set(contentTypeHeader, problemJsonHeaderValue)
 		w.WriteHeader(problem.Status)
-		_ = json.NewEncoder(w).Encode(problem)
+		json.NewEncoder(w).Encode(problem)
 	}
 }
 

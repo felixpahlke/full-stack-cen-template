@@ -13,13 +13,13 @@ var (
 	ErrItemNotFound      = errors.New("item not found")
 )
 
-var _ StrictServerInterface = (*APIHandler)(nil)
+var _ StrictServerInterface = (*ApiHandler)(nil)
 
-type APIHandler struct {
+type ApiHandler struct {
 	db      *pgxpool.Pool
 	querier postgresql.Querier
 }
 
-func NewAPIHandler(db *pgxpool.Pool) *APIHandler {
-	return &APIHandler{db: db, querier: postgresql.New()}
+func NewApiHandler(db *pgxpool.Pool) *ApiHandler {
+	return &ApiHandler{db: db, querier: postgresql.New()}
 }

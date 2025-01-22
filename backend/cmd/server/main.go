@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/rs/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.ibm.com/technology-garage-dach/full-stack-cen-template/backend"
@@ -20,8 +19,8 @@ func main() {
 	config := backend.NewApplicationConfig()
 
 	pgx := postgresql.NewPgxPool(
-		config.PostgreSQLConfig.URL,
-		config.PostgreSQLConfig.Database,
+		config.PostgreSqlConfig.Url,
+		config.PostgreSqlConfig.Database,
 	)
 	defer pgx.Close()
 
@@ -30,7 +29,7 @@ func main() {
 	}
 
 	validationMiddleware, err := middleware.NewJwtValidationMiddleware(
-		config.TokenConfig.IssuerURL,
+		config.TokenConfig.IssuerUrl,
 		errorhandler.RequestErrorHandler(),
 	)
 	if err != nil {
@@ -44,18 +43,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to create request validation middleware")
 	}
 
-	server := httpserver.Server{
-		Port:          config.APIConfig.Port,
-		BasePath:      config.APIConfig.BasePath,
-		V1APIHandler:  v1.NewAPIHandler(pgx),
-		V1Middlewares: []v1.MiddlewareFunc{requestValidationMiddleware.Handler(), validationMiddleware.Handler()},
-		CorsOptions: cors.Options{
-			AllowedOrigins:   config.APIConfig.CORSAllowedOrigins,
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Content-Type", "Authorization"},
-			AllowCredentials: true,
-		},
-	}
-
-	server.Start()
+	httpserver.Start(
+		config.ApiConfig.Port,
+		config.ApiConfig.BasePath,
+		v1.NewApiHandler(pgx),
+		requestValidationMiddleware.Handler(),
+		validationMiddleware.Handler(),
+	)
 }

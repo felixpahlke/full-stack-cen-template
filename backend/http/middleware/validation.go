@@ -49,7 +49,7 @@ func (rvm RequestValidationMiddleware) Handler() func(next http.Handler) http.Ha
 
 				w.Header().Set("Content-Type", "application/problem+json")
 				w.WriteHeader(violationProblem.Status)
-				_ = json.NewEncoder(w).Encode(violationProblem)
+				json.NewEncoder(w).Encode(violationProblem)
 				return
 			}
 			next.ServeHTTP(w, r)
