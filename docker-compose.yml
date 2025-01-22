@@ -104,12 +104,18 @@ services:
     command:
       - "--upstream=http://frontend:5173/"
       - "--upstream=http://backend:8000/api"
+      - "--upstream=http://lokal-token-printer:8080/token"
       - "--provider=oidc"
       - "--email-domain=*"
       - "--pass-authorization-header"
       - "--insecure-oidc-allow-unverified-email"
       - "--http-address=:4180"
       - "--skip-provider-button"
+
+  lokal-token-printer:
+    image: ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
+    volumes:
+      - ./lokal-token-printer-config.conf:/etc/nginx/conf.d/default.conf
 
 volumes:
   app-db-data:
