@@ -9,23 +9,23 @@ import (
 )
 
 type ApplicationConfig struct {
-	ApiConfig        ApiConfig        `envPrefix:"API_"`
-	PostgreSqlConfig PostgreSqlConfig `envPrefix:"POSTGRESQL_"`
+	APIConfig        APIConfig        `envPrefix:"API_"`
+	PostgreSQLConfig PostgreSQLConfig `envPrefix:"POSTGRESQL_"`
 	TokenConfig      TokenConfig      `envPrefix:"TOKEN_"`
 }
 
-type ApiConfig struct {
+type APIConfig struct {
 	Port     int    `env:"PORT" envDefault:"8080"`
 	BasePath string `env:"BASE_PATH" envDefault:"/api"`
 }
 
-type PostgreSqlConfig struct {
-	Url      string `env:"URL,notEmpty"`
+type PostgreSQLConfig struct {
+	URL      string `env:"URL,notEmpty"`
 	Database string `env:"DATABASE,notEmpty"`
 }
 
 type TokenConfig struct {
-	IssuerUrl string `env:"ISSUER_URL,notEmpty"`
+	IssuerURL string `env:"ISSUER_URL,notEmpty"`
 }
 
 func NewApplicationConfig() ApplicationConfig {

@@ -10,12 +10,7 @@ import (
 	"github.ibm.com/technology-garage-dach/full-stack-cen-template/backend/postgresql"
 )
 
-func (a ApiHandler) ReadItems(ctx context.Context, request ReadItemsRequestObject) (ReadItemsResponseObject, error) {
-	user, err := app_context.GetUserFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (a APIHandler) ReadItems(ctx context.Context, request ReadItemsRequestObject) (ReadItemsResponseObject, error) {
 	offset, limit := 0, 100
 
 	if request.Params.Skip != nil {
@@ -39,7 +34,7 @@ func (a ApiHandler) ReadItems(ctx context.Context, request ReadItemsRequestObjec
 			Id:          item.ID,
 			Title:       item.Title,
 			Description: item.Description,
-			OwnerId:     user.Id,
+			OwnerId:     item.OwnerID,
 		}
 	}
 
@@ -49,7 +44,7 @@ func (a ApiHandler) ReadItems(ctx context.Context, request ReadItemsRequestObjec
 	}, nil
 }
 
-func (a ApiHandler) CreateItem(ctx context.Context, request CreateItemRequestObject) (CreateItemResponseObject, error) {
+func (a APIHandler) CreateItem(ctx context.Context, request CreateItemRequestObject) (CreateItemResponseObject, error) {
 	user, err := app_context.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -58,7 +53,7 @@ func (a ApiHandler) CreateItem(ctx context.Context, request CreateItemRequestObj
 	item, err := a.querier.CreateItem(ctx, a.db, postgresql.CreateItemParams{
 		Title:       request.Body.Title,
 		Description: request.Body.Description,
-		OwnerID:     user.Id,
+		OwnerID:     user.ID,
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -78,7 +73,7 @@ func (a ApiHandler) CreateItem(ctx context.Context, request CreateItemRequestObj
 	}, nil
 }
 
-func (a ApiHandler) DeleteItem(ctx context.Context, request DeleteItemRequestObject) (DeleteItemResponseObject, error) {
+func (a APIHandler) DeleteItem(ctx context.Context, request DeleteItemRequestObject) (DeleteItemResponseObject, error) {
 	err := a.querier.DeleteItem(ctx, a.db, request.Id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -91,7 +86,7 @@ func (a ApiHandler) DeleteItem(ctx context.Context, request DeleteItemRequestObj
 
 }
 
-func (a ApiHandler) ReadItem(ctx context.Context, request ReadItemRequestObject) (ReadItemResponseObject, error) {
+func (a APIHandler) ReadItem(ctx context.Context, request ReadItemRequestObject) (ReadItemResponseObject, error) {
 	item, err := a.querier.FindItem(ctx, a.db, request.Id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -108,7 +103,7 @@ func (a ApiHandler) ReadItem(ctx context.Context, request ReadItemRequestObject)
 	}, nil
 }
 
-func (a ApiHandler) UpdateItem(ctx context.Context, request UpdateItemRequestObject) (UpdateItemResponseObject, error) {
+func (a APIHandler) UpdateItem(ctx context.Context, request UpdateItemRequestObject) (UpdateItemResponseObject, error) {
 	user, err := app_context.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -118,7 +113,7 @@ func (a ApiHandler) UpdateItem(ctx context.Context, request UpdateItemRequestObj
 		ID:          request.Id,
 		Title:       request.Body.Title,
 		Description: request.Body.Description,
-		OwnerID:     user.Id,
+		OwnerID:     user.ID,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

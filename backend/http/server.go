@@ -16,13 +16,13 @@ import (
 	"time"
 )
 
-func Start(port int, basePath string, apiHandler *v1.ApiHandler, middlewares ...v1.MiddlewareFunc) {
+func Start(port int, basePath string, apiHandler *v1.APIHandler, middlewares ...v1.MiddlewareFunc) {
 	serveMux := http.NewServeMux()
 
 	serveMux.HandleFunc("GET /openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/yaml")
 		w.WriteHeader(http.StatusOK)
-		w.Write(docs.OpenAPISpec)
+		_, _ = w.Write(docs.OpenAPISpec)
 	})
 
 	serveMux.Handle("GET /swagger-ui/", v5emb.New("swagger-ui", "/openapi.yaml", "/swagger-ui/"))
@@ -46,7 +46,6 @@ func Start(port int, basePath string, apiHandler *v1.ApiHandler, middlewares ...
 			Middlewares: middlewares,
 		},
 	)
-
 	server := http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  5 * time.Second,

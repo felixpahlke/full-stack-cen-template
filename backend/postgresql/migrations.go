@@ -9,7 +9,7 @@ import (
 	_schema "github.ibm.com/technology-garage-dach/full-stack-cen-template/backend/postgresql/.schema"
 )
 
-// migrateSchema migrates the database schema using the provided pgxpool.Pool.
+// MigrateSchema migrates the database schema using the provided pgxpool.Pool.
 func MigrateSchema(pool *pgxpool.Pool) error {
 	migrator, _ := mgx.New(
 		mgx.Migrations(

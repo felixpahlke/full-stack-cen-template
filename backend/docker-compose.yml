@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:12
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+
+  backend:
+    restart: "on-failure"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    environment:
+      - AIR_WATCH=./
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+      target: DEV
+    volumes:
+      - .:/app
+      - /app/tmp  # Temporary directory for built files
+
+    ports:
+      - "8080:8080"
+
+volumes:
+  app-db-data:

@@ -29,8 +29,8 @@ type JwtValidationMiddleware struct {
 	errorHandler func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-func NewJwtValidationMiddleware(issuerUrl string, errorHandler func(w http.ResponseWriter, r *http.Request, err error)) (*JwtValidationMiddleware, error) {
-	jwksPath, err := url.JoinPath(issuerUrl, "/publickeys")
+func NewJwtValidationMiddleware(issuerURL string, errorHandler func(w http.ResponseWriter, r *http.Request, err error)) (*JwtValidationMiddleware, error) {
+	jwksPath, err := url.JoinPath(issuerURL, "/publickeys")
 	if err != nil {
 		return nil, fmt.Errorf("could create jwks path: %w", err)
 	}
@@ -40,13 +40,13 @@ func NewJwtValidationMiddleware(issuerUrl string, errorHandler func(w http.Respo
 		return nil, fmt.Errorf("could not load jwks: %w", err)
 	}
 	return &JwtValidationMiddleware{
-		issuer:       issuerUrl,
+		issuer:       issuerURL,
 		kFunc:        kFunc,
 		errorHandler: errorHandler,
 	}, nil
 }
 
-type AppIdClaims struct {
+type AppIDClaims struct {
 	jwt.RegisteredClaims
 	Email string `json:"email"`
 	Sub   string `json:"sub"`
@@ -55,6 +55,7 @@ type AppIdClaims struct {
 func (middleware *JwtValidationMiddleware) Handler() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 			header := r.Header.Get(AuthorizationHeaderKey)
 			if header == "" || !strings.HasPrefix(header, BearerTokenPrefix) {
 				middleware.errorHandler(w, r, ErrUnauthorized)
@@ -63,7 +64,7 @@ func (middleware *JwtValidationMiddleware) Handler() func(next http.Handler) htt
 
 			tokenString := strings.TrimPrefix(header, BearerTokenPrefix)
 
-			var claims AppIdClaims
+			var claims AppIDClaims
 
 			token, err := jwt.ParseWithClaims(tokenString, &claims, middleware.kFunc.Keyfunc,
 				jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}),
@@ -79,7 +80,7 @@ func (middleware *JwtValidationMiddleware) Handler() func(next http.Handler) htt
 			}
 
 			user := ctx.User{
-				Id:    uuid.MustParse(claims.Sub),
+				ID:    uuid.MustParse(claims.Sub),
 				Email: claims.Email,
 			}
 			next.ServeHTTP(w, r.WithContext(ctx.CreateUserContext(r.Context(), user)))

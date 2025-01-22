@@ -19,8 +19,8 @@ func main() {
 	config := backend.NewApplicationConfig()
 
 	pgx := postgresql.NewPgxPool(
-		config.PostgreSqlConfig.Url,
-		config.PostgreSqlConfig.Database,
+		config.PostgreSQLConfig.URL,
+		config.PostgreSQLConfig.Database,
 	)
 	defer pgx.Close()
 
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	validationMiddleware, err := middleware.NewJwtValidationMiddleware(
-		config.TokenConfig.IssuerUrl,
+		config.TokenConfig.IssuerURL,
 		errorhandler.RequestErrorHandler(),
 	)
 	if err != nil {
@@ -44,9 +44,9 @@ func main() {
 	}
 
 	httpserver.Start(
-		config.ApiConfig.Port,
-		config.ApiConfig.BasePath,
-		v1.NewApiHandler(pgx),
+		config.APIConfig.Port,
+		config.APIConfig.BasePath,
+		v1.NewAPIHandler(pgx),
 		requestValidationMiddleware.Handler(),
 		validationMiddleware.Handler(),
 	)

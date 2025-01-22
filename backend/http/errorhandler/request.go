@@ -12,9 +12,9 @@ func RequestErrorHandler() ErrorHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		problem := problemForRequestErr(err, r.URL.String())
 
-		w.Header().Set(contentTypeHeader, problemJsonHeaderValue)
+		w.Header().Set(contentTypeHeader, problemJSONHeaderValue)
 		w.WriteHeader(problem.Status)
-		json.NewEncoder(w).Encode(problem)
+		_ = json.NewEncoder(w).Encode(problem)
 	}
 }
 

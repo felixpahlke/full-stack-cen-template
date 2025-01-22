@@ -15,6 +15,19 @@ ARG GOARCH=amd64
 ARG CGO_ENABLED=0
 RUN go build -o /go/bin/app ./cmd/server
 
+FROM  docker.io/golang:1.23-alpine AS DEV
+
+ENV GOOS=linux
+ENV CGO_ENABLED=0
+
+WORKDIR /app
+
+RUN apk add --no-cache make && go install github.com/air-verse/air@latest
+
+COPY --from=BUILDER /app .
+
+CMD ["make", "dev/live"]
+
 FROM scratch
 
 COPY --from=BUILDER --chmod=775 /go/bin/app /go/bin/app

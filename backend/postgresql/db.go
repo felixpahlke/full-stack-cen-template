@@ -8,8 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewPgxPool(postgreUrl string, db string) *pgxpool.Pool {
-	pgxConfig, err := pgxpool.ParseConfig(postgreUrl)
+func NewPgxPool(postgreURL string, db string) *pgxpool.Pool {
+	pgxConfig, err := pgxpool.ParseConfig(postgreURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse config for db connection")
 	}
