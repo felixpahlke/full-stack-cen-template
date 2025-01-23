@@ -14,7 +14,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import useAuth from "../../hooks/useAuth";
 import UserMenu from "./UserMenu";
-import { ThemeSwitcher } from "./ThemeSwitcher";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 export function Header() {
   const { logout } = useAuth();
