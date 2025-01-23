@@ -14,7 +14,7 @@ function Dashboard() {
   return (
     <div className="flex flex-col py-12">
       <h2 className="text-2xl">
-        Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
+        Hi, {currentUser?.name || currentUser?.email} 👋🏼
       </h2>
       <p>Welcome back, nice to see you again!</p>
     </div>

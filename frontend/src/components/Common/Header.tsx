@@ -11,31 +11,19 @@ import {
   SideNavItems,
   SkipToContent,
 } from "@carbon/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import type { UserPublic } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import UserMenu from "./UserMenu";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function Header() {
   const { logout } = useAuth();
-  const queryClient = useQueryClient();
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
-
-  const handleLogout = () => {
-    logout();
-  };
 
   const navItems: {
     title: string;
     path: string;
     search?: { page: number };
   }[] = [{ title: "Items", path: "/items", search: { page: 1 } }];
-
-  if (currentUser?.is_superuser) {
-    navItems.push({ title: "Admin", path: "/admin" });
-  }
 
   return (
     <HeaderContainer
@@ -87,7 +75,7 @@ export function Header() {
                     <ThemeSwitcher displayAs="sidenav" />
                   </HeaderMenuItem>
                   <HeaderMenuItem>
-                    <button onClick={handleLogout} className="text-red-500">
+                    <button onClick={logout} className="text-red-500">
                       Logout
                     </button>
                   </HeaderMenuItem>

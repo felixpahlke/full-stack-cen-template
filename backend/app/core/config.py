@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
+    OAUTH2_PROXY_WELL_KNOWN_URL: str
+    OAUTH2_PROXY_OIDC_ISSUER_URL: str
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
