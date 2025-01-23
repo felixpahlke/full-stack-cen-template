@@ -17,6 +17,8 @@ dependencies = [
     "bcrypt==4.0.1",
     "pydantic-settings<3.0.0,>=2.2.1",
     "pyjwt<3.0.0,>=2.8.0",
+    "requests>=2.32.3",
+    "cryptography>=44.0.0",
 ]
 
 [tool.uv]

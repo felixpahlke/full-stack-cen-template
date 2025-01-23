@@ -12,6 +12,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    description="For local development, navigate to <http://localhost:4180/token> to get the Bearer Token for Authentication in Swagger. Just Copy the Token after the word \"Bearer\". You have to input your Identity Providers details in the .env file.",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
     swagger_ui_parameters={"persistAuthorization": True},

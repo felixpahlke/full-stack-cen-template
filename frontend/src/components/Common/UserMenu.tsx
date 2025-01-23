@@ -1,5 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { FiLogOut, FiUser } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {

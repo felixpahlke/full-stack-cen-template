@@ -8,13 +8,13 @@ import {
 import { Edit, MoreVertical, Trash } from "lucide-react";
 import { useState } from "react";
 
-import type { ItemPublic, UserPublic } from "../../client";
+import type { ItemPublic } from "../../client";
 import EditItem from "../Items/EditItem";
 import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
-  value: ItemPublic | UserPublic;
+  value: ItemPublic;
   disabled?: boolean;
 }
 
