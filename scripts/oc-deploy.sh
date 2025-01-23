@@ -141,7 +141,30 @@ done
 
 read -p "Choose a Signup access password (leave empty if users should not be able to signup themselves): " SIGNUP_ACCESS_PASSWORD
 
-# Generate a secure random secret key
+# After the SIGNUP_ACCESS_PASSWORD prompt, add OAuth configuration inputs
+print_status "OAuth Proxy Configuration:"
+echo Head over to your Identity Provider \(AppId\) create a new Application and get the following values:
+echo -e "${GREEN}----------------------------------------${NC}"
+
+read -p "Enter the OAuth cookie domain (e.g., .example.com): " OAUTH_COOKIE_DOMAIN
+
+# OAuth cookie secret validation
+
+read -p "Enter the OAuth client ID: " OAUTH_CLIENT_ID
+read -p "Enter the OAuth client secret: " OAUTH_CLIENT_SECRET
+read -p "Enter the OIDC issuer URL: " OAUTH_OIDC_ISSUER_URL
+read -p "Enter the OIDC well known URL: " OAUTH2_PROXY_WELL_KNOWN_URL
+while true; do
+    read -p "Choose OAuth cookie secret (16, 32 or 64 characters long, this does not come from your Identity Provider): " OAUTH_COOKIE_SECRET
+    if [ ${#OAUTH_COOKIE_SECRET} -eq 16 ] || [ ${#OAUTH_COOKIE_SECRET} -eq 32 ] || [ ${#OAUTH_COOKIE_SECRET} -eq 64 ]; then
+        break
+    else
+        print_error "Cookie secret must be exactly 16, 32 or 64 characters long"
+    fi
+done
+
+
+# Generate secret key for backend
 SECRET_KEY=$(openssl rand -hex 32)
 print_success "Generated secure secret key for backend"
 
@@ -195,16 +218,100 @@ oc exec $POD_NAME -- psql -c 'CREATE DATABASE app;'
 print_status "Deploying frontend..."
 oc new-app --name=frontend --strategy=docker --context-dir=frontend --source-secret=git-secret $GIT_URL
 
-print_status "Exposing frontend service..."
-oc create route edge frontend --service=frontend --port=8080
 
 # Deploy Backend
 print_status "Deploying backend..."
 oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret $GIT_URL
 
+
+
+# Deploy OAuth proxy
+print_status "Deploying OAuth proxy..."
+cat << EOF | oc apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: oauth-proxy
+  template:
+    metadata:
+      labels:
+        deployment: oauth-proxy
+    spec:
+      containers:
+        - name: oauth-proxy
+          image: "quay.io/oauth2-proxy/oauth2-proxy:latest"
+          env:
+            - name: OAUTH2_PROXY_COOKIE_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: cookiedomain
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: cookiesecret
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: clientid
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: clientsecret
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: oidc-issuer-url
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ${APP_NAME}-oauth-proxy-secret
+                  key: redirect-url
+          ports:
+            - containerPort: 4180
+              protocol: TCP
+          args:
+            - "--provider=oidc"
+            - "--pass-authorization-header"
+            - "--insecure-oidc-allow-unverified-email"
+            - "--upstream=http://backend:8000/api/"
+            - "--upstream=http://frontend:8080/"
+            - "--http-address=:4180"
+            - "--skip-provider-button"
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 2
+            periodSeconds: 30
+EOF
+
+# Create service for OAuth proxy
+print_status "Creating OAuth proxy service..."
+oc create service clusterip oauth-proxy --tcp=4180:4180
+
+# Create route for OAuth proxy
+print_status "Creating route for OAuth proxy..."
+oc create route edge oauth-proxy --service=oauth-proxy --port=4180
+
 # Setup backend environment
 print_status "Setting up backend environment..."
-FRONTEND_URL=$(oc get route frontend -o jsonpath='{.spec.host}')
+FRONTEND_URL=$(oc get route oauth-proxy -o jsonpath='{.spec.host}')
 
 oc create secret generic backend-envs \
     --from-literal=POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
@@ -218,14 +325,29 @@ oc create secret generic backend-envs \
     --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
     --from-literal=FIRST_SUPERUSER=$FIRST_SUPERUSER \
-    --from-literal=SIGNUP_ACCESS_PASSWORD=$SIGNUP_ACCESS_PASSWORD
+    --from-literal=SIGNUP_ACCESS_PASSWORD=$SIGNUP_ACCESS_PASSWORD \
+    --from-literal=OAUTH2_PROXY_WELL_KNOWN_URL=$OAUTH2_PROXY_WELL_KNOWN_URL \
+    --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=$OAUTH2_PROXY_OIDC_ISSUER_URL
+
+
+# Create OAuth proxy secret
+print_status "Creating OAuth proxy secret..."
+OAUTH_REDIRECT_URL="https://$FRONTEND_URL/oauth2/callback"
+
+oc create secret generic $APP_NAME-oauth-proxy-secret \
+    --from-literal=cookiedomain=$FRONTEND_URL \
+    --from-literal=cookiesecret=$OAUTH_COOKIE_SECRET \
+    --from-literal=clientid=$OAUTH_CLIENT_ID \
+    --from-literal=clientsecret=$OAUTH_CLIENT_SECRET \
+    --from-literal=oidc-issuer-url=$OAUTH_OIDC_ISSUER_URL \
+    --from-literal=redirect-url=$OAUTH_REDIRECT_URL
 
 print_status "Applying backend environment..."
 oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
 
 # Group resources as one application
 print_status "Grouping resources as one application..."
-oc label deployment/frontend deployment/backend dc/postgresql app.kubernetes.io/part-of=$APP_NAME
+oc label deployment/frontend deployment/backend dc/postgresql deployment/oauth-proxy app.kubernetes.io/part-of=$APP_NAME
 
 # Setup CI/CD webhooks
 print_status "Getting webhook URLs..."
