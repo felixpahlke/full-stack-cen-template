@@ -32,14 +32,6 @@ validate_name() {
     return 0
 }
 
-# Function to validate email
-validate_email() {
-    local email=$1
-    if [[ ! $email =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-        return 1
-    fi
-    return 0
-}
 
 # Function to validate git SSH URL
 validate_git_url() {
@@ -141,54 +133,27 @@ done
 read -p "Choose a Postgres username: " POSTGRES_USER
 read -p "Choose a Postgres password: " POSTGRES_PASSWORD
 
-# Superuser email with validation
-while true; do
-    read -p "Choose a First superuser email: " FIRST_SUPERUSER
-    if validate_email "$FIRST_SUPERUSER"; then
-        break
-    else
-        print_error "Invalid email format. Please enter a valid email address."
-    fi
-done
 
-# Superuser password with length validation
-while true; do
-    read -p "Choose a First superuser password (minimum 8 characters): " FIRST_SUPERUSER_PASSWORD
-    if [ ${#FIRST_SUPERUSER_PASSWORD} -ge 8 ]; then
-        break
-    else
-        print_error "Password must be at least 8 characters long"
-    fi
-done
-
-read -p "Choose a Signup access password (leave empty if users should not be able to signup themselves): " SIGNUP_ACCESS_PASSWORD
 
 # After the SIGNUP_ACCESS_PASSWORD prompt, add OAuth configuration inputs
 print_status "OAuth Proxy Configuration:"
 echo Head over to your Identity Provider \(AppId\) create a new Application and get the following values:
 echo -e "${GREEN}----------------------------------------${NC}"
 
-read -p "Enter the OAuth cookie domain (e.g., .example.com): " OAUTH_COOKIE_DOMAIN
 
 # OAuth cookie secret validation
-
 read -p "Enter the OAuth client ID: " OAUTH_CLIENT_ID
 read -p "Enter the OAuth client secret: " OAUTH_CLIENT_SECRET
-read -p "Enter the OIDC issuer URL: " OAUTH_OIDC_ISSUER_URL
-read -p "Enter the OIDC well known URL: " OAUTH2_PROXY_WELL_KNOWN_URL
+read -p "Enter the OIDC issuer URL (oAuthServerUrl): " OAUTH_OIDC_ISSUER_URL
+read -p "Enter the OIDC well known URL (discoveryEndpoint): " OAUTH2_PROXY_WELL_KNOWN_URL
 while true; do
-    read -p "Choose OAuth cookie secret (16, 32 or 64 characters long, this does not come from your Identity Provider): " OAUTH_COOKIE_SECRET
+    read -p "Choose OAuth cookie secret (16, 32 or 64 characters long, you can choose your own): " OAUTH_COOKIE_SECRET
     if [ ${#OAUTH_COOKIE_SECRET} -eq 16 ] || [ ${#OAUTH_COOKIE_SECRET} -eq 32 ] || [ ${#OAUTH_COOKIE_SECRET} -eq 64 ]; then
         break
     else
         print_error "Cookie secret must be exactly 16, 32 or 64 characters long"
     fi
 done
-
-
-# Generate secret key for backend
-SECRET_KEY=$(openssl rand -hex 32)
-print_success "Generated secure secret key for backend"
 
 # Create SSH keys
 print_status "Creating SSH key pair in ~/.ssh/$PROJECT_NAME/..."
@@ -319,7 +284,19 @@ EOF
 
 # Create service for OAuth proxy
 print_status "Creating OAuth proxy service..."
-oc create service clusterip oauth-proxy --tcp=4180:4180 --selector=deployment=oauth-proxy
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth-proxy
+spec:
+  ports:
+    - name: external
+      port: 4180
+      protocol: TCP
+  selector:
+    deployment: oauth-proxy
+EOF
 
 # Create route for OAuth proxy
 print_status "Creating route for OAuth proxy..."
@@ -331,24 +308,20 @@ FRONTEND_URL=$(oc get route oauth-proxy -o jsonpath='{.spec.host}')
 
 oc create secret generic backend-envs \
     --from-literal=POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    --from-literal=FIRST_SUPERUSER_PASSWORD=$FIRST_SUPERUSER_PASSWORD \
     --from-literal=POSTGRES_DB=app \
     --from-literal=BACKEND_CORS_ORIGINS=https://$FRONTEND_URL \
     --from-literal=POSTGRES_PORT=5432 \
     --from-literal=POSTGRES_SERVER=postgresql \
-    --from-literal=SECRET_KEY=$SECRET_KEY \
     --from-literal=PROJECT_NAME=$PROJECT_NAME \
     --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
-    --from-literal=FIRST_SUPERUSER=$FIRST_SUPERUSER \
-    --from-literal=SIGNUP_ACCESS_PASSWORD=$SIGNUP_ACCESS_PASSWORD \
     --from-literal=OAUTH2_PROXY_WELL_KNOWN_URL=$OAUTH2_PROXY_WELL_KNOWN_URL \
-    --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=$OAUTH2_PROXY_OIDC_ISSUER_URL
+    --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=$OAUTH_OIDC_ISSUER_URL
 
 
 # Create OAuth proxy secret
 print_status "Creating OAuth proxy secret..."
-OAUTH_REDIRECT_URL="https://$FRONTEND_URL/oauth2-redirect"
+OAUTH_REDIRECT_URL="https://$FRONTEND_URL/oauth2/callback"
 
 oc create secret generic $APP_NAME-oauth-proxy-secret \
     --from-literal=cookiedomain=$FRONTEND_URL \
