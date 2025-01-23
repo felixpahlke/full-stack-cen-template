@@ -300,6 +300,7 @@ spec:
             - "--insecure-oidc-allow-unverified-email"
             - "--upstream=http://backend:8000/api/"
             - "--upstream=http://frontend:8080/"
+            - "--email-domain=*"
             - "--http-address=:4180"
             - "--skip-provider-button"
           readinessProbe:
@@ -318,7 +319,7 @@ EOF
 
 # Create service for OAuth proxy
 print_status "Creating OAuth proxy service..."
-oc create service clusterip oauth-proxy --tcp=4180:4180
+oc create service clusterip oauth-proxy --tcp=4180:4180 --selector=deployment=oauth-proxy
 
 # Create route for OAuth proxy
 print_status "Creating route for OAuth proxy..."
@@ -347,7 +348,7 @@ oc create secret generic backend-envs \
 
 # Create OAuth proxy secret
 print_status "Creating OAuth proxy secret..."
-OAUTH_REDIRECT_URL="https://$FRONTEND_URL/oauth2/callback"
+OAUTH_REDIRECT_URL="https://$FRONTEND_URL/oauth2-redirect"
 
 oc create secret generic $APP_NAME-oauth-proxy-secret \
     --from-literal=cookiedomain=$FRONTEND_URL \
@@ -407,5 +408,9 @@ echo
 echo "Once Builds are completed (this can take a few minutes), you can access the application at:"
 echo "https://$FRONTEND_URL"
 echo
+echo "OAuth Redirect URL (you need to add this to your Identity Provider):"
+echo $OAUTH_REDIRECT_URL
+echo
+
 print_status "Please add these webhook URLs to your GitLab/GitHub repository"
 echo
