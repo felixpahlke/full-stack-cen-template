@@ -7,21 +7,21 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
-const { FIRST_SUPERUSER, FIRST_SUPERUSER_PASSWORD, SIGNUP_ACCESS_PASSWORD } =
+const { PLAYWRIGHT_TEST_USER_EMAIL, PLAYWRIGHT_TEST_USER_PASSWORD } =
   process.env;
 
-if (typeof FIRST_SUPERUSER !== "string") {
-  throw new Error("Environment variable FIRST_SUPERUSER is undefined");
+if (typeof PLAYWRIGHT_TEST_USER_EMAIL !== "string") {
+  throw new Error(
+    "Environment variable PLAYWRIGHT_TEST_USER_EMAIL is undefined",
+  );
 }
 
-if (typeof FIRST_SUPERUSER_PASSWORD !== "string") {
-  throw new Error("Environment variable FIRST_SUPERUSER_PASSWORD is undefined");
+if (typeof PLAYWRIGHT_TEST_USER_PASSWORD !== "string") {
+  throw new Error(
+    "Environment variable PLAYWRIGHT_TEST_USER_PASSWORD is undefined",
+  );
 }
 
-if (typeof SIGNUP_ACCESS_PASSWORD !== "string") {
-  throw new Error("Environment variable SIGNUP_ACCESS_PASSWORD is undefined");
-}
-
-export const firstSuperuser = FIRST_SUPERUSER as string;
-export const firstSuperuserPassword = FIRST_SUPERUSER_PASSWORD as string;
-export const accessPassword = SIGNUP_ACCESS_PASSWORD as string;
+export const playwrightTestUserEmail = PLAYWRIGHT_TEST_USER_EMAIL as string;
+export const playwrightTestUserPassword =
+  PLAYWRIGHT_TEST_USER_PASSWORD as string;
