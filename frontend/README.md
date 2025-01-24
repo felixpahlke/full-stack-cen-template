@@ -104,8 +104,10 @@ Then, when you run the frontend, it will use that URL as the base URL for the AP
 The frontend includes initial end-to-end tests using Playwright. To run the tests, you need to have the Docker Compose stack running. Start the stack with the following command:
 
 ```bash
-docker compose up -d --wait backend
+docker compose watch
 ```
+
+For the tests to work with AppID authentication, you need to create a user in your AppID instance. In AppID, go to CloudDirectory -> Users and create a new user. Then you have to set the environment variables `PLAYWRIGHT_TEST_USER_EMAIL` and `PLAYWRIGHT_TEST_USER_PASSWORD` in the `.env` file.
 
 Then, you can run the tests with the following command:
 
