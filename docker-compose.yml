@@ -17,23 +17,23 @@ services:
     ports:
       - "5432:5432"
 
-#  backend:
-#    restart: "on-failure"
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#        restart: true
-#    env_file:
-#      - .env
-#    build:
-#      context: ./backend
-#      dockerfile: ./build/Dockerfile
-#    ports:
-#      - "8080:8080"
-#    develop:
-#      watch:
-#        - action: rebuild
-#          path: ./**/*
+  backend:
+    restart: "on-failure"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - .env
+    build:
+      context: ./backend
+      dockerfile: ./build/Dockerfile
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./**/*
 
   frontend:
     restart: "no"
