@@ -21,13 +21,29 @@ Formatters: (**important because** - otherwise a single change of one line of co
 
 ### Environment Variables
 
-rename the `.env.example` to `.env`
+rename the `.env.example` to `.env` (This is not necessary if you setup via CLI)
 
 ```bash
 mv .env.example .env
 ```
 
-For local development you don't have to necessarily edit the "changethis" passwords etc. Later when we move on to Deployment, we have to change it!
+⬇️ For the Stack to work you will need to provide environment variables for the AppID Instance. ⬇️
+
+## AppID Setup
+
+#### Environment Variables
+
+- You will need an AppID Instance (or a different Identity Provider) for Authentication. You can create one for free in the IBM Cloud. (https://cloud.ibm.com/catalog/services/app-id)
+- In AppID go to "Applications" and click "Add Application". (Best practice: Create one for development and one for production)
+- You will see your Application in the List -> Click on it and you will see the Environment Variables that you need.
+- Fill out the `.env` file with the Environment Variables.
+
+#### Recirect Urls
+
+- In AppID go to "Manage Authentication" -> "Authentication Settings"
+- Add the redirect URLs to you Application:
+- local: http://localhost:4180/oauth2/callback
+- prod (you can add this once you have deployed the oauth-proxy): \<url-to-your-deployed-oauth-proxy\>/oauth2/callback
 
 ## Docker Compose
 
@@ -45,11 +61,13 @@ docker compose watch
 
 - Now you can open your browser and interact with these URLs:
 
-Frontend, built with Docker, with routes handled based on the path: http://localhost:5173
+Frontend, served through the Oauth-Proxy, with routes handled based on the path: http://localhost:4180
 
 Backend, JSON based web API based on OpenAPI: http://localhost:8000
 
 Automatic interactive documentation with Swagger UI (from the OpenAPI backend): http://localhost:8000/docs
+
+You can get the Bearer Token on http://localhost:4180/token to authenticate in the Swagger UI
 
 Adminer, database web administration: http://localhost:8080
 
@@ -64,47 +82,7 @@ docker compose logs
 To check the logs of a specific service, add the name of the service, e.g.:
 
 ```bash
-docker compose logs backend
-```
-
-## Local Development
-
-The Docker Compose files are configured so that each of the services is available in a different port in `localhost`.
-
-For the backend and frontend, they use the same port that would be used by their local development server, so, the backend is at `http://localhost:8000` and the frontend at `http://localhost:5173`.
-
-This way, you could turn off a Docker Compose service and start its local development service, and everything would keep working, because it all uses the same ports.
-
-For example, you can stop that `frontend` service in the Docker Compose, in another terminal, run:
-
-```bash
-docker compose stop frontend
-```
-
-And then start the local frontend development server:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Or you could stop the `backend` Docker Compose service:
-
-```bash
-docker compose stop backend
-```
-
-And then you can run the local development server for the backend:
-
-```bash
-cd backend
-fastapi dev app/main.py
-```
-
-When you are done, shut down all containers with
-
-```bash
-docker compose down
+docker compose logs backend -f
 ```
 
 ## Docker Compose files and env vars
@@ -131,7 +109,7 @@ One way to do it could be to add each environment variable to your CI/CD system,
 
 Development URLs, for local development.
 
-Frontend: http://localhost:5173
+Frontend (Oauth-Proxy): http://localhost:4180
 
 Backend: http://localhost:8000
 
