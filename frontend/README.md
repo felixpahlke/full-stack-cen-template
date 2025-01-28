@@ -27,21 +27,8 @@ The frontend will be started in development mode with hot reloading, inside the 
 docker compose watch
 ```
 
-Open your browser at http://localhost:5173/
+Open your browser at http://localhost:4180/  (this is the Oauth-Proxy, forwarding to the frontend)
 
-### (optional ) Using the Local Frontend Dev Server
-
-Should you still want to use the local dev server, you can do so by following these steps:
-
-```bash
-# Stop the frontend container if running in Docker
-docker compose stop frontend
-
-cd frontend
-npm run dev
-```
-
-Open your browser at http://localhost:5173/
 
 ## Generate Client
 
