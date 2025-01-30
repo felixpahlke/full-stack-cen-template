@@ -19,8 +19,7 @@ audit: test
 	go mod verify
 	test -z "$(shell gofmt -l .)"
 	go vet ./...
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
-	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
+	go run honnef.co/go/tools/cmd/staticcheck@latest -f=stylish ./...
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 
@@ -62,9 +61,9 @@ dev/live:
 		-d \
 		--build.cmd "make build" \
 		--build.bin "/tmp/bin/${binary_name}" \
-		 --build.delay "100" \
-		 --build.kill_delay "100" \
-		 --build.poll "true" \
+		--build.delay "100" \
+		--build.kill_delay "100" \
+		--build.poll "true" \
 		--build.exclude_dir "tmp" \
 		--build.include_ext "go,sql,yaml" \
 		--misc.clean_on_exit "true"

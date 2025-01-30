@@ -15,8 +15,9 @@ type ApplicationConfig struct {
 }
 
 type APIConfig struct {
-	Port     int    `env:"PORT" envDefault:"8080"`
-	BasePath string `env:"BASE_PATH" envDefault:"/api"`
+	Port               int      `env:"PORT" envDefault:"8080"`
+	BasePath           string   `env:"BASE_PATH" envDefault:"/api"`
+	CORSAllowedOrigins []string `env:"CORS_ALLOWED_ORIGINS" envDefault:"http://localhost"`
 }
 
 type PostgreSQLConfig struct {

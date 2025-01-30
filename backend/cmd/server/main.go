@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/rs/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.ibm.com/technology-garage-dach/full-stack-cen-template/backend"
@@ -43,11 +44,18 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to create request validation middleware")
 	}
 
-	httpserver.Start(
-		config.APIConfig.Port,
-		config.APIConfig.BasePath,
-		v1.NewAPIHandler(pgx),
-		requestValidationMiddleware.Handler(),
-		validationMiddleware.Handler(),
-	)
+	server := httpserver.Server{
+		Port:          config.APIConfig.Port,
+		BasePath:      config.APIConfig.BasePath,
+		V1APIHandler:  v1.NewAPIHandler(pgx),
+		V1Middlewares: []v1.MiddlewareFunc{requestValidationMiddleware.Handler(), validationMiddleware.Handler()},
+		CorsOptions: cors.Options{
+			AllowedOrigins:   config.APIConfig.CORSAllowedOrigins,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Content-Type", "Authorization"},
+			AllowCredentials: true,
+		},
+	}
+
+	server.Start()
 }

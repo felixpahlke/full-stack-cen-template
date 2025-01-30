@@ -15,6 +15,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/pb33f/libopenapi v0.20.0
 	github.com/pb33f/libopenapi-validator v0.3.0
+	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.33.0
 	github.com/sqlc-dev/sqlc v1.27.0
 	github.com/stretchr/testify v1.10.0
