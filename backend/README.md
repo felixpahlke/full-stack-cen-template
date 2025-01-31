@@ -119,3 +119,51 @@ This project includes a Makefile to streamline common development tasks such as 
 - `make dev/live` – Starts the application with Air for live hot reloading.
 
 > 💡 Run `make help` to list all available commands with descriptions.
+
+### Migrations
+
+This project uses [mgx](https://github.com/z0ne-dev/mgx) for database migrations. mgx is a Go-native migration tool that enables defining and executing migrations directly in Go code instead of raw SQL files.
+
+Migrations are automatically applied during application startup. mgx maintains a `__migrations` table to track executed migrations.
+
+We manage our database schema and migrations in the postgresql/.schema/ folder, which is also used for SQL code generation with sqlc.
+
+1. Adding a New Schema and Migration
+2. Create a new schema under ./postgresql/.schema/v[n].
+3. Add an execution entry to migrations.go.
+
+Update your SQL statements and regenerate the database client code using:
+
+```shell
+  make generate
+```
+
+> Note: Always ensure your SQL statements are up to date before regenerating your database client.
+
+### Tests
+
+This project follows a pragmatic testing approach by focusing primarily on simple unit tests while leveraging test containers for integration tests when real dependencies are required.
+
+##### Unit Testing Approach
+
+- Write simple, focused unit tests to verify individual functions and components.
+- Avoid unnecessary complexity in unit tests by keeping them isolated.
+- Use mocks where real dependencies are not needed.
+
+##### Using Test with Real Dependencies
+
+When testing requires real dependencies, we can use Testcontainers for Go to spin up lightweight, disposable containers for services like databases.
+
+[Testcontainers](https://testcontainers.com/guides/getting-started-with-testcontainers-for-go/) allows you to programmatically create and manage Docker containers for testing purposes. These containers ensure that tests run in a reproducible and isolated environment.
+
+You can find a sample test using a postgresql database in [./http/v1/items_test.go](./http/v1/items_test.go)
+
+##### Running Tests
+
+Running all tests using:
+
+`go test ./...` or `make test`
+
+> For tests requiring external services, ensure Docker(with colima) or podman is running so that test containers can be provisioned automatically.
+
+By following this approach, we ensure that tests are both fast and reliable while providing the flexibility to validate real-world scenarios when necessary.

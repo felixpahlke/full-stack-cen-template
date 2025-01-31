@@ -34,7 +34,6 @@ services:
     volumes:
       - .:/app
       - /app/tmp  # Temporary directory for built files
-
     ports:
       - "8080:8080"
 
