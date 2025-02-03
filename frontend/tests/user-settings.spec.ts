@@ -243,7 +243,7 @@ test("User can switch from light mode to dark mode", async ({ page }) => {
   // await page.getByLabel("Appearance").locator("span").nth(3).click();
   await page.getByLabel("Dark Mode").click();
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g90"),
+    document.documentElement.classList.contains("dark"),
   );
   expect(isDarkMode).toBe(true);
 });
@@ -253,8 +253,8 @@ test("User can switch from dark mode to light mode", async ({ page }) => {
   await page.getByRole("tab", { name: "Appearance" }).click();
   // await page.getByLabel("Appearance").locator("span").first().click();
   await page.getByLabel("Light Mode").click();
-  const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--white"),
+  const isLightMode = await page.evaluate(
+    () => !document.documentElement.classList.contains("dark"),
   );
   expect(isLightMode).toBe(true);
 });
@@ -269,7 +269,7 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
 
   await logInUser(page, firstSuperuser, firstSuperuserPassword);
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g90"),
+    document.documentElement.classList.contains("dark"),
   );
   expect(isDarkMode).toBe(true);
 });
