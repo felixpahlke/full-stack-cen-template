@@ -1,7 +1,11 @@
-import { Theme as CarbonTheme } from "@carbon/react";
+import { Theme as CarbonThemeProvider } from "@carbon/react";
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "g10" | "g90" | "g100" | "white" | "system";
+const LIGHT_THEME: CarbonTheme = "white";
+const DARK_THEME: CarbonTheme = "g100";
+
+type CarbonTheme = "g10" | "g90" | "g100" | "white";
+type Theme = "light" | "dark" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -11,13 +15,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  actualTheme: Exclude<Theme, "system">;
+  actualTheme: "light" | "dark";
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
-  actualTheme: "white",
+  actualTheme: "light",
   setTheme: () => null,
 };
 
@@ -32,21 +36,20 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-  const [actualTheme, setActualTheme] =
-    useState<Exclude<Theme, "system">>("white");
+  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
-        ? "g90"
-        : "white";
+        ? "dark"
+        : "light";
 
       setActualTheme(systemTheme);
       return;
     }
 
-    setActualTheme(theme as Exclude<Theme, "system">);
+    setActualTheme(theme);
   }, [theme]);
 
   useEffect(() => {
@@ -57,8 +60,10 @@ export function ThemeProvider({
       "cds--g100",
       "dark",
     );
-    document.documentElement.classList.add(`cds--${actualTheme}`);
-    if (actualTheme === "g90" || actualTheme === "g100") {
+
+    const carbonTheme = actualTheme === "dark" ? DARK_THEME : LIGHT_THEME;
+    document.documentElement.classList.add(`cds--${carbonTheme}`);
+    if (actualTheme === "dark") {
       document.documentElement.classList.add("dark");
     }
   }, [actualTheme]);
@@ -74,7 +79,11 @@ export function ThemeProvider({
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      <CarbonTheme theme={actualTheme}>{children}</CarbonTheme>
+      <CarbonThemeProvider
+        theme={actualTheme === "dark" ? DARK_THEME : LIGHT_THEME}
+      >
+        {children}
+      </CarbonThemeProvider>
     </ThemeProviderContext.Provider>
   );
 }

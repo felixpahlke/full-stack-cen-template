@@ -8,7 +8,7 @@ const Appearance = () => {
   const { theme, setTheme } = useTheme();
 
   const handleThemeChange = (value: string) => {
-    setTheme(value as "white" | "g90" | "system");
+    setTheme(value as "light" | "dark" | "system");
   };
 
   return (
@@ -23,16 +23,16 @@ const Appearance = () => {
           className="space-y-4"
         >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="white" id="light" />
+            <RadioGroupItem value="light" id="light" />
             <Label htmlFor="light">Light Mode</Label>
-            {theme === "white" && (
+            {theme === "light" && (
               <Tag type="blue" size="sm">
                 Default
               </Tag>
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="g90" id="dark" />
+            <RadioGroupItem value="dark" id="dark" />
             <Label htmlFor="dark">Dark Mode</Label>
           </div>
           <div className="flex items-center space-x-2">

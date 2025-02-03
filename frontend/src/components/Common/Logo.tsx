@@ -23,7 +23,7 @@ export const Logo = ({
           "w-16": logoSize === "lg",
         })}
         src={
-          actualTheme === "g90" || actualTheme === "g100"
+          actualTheme === "dark"
             ? "/assets/images/ibm-bee-white.png"
             : "/assets/images/ibm-bee-black.png"
         }
