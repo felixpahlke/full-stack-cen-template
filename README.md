@@ -138,9 +138,9 @@ General development docs: [development.md](./docs/development.md).
 
 ## Deployment
 
-Deployment docs: [deployment.md](./docs/deployment.md).
+OpenShift Deployment docs: [oc-deployment.md](./docs/oc-deployment.md).
 
-This includes using Docker Compose, custom local domains, `.env` configurations, etc.
+Code Engine Deployment docs: [ce-deployment.md](./docs/ce-deployment.md).
 
 ## Backend Development
 
@@ -152,4 +152,4 @@ Frontend docs: [frontend/README.md](./frontend/README.md).
 
 ## Release Notes
 
-Check the file [release-notes.md](./release-notes.md).
+Check the file [release-notes.md](./docs/release-notes.md).

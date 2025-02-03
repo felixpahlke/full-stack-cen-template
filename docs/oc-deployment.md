@@ -1,15 +1,34 @@
 # OpenShift Deployment
 
-## Before you begin
+In this guide, we will look at two ways to deploy to OpenShift:
 
-There are two ways to deploy to OpenShift:
+### 1. Using the OpenShift Deployment Script ([../scripts/oc-deploy.sh](../scripts/oc-deploy.sh))
 
-- Using the OpenShift Deployment Script in [../scripts/oc-deploy.sh](../scripts/oc-deploy.sh)
-- Using the OpenShift UI
+Prerequisites:
 
-This guide will use the OpenShift UI.
+- OpenShift CLI installed (`brew install openshift-cli`)
+- Code pushed to a Git repository (GitHub/GitLab)
+- Access to an OpenShift instance
+- Logged in to OpenShift CLI (`oc login --token=<token> --server=<server-url>`) - _( you can grab the token from the OpenShift UI in the top right corner )_
 
-## Our journey to a successful deployment 🏁
+To use the script:
+
+```bash
+chmod +x scripts/oc-deploy.sh
+./scripts/oc-deploy.sh
+```
+
+you might have to change the permissions of the script
+
+```bash
+chmod +x scripts/oc-deploy.sh
+```
+
+The script will guide you through the deployment process and handle all the necessary steps automatically.
+
+_Note: All the steps in the script can be done manually over the terminal with the OpenShift CLI if you prefer to do so._
+
+### 2. Using the OpenShift UI
 
 The steps should be performed in this exact order.
 
@@ -23,10 +42,10 @@ The steps should be performed in this exact order.
 ## Preparation
 
 1. If not already done, have this codebase pushed to your Gitlab/Github repo
-2. Create AccessToken (Gitlab) for your project in Gitlab or create and ssh key (Github) (❗️❗️❗️Currently only tested with Gitlab AccessToken❗️❗️❗️)
+2. Create AccessToken (Gitlab) for your project in Gitlab or create and ssh key (Github) (❗️Currently only tested with Gitlab AccessToken❗️)
 3. Get OpenShift Instance, Open the Console and access the "Developer View"
 4. Create a new project in OpenShift
-5. Put the AccessToken in OpenShift as a Secret (Source Secret) (❗️❗️❗️Currently only tested with Gitlab AccessToken❗️❗️❗️)
+5. Put the AccessToken in OpenShift as a Secret (Source Secret) (❗️Currently only tested with Gitlab AccessToken❗️)
    - Username is empty
    - Password is the token
 
@@ -61,7 +80,7 @@ The steps should be performed in this exact order.
 5. Select Dockerfile as Import Strategy
 6. Define the Name of the Dockerfile to `Dockerfile`
 7. Name your Application (Name for everything alltogether) and this particular Service (the backend)
-   ❗️❗️❗️ make sure to use `backend` as name for the service, otherwise the frontend will not be able to find it ❗️❗️❗️
+   ❗️ make sure to use `backend` as name for the service, otherwise the frontend will not be able to find it ❗️
 
 ![application (backend)](<../img/openshift-deployment-config(2).png>)
 
