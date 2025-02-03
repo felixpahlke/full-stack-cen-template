@@ -20,21 +20,21 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
       <button
         onClick={() => {
           const nextTheme =
-            theme === "white" ? "g90" : theme === "g90" ? "system" : "white";
+            theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
           setTheme(nextTheme);
         }}
         className="flex w-full items-center"
       >
         <span className="mr-2">
-          {theme === "white" ? (
+          {theme === "light" ? (
             <Light className="h-5 w-5" />
-          ) : theme === "g90" ? (
+          ) : theme === "dark" ? (
             <Moon className="h-5 w-5" />
           ) : (
             <BrightnessContrast className="h-5 w-5" />
           )}
         </span>
-        {`Switch to ${theme === "white" ? "Dark" : theme === "g90" ? "System" : "Light"} Mode`}
+        {`Switch to ${theme === "light" ? "Dark" : theme === "dark" ? "System" : "Light"} Mode`}
       </button>
     );
   }
@@ -48,9 +48,9 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
           className="text-cds-text-primary"
           aria-label="Theme switcher"
         >
-          {theme === "white" ? (
+          {theme === "light" ? (
             <Light className="h-5 w-5" />
-          ) : theme === "g90" ? (
+          ) : theme === "dark" ? (
             <Moon className="h-5 w-5" />
           ) : (
             <BrightnessContrast className="h-5 w-5" />
@@ -58,11 +58,11 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("white")}>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
           <Light className="mr-2 h-4 w-4" />
           Light Mode
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("g90")}>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
           <Moon className="mr-2 h-4 w-4" />
           Dark Mode
         </DropdownMenuItem>
