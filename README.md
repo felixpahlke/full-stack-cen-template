@@ -29,14 +29,14 @@ Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix
 
 ### Dashboard Login
 
-![API docs](img/login.png)
+![API docs](.docs/img/login.png)
 
 </td>
 <td>
 
 ### Dashboard - Admin
 
-![API docs](img/dashboard.png)
+![API docs](.docs/img/dashboard.png)
 
 </td>
 </tr>
@@ -45,14 +45,14 @@ Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix
 
 ### Dashboard - Create User
 
-![API docs](img/dashboard-create.png)
+![API docs](.docs/img/dashboard-create.png)
 
 </td>
 <td>
 
 ### Dashboard - Items
 
-![API docs](img/dashboard-items.png)
+![API docs](.docs/img/dashboard-items.png)
 
 </td>
 </tr>
@@ -61,14 +61,14 @@ Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix
 
 ### Dashboard - User Settings
 
-![API docs](img/dashboard-user-settings.png)
+![API docs](.docs/img/dashboard-user-settings.png)
 
 </td>
 <td>
 
 ### Dashboard - Dark Mode
 
-![API docs](img/dashboard-dark.png)
+![API docs](.docs/img/dashboard-dark.png)
 
 </td>
 </tr>
@@ -77,7 +77,7 @@ Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix
 
 ### Interactive API Documentation
 
-![API docs](img/docs.png)
+![API docs](.docs/img/docs.png)
 
 </td>
 <td></td>
