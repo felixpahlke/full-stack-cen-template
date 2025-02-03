@@ -18,6 +18,10 @@
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
 
+## Tutorials
+
+Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix-Pahlke/full-stack-cen-template-tutorials)
+
 <table>
 <tbody>
 <tr>
@@ -134,13 +138,13 @@ git push -u origin main
 
 ## Development
 
-General development docs: [development.md](./development.md).
+General development docs: [development.md](./docs/development.md).
 
 ## Deployment
 
-Deployment docs: [deployment.md](./deployment.md).
+OpenShift Deployment docs: [oc-deployment.md](./docs/oc-deployment.md).
 
-This includes using Docker Compose, custom local domains, `.env` configurations, etc.
+Code Engine Deployment docs: [ce-deployment.md](./docs/ce-deployment.md).
 
 ## Backend Development
 
@@ -152,8 +156,4 @@ Frontend docs: [frontend/README.md](./frontend/README.md).
 
 ## Release Notes
 
-Check the file [release-notes.md](./release-notes.md).
-
-## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+Check the file [release-notes.md](./docs/release-notes.md).
