@@ -138,13 +138,13 @@ git push -u origin main
 
 ## Development
 
-General development docs: [development.md](./docs/development.md).
+General development docs: [development.md](./.docs/development.md).
 
 ## Deployment
 
-OpenShift Deployment docs: [oc-deployment.md](./docs/oc-deployment.md).
+OpenShift Deployment docs: [oc-deployment.md](./.docs/oc-deployment.md).
 
-Code Engine Deployment docs: [ce-deployment.md](./docs/ce-deployment.md).
+Code Engine Deployment docs: [ce-deployment.md](./.docs/ce-deployment.md).
 
 ## Backend Development
 
@@ -156,4 +156,4 @@ Frontend docs: [frontend/README.md](./frontend/README.md).
 
 ## Release Notes
 
-Check the file [release-notes.md](./docs/release-notes.md).
+Check the file [release-notes.md](./.docs/release-notes.md).
