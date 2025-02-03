@@ -18,6 +18,10 @@
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
 
+## Tutorials
+
+Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix-Pahlke/full-stack-cen-template-tutorials)
+
 <table>
 <tbody>
 <tr>
