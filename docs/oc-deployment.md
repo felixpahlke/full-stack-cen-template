@@ -2,6 +2,8 @@
 
 In this guide, we will look at two ways to deploy to OpenShift:
 
+---
+
 ### 1. Using the OpenShift Deployment Script ([../scripts/oc-deploy.sh](../scripts/oc-deploy.sh))
 
 Prerequisites:
@@ -14,7 +16,6 @@ Prerequisites:
 To use the script:
 
 ```bash
-chmod +x scripts/oc-deploy.sh
 ./scripts/oc-deploy.sh
 ```
 
@@ -27,6 +28,8 @@ chmod +x scripts/oc-deploy.sh
 The script will guide you through the deployment process and handle all the necessary steps automatically.
 
 _Note: All the steps in the script can be done manually over the terminal with the OpenShift CLI if you prefer to do so._
+
+---
 
 ### 2. Using the OpenShift UI
 
