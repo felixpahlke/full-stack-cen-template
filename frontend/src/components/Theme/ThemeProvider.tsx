@@ -55,8 +55,12 @@ export function ThemeProvider({
       "cds--g10",
       "cds--g90",
       "cds--g100",
+      "dark",
     );
     document.documentElement.classList.add(`cds--${actualTheme}`);
+    if (actualTheme === "g90" || actualTheme === "g100") {
+      document.documentElement.classList.add("dark");
+    }
   }, [actualTheme]);
 
   const value = {
