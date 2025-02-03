@@ -134,11 +134,11 @@ git push -u origin main
 
 ## Development
 
-General development docs: [development.md](./development.md).
+General development docs: [development.md](./docs/development.md).
 
 ## Deployment
 
-Deployment docs: [deployment.md](./deployment.md).
+Deployment docs: [deployment.md](./docs/deployment.md).
 
 This includes using Docker Compose, custom local domains, `.env` configurations, etc.
 
@@ -153,7 +153,3 @@ Frontend docs: [frontend/README.md](./frontend/README.md).
 ## Release Notes
 
 Check the file [release-notes.md](./release-notes.md).
-
-## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.

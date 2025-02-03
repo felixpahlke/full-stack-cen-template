@@ -1,8 +1,13 @@
-# Full-Stack CEN Template - Deployment
+# OpenShift Deployment
 
 ## Before you begin
 
-❗️❗️❗️ This Readme will describe the deployment on OpenShift using the OpenShift **UI**. The faster and recommended way to deploy to OpenShift is using the [CLI Deployment](cli-deployment.md). ❗️❗️❗️
+There are two ways to deploy to OpenShift:
+
+- Using the OpenShift Deployment Script in [../scripts/oc-deploy.sh](../scripts/oc-deploy.sh)
+- Using the OpenShift UI
+
+This guide will use the OpenShift UI.
 
 ## Our journey to a successful deployment 🏁
 
@@ -25,7 +30,7 @@ The steps should be performed in this exact order.
    - Username is empty
    - Password is the token
 
-![Source Secret](img/openshif-deployment-source-secret.png)
+![Source Secret](../img/openshif-deployment-source-secret.png)
 
 ## Database
 
@@ -34,7 +39,7 @@ The steps should be performed in this exact order.
 3. Click "Create"
 4. If you are not automatically redirected, you can monitor the instanciation progress in "Topology".
 
-![Database](img/openshift-postgres-deployment.png)
+![Database](../img/openshift-postgres-deployment.png)
 
 ❗️Sometimes the database "app" is not created automatically, you can create it manually though.
 
@@ -51,19 +56,19 @@ The steps should be performed in this exact order.
 3. Then enter `/backend` as Context dir
 4. Select the Source Secret, that you have set up before in [Preperation](#preperation)
 
-![advanced options (backend)](<img/openshift-deployment-config(1).png>)
+![advanced options (backend)](<../img/openshift-deployment-config(1).png>)
 
 5. Select Dockerfile as Import Strategy
 6. Define the Name of the Dockerfile to `Dockerfile`
 7. Name your Application (Name for everything alltogether) and this particular Service (the backend)
    ❗️❗️❗️ make sure to use `backend` as name for the service, otherwise the frontend will not be able to find it ❗️❗️❗️
 
-![application (backend)](<img/openshift-deployment-config(2).png>)
+![application (backend)](<../img/openshift-deployment-config(2).png>)
 
 8. Set the port to `8000`
 9. If not already set choose "create route"
 
-![ports (backend)](<img/openshift-deployment-config(3).png>)
+![ports (backend)](<../img/openshift-deployment-config(3).png>)
 
 10. Click "Create" and - again, monitor the deployment progress in "Topology"
 11. Move your database container into the application group (with "⇧shift" + drag&drop)
@@ -83,12 +88,12 @@ We start with the deployment of the frontend. The steps are basically similar to
 6. Define the Name of the Dockerfile to `Dockerfile`
 7. Use the same Application (Name for everything alltogether) and set a new name for this particular Service (the frontend)
 
-![application (frontend)](<img/openshift-frontend-deployment-config(2).png>)
+![application (frontend)](<../img/openshift-frontend-deployment-config(2).png>)
 
 8. Set the port to `8080`
 9. If not already set choose "create route"
 
-![ports (frontend)](<img/openshift-frontend-deployment-config(3).png>)
+![ports (frontend)](<../img/openshift-frontend-deployment-config(3).png>)
 
 10. Click "Create" and - again, monitor the deployment progress in "Topology"
 
@@ -96,16 +101,16 @@ You can either wait for the first successful build, or directly open the BuildCo
 
 11. To do so, we copy the backend URL to our clipboard. This specific URL can be found trough the Topology view.
 
-![Copy Backend URL](img/openshift-access-backend-url.png)
+![Copy Backend URL](../img/openshift-access-backend-url.png)
 
 12. After we copied the URL we open up the BuildConfig of our frontend.
 
-![access buildconfig (frontend)](img/openshift-access-frontend-bc.png)
+![access buildconfig (frontend)](../img/openshift-access-frontend-bc.png)
 
 13. In the top bar of the BuildConfig, we switch the view from Details to Environment.
 14. There we provide the BC with a new Name-Value pair. The name has to be set to `VITE_API_URL` and the Value is the copied URL from our backend.
 
-![access buildconfig (frontend)](img/openshift-frontend-buildconfig.png)
+![access buildconfig (frontend)](../img/openshift-frontend-buildconfig.png)
 
 15. We click on "Save" → head back to the Topology view → Click on the frontend-node → under Builds click on "Start Build".
 16. After the second build is complete, the frontend knows under which URL the backend can be accessed.
@@ -133,14 +138,14 @@ FIRST_SUPERUSER: <myexampleadmin@email.com>
 1. We start with opening the ConfigMaps tab → on the top right corner we click on "Create ConfigMap".
 2. We will provide it with an according name, e.g. `backend-envs` and start filling it with the defined 12 env variables.
 
-![backend env config map](<img/openshift-env-config-map(1).png>)
+![backend env config map](<../img/openshift-env-config-map(1).png>)
 
 3. Save your config and go back to Topology and click on your backends "Deployment"
 4. Go to Environment and link your Env Config Map with "Add all from ConfigMap or Secret"
 
-![backend acces deployment](img/openshift-backend-access-deployment.png)
+![backend acces deployment](../img/openshift-backend-access-deployment.png)
 
-![link config map](/img/openshift-backend-link-configmap.png)
+![link config map](../img/openshift-backend-link-configmap.png)
 
 ## Adminer
 
@@ -156,7 +161,7 @@ Image name from external registry:
 3. Click the route of your Adminer Deployment
 4. Login to Adminer
 
-![adminer login](img/adminer-login.png)
+![adminer login](../img/adminer-login.png)
 
 ## Setup a Deployment Hook
 
@@ -165,8 +170,8 @@ How we can setup the Deployment Hook for some kind of "Continuos Delivery" betwe
 1. Go to your Backend's build config
 2. Copy the **"Generic Webhook"** adress (works for GitLab too)
 
-![copy generic webhook](<img/webhook(1).png>)
+![copy generic webhook](<../img/webhook(1).png>)
 
 3. Create a new Webhook in Gitlab / Github and paste your Webhook URL
 
-![paste webhook](<img/webhook(2).png>)
+![paste webhook](<../img/webhook(2).png>)
