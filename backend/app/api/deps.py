@@ -10,9 +10,8 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.core.db import engine
+from app.core.singleton import Singleton
 from app.schemas import TokenPayload, User
-
-bearer = HTTPBearer()
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -20,42 +19,34 @@ def get_db() -> Generator[Session, None, None]:
         yield session
 
 
+bearer = HTTPBearer()
+
 SessionDep = Annotated[Session, Depends(get_db)]
 
 TokenDep = Annotated[str, Depends(bearer)]
 
 
-class JWKSUrlManager:
-    _instance = None
-    _jwks_url = None
+@Singleton
+class JWKSUrlClient:
+    pyjwk_client: PyJWKClient | None = None
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def get_jwks_url(self) -> str:
-        if self._jwks_url is None:
-            openid_config = requests.get(settings.OAUTH2_PROXY_WELL_KNOWN_URL)
-            openid_config.raise_for_status()
-            self._jwks_url = openid_config.json()["jwks_uri"]
-        return self._jwks_url
+    def __init__(self):
+        openid_config = requests.get(settings.OAUTH2_PROXY_WELL_KNOWN_URL)
+        openid_config.raise_for_status()
+        self.pyjwk_client = PyJWKClient(openid_config.json()["jwks_uri"])
 
 
-def get_jwks_url() -> str:
-    return JWKSUrlManager().get_jwks_url()
-
-
-JWKSUrl = Annotated[str, Depends(get_jwks_url)]
-
-
-def get_current_user(token: TokenDep, jwks_url: JWKSUrl) -> User:
+def get_current_user(token: TokenDep) -> User:
     token = token.credentials
 
-    # Fetch JWKS URL from the OpenID Configuration endpoint
-
-    jwks_client = PyJWKClient(jwks_url)
-    signing_key = jwks_client.get_signing_key_from_jwt(token)
+    try:
+        jwks_client = JWKSUrlClient.instance()
+        signing_key = jwks_client.pyjwk_client.get_signing_key_from_jwt(token)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Failed to get signing key: {str(e)}",
+        )
 
     try:
         data: TokenPayload = jwt.decode(
