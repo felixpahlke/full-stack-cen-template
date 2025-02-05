@@ -50,6 +50,7 @@ type AppIdClaims struct {
 	jwt.RegisteredClaims
 	Email string `json:"email"`
 	Sub   string `json:"sub"`
+	Name  string `json:"name"`
 }
 
 func (middleware *JwtValidationMiddleware) Handler() func(next http.Handler) http.Handler {
@@ -80,6 +81,7 @@ func (middleware *JwtValidationMiddleware) Handler() func(next http.Handler) htt
 
 			user := ctx.User{
 				Id:    uuid.MustParse(claims.Sub),
+				Name:  claims.Name,
 				Email: claims.Email,
 			}
 			next.ServeHTTP(w, r.WithContext(ctx.CreateUserContext(r.Context(), user)))

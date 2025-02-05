@@ -10,6 +10,7 @@ const userContextKey = "user.context"
 
 type User struct {
 	Id    uuid.UUID
+	Name  string
 	Email string
 }
 

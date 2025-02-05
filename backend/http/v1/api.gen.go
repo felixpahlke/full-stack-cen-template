@@ -61,6 +61,13 @@ type Problem struct {
 	Type *string `json:"type,omitempty"`
 }
 
+// User defines model for User.
+type User struct {
+	Email string             `json:"email"`
+	Id    openapi_types.UUID `json:"id"`
+	Name  string             `json:"name"`
+}
+
 // Violation defines model for Violation.
 type Violation struct {
 	// Field A human-readable reference specific to a field of the request.
@@ -127,6 +134,9 @@ type ServerInterface interface {
 	// Update Item
 	// (PUT /v1/items/{id})
 	UpdateItem(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Read User
+	// (GET /v1/users/me)
+	UserMe(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -292,6 +302,26 @@ func (siw *ServerInterfaceWrapper) UpdateItem(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// UserMe operation middleware
+func (siw *ServerInterfaceWrapper) UserMe(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UserMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -417,6 +447,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("DELETE "+options.BaseURL+"/v1/items/{id}", wrapper.DeleteItem)
 	m.HandleFunc("GET "+options.BaseURL+"/v1/items/{id}", wrapper.ReadItem)
 	m.HandleFunc("PUT "+options.BaseURL+"/v1/items/{id}", wrapper.UpdateItem)
+	m.HandleFunc("GET "+options.BaseURL+"/v1/users/me", wrapper.UserMe)
 
 	return m
 }
@@ -622,6 +653,22 @@ func (response UpdateItem422ApplicationProblemPlusJSONResponse) VisitUpdateItemR
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UserMeRequestObject struct {
+}
+
+type UserMeResponseObject interface {
+	VisitUserMeResponse(w http.ResponseWriter) error
+}
+
+type UserMe200JSONResponse User
+
+func (response UserMe200JSONResponse) VisitUserMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Read Items
@@ -639,6 +686,9 @@ type StrictServerInterface interface {
 	// Update Item
 	// (PUT /v1/items/{id})
 	UpdateItem(ctx context.Context, request UpdateItemRequestObject) (UpdateItemResponseObject, error)
+	// Read User
+	// (GET /v1/users/me)
+	UserMe(ctx context.Context, request UserMeRequestObject) (UserMeResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -805,6 +855,30 @@ func (sh *strictHandler) UpdateItem(w http.ResponseWriter, r *http.Request, id o
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateItemResponseObject); ok {
 		if err := validResponse.VisitUpdateItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UserMe operation middleware
+func (sh *strictHandler) UserMe(w http.ResponseWriter, r *http.Request) {
+	var request UserMeRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UserMe(ctx, request.(UserMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UserMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UserMeResponseObject); ok {
+		if err := validResponse.VisitUserMeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
