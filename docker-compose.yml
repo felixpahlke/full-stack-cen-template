@@ -7,7 +7,7 @@ services:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:8000
+        # - VITE_API_URL=http://localhost:8000
         - NODE_ENV=development
       target: base
     ports:
@@ -16,8 +16,8 @@ services:
       npm run dev
       --
       --host 0.0.0.0
-    environment:
-      - VITE_API_URL=http://localhost:8000
+    # environment:
+    #   - VITE_API_URL=http://localhost:8000
     volumes:
       - ./frontend/src/routeTree.gen.ts:/app/src/routeTree.gen.ts
     develop:
@@ -37,7 +37,7 @@ services:
       - "4180:4180"
     command:
       - "--upstream=http://frontend:5173/"
-      - "--upstream=http://backend:8080/api"
+      - "--upstream=http://backend:8080/api/"
       - "--upstream=http://lokal-token-printer:8080/token"
       - "--provider=oidc"
       - "--email-domain=*"
