@@ -12,7 +12,8 @@ const useAuth = () => {
   });
 
   const logout = () => {
-    window.location.href = "/oauth2/sign_out";
+    // oauth2/sign_in - the login page, which also doubles as a sign-out page (it clears cookies)
+    window.location.href = "/oauth2/sign_in";
   };
 
   if (error) {
