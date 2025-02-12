@@ -22,6 +22,19 @@ _This Template is based on [full-stack-fastapi-template](https://github.com/fast
 
 Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix-Pahlke/full-stack-cen-template-tutorials)
 
+## Sample Applications
+
+Check out our Collection of Sample Applications built on top of the template:
+
+- [CE Starter 🚀](https://github.ibm.com/CE-Starter/)
+
+it includes starters such as:
+
+- [watsonx chat - customizable AI-Chat UI](https://github.ibm.com/CE-Starter/custom-watsonx-chat)
+- [watsonx chat - carbon AI-Chat UI](https://github.ibm.com/CE-Starter/carbon-watsonx-chat)
+
+## Screenshots
+
 <table>
 <tbody>
 <tr>
@@ -94,7 +107,7 @@ Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix
 npm create cen-app@latest
 ```
 
-2. Or if you just want to clone it:
+2. Or if you want to clone it and pull updates from the original template:
 
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
@@ -108,32 +121,53 @@ git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git 
 cd my-full-stack
 ```
 
-- Remove the old Git history and start fresh:
+- Set the new origin to your new repository (copy from GitHub interface):
 
 ```bash
-rm -rf .git
+git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 ```
 
-- Initialize a new Git repo:
+- Add the template repository as upstream to get future updates:
 
 ```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -m main
-```
-
-- Create a new Git repo, for example `my-full-stack`.
-- Add the new remote repository as origin:
-
-```bash
-git remote add origin git@github.com:my-username/my-full-stack.git
+git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
 ```
 
 - Push the code to your new repository:
 
 ```bash
 git push -u origin main
+```
+
+### Update From the Original Template
+
+After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
+
+- Make sure you added the original repository as a remote, you can check it with:
+
+```bash
+git remote -v
+
+origin    git@github.ibm.com:my-username/my-full-stack.git (fetch)
+origin    git@github.ibm.com:my-username/my-full-stack.git (push)
+upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (fetch)
+upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
+```
+
+- Pull the latest changes without merging:
+
+```bash
+git pull --no-commit upstream main
+```
+
+This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
+
+- If there are conflicts, solve them in your editor.
+
+- Once you are done, commit the changes:
+
+```bash
+git merge --continue
 ```
 
 ## Development
