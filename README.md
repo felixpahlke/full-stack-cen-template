@@ -18,20 +18,12 @@
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
 
-## Tutorials
+## Sample Applications & Tutorials
 
-Learn how to use this Template with the [TUTORIALS](https://github.ibm.com/Felix-Pahlke/full-stack-cen-template-tutorials)
-
-## Sample Applications
-
-Check out our Collection of Sample Applications built on top of the template:
+Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
 
 - [CE Starter 🚀](https://github.ibm.com/CE-Starter/)
-
-it includes starters such as:
-
-- [watsonx chat - customizable AI-Chat UI](https://github.ibm.com/CE-Starter/custom-watsonx-chat)
-- [watsonx chat - carbon AI-Chat UI](https://github.ibm.com/CE-Starter/carbon-watsonx-chat)
+- [Tutorials](https://github.ibm.com/CE-Starter/full-stack-cen-template-tutorials)
 
 ## Screenshots
 
