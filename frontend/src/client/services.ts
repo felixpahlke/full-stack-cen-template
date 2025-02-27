@@ -4,19 +4,19 @@ import { request as __request } from "./core/request";
 
 import type {
   Body_login_login_access_token,
-  ItemCreate,
-  ItemPublic,
-  ItemUpdate,
-  ItemsPublic,
-  Message,
   Token,
+  UserPublic,
+  Message,
   UpdatePassword,
   UserCreate,
-  UserPublic,
   UserRegister,
+  UsersPublic,
   UserUpdate,
   UserUpdateMe,
-  UsersPublic,
+  ItemCreate,
+  ItemPublic,
+  ItemsPublic,
+  ItemUpdate,
 } from "./models";
 
 export type LoginData = {
@@ -53,8 +53,6 @@ export type UsersData = {
     userId: string;
   };
 };
-
-export type UtilsData = {};
 
 export type ItemsData = {
   ReadItems: {
@@ -93,7 +91,7 @@ export class LoginService {
       formData: formData,
       mediaType: "application/x-www-form-urlencoded",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -131,7 +129,7 @@ export class UsersService {
         limit,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -152,7 +150,7 @@ export class UsersService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -199,7 +197,7 @@ export class UsersService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -220,7 +218,7 @@ export class UsersService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -241,7 +239,7 @@ export class UsersService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -263,7 +261,7 @@ export class UsersService {
         user_id: userId,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -287,7 +285,7 @@ export class UsersService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -309,22 +307,8 @@ export class UsersService {
         user_id: userId,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
-    });
-  }
-}
-
-export class UtilsService {
-  /**
-   * Health Check
-   * @returns boolean Successful Response
-   * @throws ApiError
-   */
-  public static healthCheck(): CancelablePromise<boolean> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/utils/health-check/",
     });
   }
 }
@@ -348,7 +332,7 @@ export class ItemsService {
         limit,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -369,7 +353,7 @@ export class ItemsService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -391,7 +375,7 @@ export class ItemsService {
         id,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -415,7 +399,7 @@ export class ItemsService {
       body: requestBody,
       mediaType: "application/json",
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
@@ -437,7 +421,7 @@ export class ItemsService {
         id,
       },
       errors: {
-        422: "Validation Error",
+        422: `Validation Error`,
       },
     });
   }
