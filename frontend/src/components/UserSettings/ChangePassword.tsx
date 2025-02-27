@@ -7,7 +7,7 @@ import { confirmPasswordRules, handleError, passwordRules } from "../../utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "@/components/Common/Toaster";
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string;

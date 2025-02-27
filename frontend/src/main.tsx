@@ -8,7 +8,7 @@ import { OpenAPI } from "./client";
 
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/Common/Toaster";
 import { ThemeProvider } from "./components/Theme/ThemeProvider";
 
 // this is set at build time
