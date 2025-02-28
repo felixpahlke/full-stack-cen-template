@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { useRef } from "react";
 
 import {
   type ApiError,
@@ -9,23 +10,7 @@ import {
 } from "../../client";
 import { handleError } from "../../utils";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Modal, TextInput } from "@carbon/react";
 import { toast } from "@/components/Common/Toaster";
 
 interface EditItemProps {
@@ -41,7 +26,7 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
     defaultValues: item,
   });
 
-  const mutation = useMutation({
+  const { mutate: updateItem, isPending } = useMutation({
     mutationFn: (data: ItemUpdate) =>
       ItemsService.updateItem({ id: item.id, requestBody: data }),
     onSuccess: () => {
@@ -57,67 +42,63 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<ItemUpdate> = (data) => {
-    mutation.mutate(data);
+  const onSubmit = () => {
+    const data = form.getValues();
+
+    // Title validation
+    if (!data.title || data.title.trim() === "") {
+      form.setError("title", {
+        type: "validate",
+        message: "Title is required",
+      });
+      return;
+    }
+
+    updateItem(data);
   };
 
+  const buttonRef = useRef(null);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-8 px-4 pb-2">
-              <FormField
-                control={form.control}
-                name="title"
-                rules={{ required: "Title is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Title"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Description"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? "Saving..." : "Save"}
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <Modal
+      open={isOpen}
+      onRequestClose={onClose}
+      modalHeading="Edit Item"
+      primaryButtonText={isPending ? "Saving..." : "Save"}
+      secondaryButtonText="Cancel"
+      onRequestSubmit={onSubmit}
+      primaryButtonDisabled={isPending}
+      launcherButtonRef={buttonRef}
+    >
+      <div className="space-y-6 py-4">
+        <TextInput
+          id="title"
+          labelText="Title"
+          placeholder="Title"
+          value={form.watch("title") || ""}
+          onChange={(e) => {
+            form.setValue("title", e.target.value);
+            form.clearErrors("title");
+          }}
+          invalid={!!form.formState.errors.title}
+          invalidText={form.formState.errors.title?.message}
+          required
+        />
+
+        <TextInput
+          id="description"
+          labelText="Description"
+          placeholder="Description"
+          value={form.watch("description") || ""}
+          onChange={(e) => {
+            form.setValue("description", e.target.value);
+            form.clearErrors("description");
+          }}
+          invalid={!!form.formState.errors.description}
+          invalidText={form.formState.errors.description?.message}
+        />
+      </div>
+    </Modal>
   );
 };
 

@@ -157,7 +157,7 @@ export function Toaster() {
   });
 
   return (
-    <div className="fixed right-4 top-16 z-50 flex flex-col">
+    <div className="fixed right-4 top-16 z-[9999] flex flex-col">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <motion.div
