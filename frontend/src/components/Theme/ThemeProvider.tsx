@@ -5,7 +5,7 @@ const LIGHT_THEME: CarbonTheme = "white";
 const DARK_THEME: CarbonTheme = "g100";
 
 type CarbonTheme = "g10" | "g90" | "g100" | "white";
-type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;

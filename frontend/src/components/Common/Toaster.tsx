@@ -1,7 +1,7 @@
 import { ToastNotification, ToastNotificationProps } from "@carbon/react";
 // import * as motion from "motion/react-client";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type ToastType = Exclude<ToastNotificationProps["kind"], undefined>;
 
@@ -115,8 +115,8 @@ export const toast = {
 export function Toaster() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Add event listener when component mounts
-  useState(() => {
+  // Change useState to useEffect for event listener setup
+  useEffect(() => {
     const handleToast = (event: ToastEvent) => {
       const {
         message,
@@ -154,7 +154,7 @@ export function Toaster() {
     window.addEventListener(TOAST_EVENT, handleToast as EventListener);
     return () =>
       window.removeEventListener(TOAST_EVENT, handleToast as EventListener);
-  });
+  }, []); // Add empty dependency array to run only on mount/unmount
 
   return (
     <div className="fixed right-4 top-16 z-[9999] flex flex-col">

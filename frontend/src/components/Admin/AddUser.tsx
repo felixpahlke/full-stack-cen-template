@@ -1,12 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { useRef } from "react";
 
 import { type UserCreate, UsersService } from "../../client";
 import type { ApiError } from "../../client/core/ApiError";
 import { emailPattern, handleError } from "../../utils";
 
-import { Checkbox, Modal, TextInput } from "@carbon/react";
+import {
+  Checkbox,
+  Form,
+  Modal,
+  PasswordInput,
+  Stack,
+  TextInput,
+} from "@carbon/react";
 import { toast } from "@/components/Common/Toaster";
 
 interface AddUserProps {
@@ -21,6 +28,8 @@ interface UserCreateForm extends UserCreate {
 const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   const queryClient = useQueryClient();
   const form = useForm<UserCreateForm>({
+    mode: "onBlur",
+    criteriaMode: "all",
     defaultValues: {
       email: "",
       full_name: "",
@@ -29,8 +38,9 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       is_superuser: false,
       is_active: false,
     },
-    mode: "onChange",
   });
+
+  const { errors, isValid } = form.formState;
 
   const { mutate: createUser, isPending } = useMutation({
     mutationFn: (data: UserCreate) =>
@@ -48,46 +58,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     },
   });
 
-  const onSubmit = () => {
-    console.log("onSubmit");
-    const data = form.getValues();
-
-    // Email validation
-    if (!emailPattern.value.test(data.email)) {
-      form.setError("email", {
-        type: "validate",
-        message: emailPattern.message,
-      });
-      return;
-    }
-
-    // Full name validation
-    if (!data.full_name || data.full_name.trim() === "") {
-      form.setError("full_name", {
-        type: "validate",
-        message: "Full name is required",
-      });
-      return;
-    }
-
-    // Password validation
-    if (!data.password || data.password.trim() === "") {
-      form.setError("password", {
-        type: "validate",
-        message: "Password is required",
-      });
-      return;
-    }
-
-    // Password match validation
-    if (data.password !== data.confirm_password) {
-      form.setError("confirm_password", {
-        type: "validate",
-        message: "The passwords do not match",
-      });
-      return;
-    }
-
+  const onSubmit: SubmitHandler<UserCreateForm> = (data) => {
     createUser(data);
   };
 
@@ -100,86 +71,81 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       modalHeading="Add User"
       primaryButtonText={isPending ? "Saving..." : "Save"}
       secondaryButtonText="Cancel"
-      onRequestSubmit={onSubmit}
-      primaryButtonDisabled={isPending}
+      onRequestSubmit={form.handleSubmit(onSubmit)}
+      primaryButtonDisabled={isPending || !isValid}
       launcherButtonRef={buttonRef}
     >
-      <div className="space-y-6 py-4">
-        <TextInput
-          id="email"
-          labelText="Email"
-          placeholder="Email"
-          type="email"
-          value={form.watch("email")}
-          onChange={(e) => {
-            form.setValue("email", e.target.value);
-            form.clearErrors("email");
-          }}
-          invalid={!!form.formState.errors.email}
-          invalidText={form.formState.errors.email?.message}
-          required
-        />
-
-        <TextInput
-          id="full_name"
-          labelText="Full name"
-          placeholder="Full name"
-          value={form.watch("full_name") || ""}
-          onChange={(e) => {
-            form.setValue("full_name", e.target.value);
-            form.clearErrors("full_name");
-          }}
-          invalid={!!form.formState.errors.full_name}
-          invalidText={form.formState.errors.full_name?.message}
-          required
-        />
-
-        <TextInput
-          id="password"
-          labelText="Set Password"
-          placeholder="Password"
-          type="password"
-          value={form.watch("password")}
-          onChange={(e) => {
-            form.setValue("password", e.target.value);
-            form.clearErrors("password");
-          }}
-          invalid={!!form.formState.errors.password}
-          invalidText={form.formState.errors.password?.message}
-          required
-        />
-
-        <TextInput
-          id="confirm_password"
-          labelText="Confirm Password"
-          placeholder="Confirm password"
-          type="password"
-          value={form.watch("confirm_password")}
-          onChange={(e) => {
-            form.setValue("confirm_password", e.target.value);
-            form.clearErrors("confirm_password");
-          }}
-          invalid={!!form.formState.errors.confirm_password}
-          invalidText={form.formState.errors.confirm_password?.message}
-          required
-        />
-
-        <div className="flex space-x-8">
-          <Checkbox
-            id="is_superuser"
-            labelText="Is superuser?"
-            checked={form.watch("is_superuser")}
-            onChange={(e) => form.setValue("is_superuser", e.target.checked)}
+      <Form className="py-4">
+        <Stack gap={5}>
+          <TextInput
+            id="email"
+            labelText="Email"
+            placeholder="Email"
+            type="email"
+            invalid={!!errors.email}
+            invalidText={errors.email?.message}
+            {...form.register("email", {
+              required: "Email is required",
+              pattern: emailPattern,
+            })}
           />
 
-          <Checkbox
-            id="is_active"
-            labelText="Is active?"
-            checked={form.watch("is_active")}
-            onChange={(e) => form.setValue("is_active", e.target.checked)}
+          <TextInput
+            id="full_name"
+            labelText="Full name"
+            placeholder="Full name"
+            invalid={!!errors.full_name}
+            invalidText={errors.full_name?.message}
+            {...form.register("full_name", {
+              required: "Full name is required",
+              minLength: 3,
+            })}
           />
-        </div>
-      </div>
+
+          <PasswordInput
+            id="password"
+            labelText="Set Password"
+            placeholder="Password"
+            hidePasswordLabel="Hide password"
+            showPasswordLabel="Show password"
+            invalid={!!errors.password}
+            invalidText={errors.password?.message}
+            {...form.register("password", {
+              required: "Password is required",
+            })}
+          />
+
+          <PasswordInput
+            id="confirm_password"
+            labelText="Confirm Password"
+            placeholder="Confirm password"
+            hidePasswordLabel="Hide password"
+            showPasswordLabel="Show password"
+            invalid={!!errors.confirm_password}
+            invalidText={errors.confirm_password?.message}
+            {...form.register("confirm_password", {
+              required: "Confirm password is required",
+              validate: (value) =>
+                value === form.getValues("password") ||
+                "The passwords do not match",
+            })}
+          />
+
+          <div className="flex space-x-8">
+            <Checkbox
+              id="is_superuser"
+              labelText="Is superuser?"
+              {...form.register("is_superuser")}
+            />
+
+            <Checkbox
+              id="is_active"
+              labelText="Is active?"
+              {...form.register("is_active")}
+            />
+          </div>
+        </Stack>
+      </Form>
     </Modal>
   );
 };

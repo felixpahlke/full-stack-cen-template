@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Button } from "@carbon/react";
+import { Add } from "@carbon/icons-react";
 import type { ComponentType, ElementType } from "react";
 import { useState } from "react";
 
@@ -16,11 +16,12 @@ const ActionBar = ({ type, addModalAs }: NavbarProps) => {
     <>
       <div className="flex gap-4 py-8">
         <Button
-          variant="default"
-          className="md:text-base gap-1 text-sm"
+          kind="primary"
+          className="md:text-base text-sm"
           onClick={() => setIsModalOpen(true)}
+          renderIcon={Add}
         >
-          <Plus className="h-4 w-4" /> Add {type}
+          Add {type}
         </Button>
         <AddModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </div>

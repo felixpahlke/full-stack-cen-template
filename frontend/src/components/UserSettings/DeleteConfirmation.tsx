@@ -4,18 +4,7 @@ import { useForm } from "react-hook-form";
 import { type ApiError, UsersService } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import { handleError } from "../../utils";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Modal } from "@carbon/react";
 import { toast } from "@/components/Common/Toaster";
 
 interface DeleteProps {
@@ -51,37 +40,22 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmation Required</AlertDialogTitle>
-            <AlertDialogDescription>
-              All your account data will be{" "}
-              <strong>permanently deleted.</strong> If you are sure, please
-              click <strong>"Confirm"</strong> to proceed. This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel asChild>
-              <Button variant="outline" disabled={isSubmitting}>
-                Cancel
-              </Button>
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                variant="destructive"
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Deleting..." : "Confirm"}
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Modal
+      open={isOpen}
+      onRequestClose={onClose}
+      modalHeading="Confirmation Required"
+      primaryButtonText={isSubmitting ? "Deleting..." : "Confirm"}
+      secondaryButtonText="Cancel"
+      primaryButtonDisabled={isSubmitting}
+      onRequestSubmit={handleSubmit(onSubmit)}
+      danger
+    >
+      <p className="mb-4">
+        All your account data will be <strong>permanently deleted.</strong> If
+        you are sure, please click <strong>"Confirm"</strong> to proceed. This
+        action cannot be undone.
+      </p>
+    </Modal>
   );
 };
 

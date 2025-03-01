@@ -1,7 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tag } from "@carbon/react";
+import { RadioButtonGroup, RadioButton, Tile, Tag } from "@carbon/react";
 import { useTheme } from "../Theme/ThemeProvider";
 
 const Appearance = () => {
@@ -12,36 +9,35 @@ const Appearance = () => {
   };
 
   return (
-    <Card className="max-w-md">
-      <CardHeader>
-        <CardTitle>Appearance</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <RadioGroup
-          value={theme}
-          onValueChange={handleThemeChange}
-          className="space-y-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="light" id="light" />
-            <Label htmlFor="light">Light Mode</Label>
-            {theme === "light" && (
-              <Tag type="blue" size="sm">
-                Default
-              </Tag>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="dark" id="dark" />
-            <Label htmlFor="dark">Dark Mode</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="system" id="system" />
-            <Label htmlFor="system">System Default</Label>
-          </div>
-        </RadioGroup>
-      </CardContent>
-    </Card>
+    <Tile className="max-w-md">
+      <h3 className="mb-4 text-lg font-medium">Appearance</h3>
+      <RadioButtonGroup
+        className="mt-4"
+        name="theme-selection"
+        valueSelected={theme}
+        onChange={(value) =>
+          handleThemeChange(value ? value.toString() : "system")
+        }
+        orientation="vertical"
+      >
+        <RadioButton
+          id="light"
+          labelText={
+            <div className="flex items-center">
+              <span className="mr-2">Light Mode</span>
+              {theme === "light" && (
+                <Tag type="blue" size="sm" className="my-0">
+                  Default
+                </Tag>
+              )}
+            </div>
+          }
+          value="light"
+        />
+        <RadioButton id="dark" labelText="Dark Mode" value="dark" />
+        <RadioButton id="system" labelText="System Default" value="system" />
+      </RadioButtonGroup>
+    </Tile>
   );
 };
 

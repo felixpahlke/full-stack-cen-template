@@ -1,12 +1,8 @@
 import { BrightnessContrast, Light, Moon } from "@carbon/icons-react";
-import { useTheme } from "../Theme/ThemeProvider";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Theme, useTheme } from "../Theme/ThemeProvider";
+import { Button } from "@carbon/react";
+import { Menu, MenuItemRadioGroup } from "@carbon/react";
+import { useRef, useState } from "react";
 
 interface ThemeSwitcherProps {
   displayAs?: "dropdown" | "sidenav";
@@ -14,6 +10,8 @@ interface ThemeSwitcherProps {
 
 export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (displayAs === "sidenav") {
     return (
@@ -39,14 +37,42 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
     );
   }
 
+  const themeItems = ["Light Mode", "Dark Mode", "System"];
+  const themeValues = ["light", "dark", "system"];
+
+  const handleThemeChange = (selectedItem: string) => {
+    const index = themeItems.indexOf(selectedItem);
+    if (index !== -1) {
+      setTheme(themeValues[index] as Theme);
+    }
+    setIsOpen(false);
+  };
+
+  const getSelectedThemeLabel = () => {
+    const index = themeValues.indexOf(theme);
+    return themeItems[index];
+  };
+
+  // Calculate position for the menu when button is clicked
+  const getMenuPosition = () => {
+    if (!buttonRef.current) return { x: 0, y: 0 };
+
+    const rect = buttonRef.current.getBoundingClientRect();
+
+    return {
+      x: rect.left + 20,
+      y: rect.bottom,
+    };
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="hidden lg:flex" asChild>
+    <>
+      <div className="h-full">
         <Button
-          variant="ghost"
-          size="icon"
-          className="text-cds-text-primary"
-          aria-label="Theme switcher"
+          ref={buttonRef}
+          kind="ghost"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex h-12 items-center"
         >
           {theme === "light" ? (
             <Light className="h-5 w-5" />
@@ -56,22 +82,24 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
             <BrightnessContrast className="h-5 w-5" />
           )}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Light className="mr-2 h-4 w-4" />
-          Light Mode
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          Dark Mode
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <BrightnessContrast className="mr-2 h-4 w-4" />
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        {isOpen && buttonRef.current && (
+          <Menu
+            label="Theme"
+            open={isOpen}
+            onClose={() => setIsOpen(false)}
+            {...getMenuPosition()}
+          >
+            <MenuItemRadioGroup
+              label="Theme"
+              items={themeItems}
+              selectedItem={getSelectedThemeLabel()}
+              // @ts-ignore
+              onChange={(item) => handleThemeChange(item)}
+            />
+          </Menu>
+        )}
+      </div>
+    </>
   );
 }
 

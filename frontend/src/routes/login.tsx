@@ -1,12 +1,5 @@
-import {
-  Button,
-  Form,
-  Link,
-  PasswordInput,
-  Stack,
-  TextInput,
-} from "@carbon/react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { Logo } from "@/components/Common/Logo";
@@ -49,8 +42,8 @@ function Login() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
       <Form onSubmit={form.handleSubmit(onSubmit)}>
-        <Stack gap={6}>
-          <Logo className="mb-3 w-full" />
+        <Stack gap={5}>
+          <Logo className="mb-2 w-full" />
 
           <TextInput
             id="username"
@@ -79,12 +72,12 @@ function Login() {
             />{" "}
           </div>
 
-          <Button type="submit" className="w-full max-w-full">
+          <Button type="submit" className="mt-4 w-full max-w-full">
             {form.formState.isSubmitting ? "Loading..." : "Log In"}
           </Button>
 
           <div className="flex w-full justify-center gap-2">
-            Don't have an account? <Link href="/signup">Sign up</Link>
+            Don't have an account? <Link to="/signup">Sign up</Link>
           </div>
         </Stack>
       </Form>
