@@ -59,7 +59,7 @@ const useAuth = () => {
       }
 
       toast.error("Something went wrong.", {
-        description: errDetail,
+        caption: errDetail,
       });
     },
     onSettled: () => {
