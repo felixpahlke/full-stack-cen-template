@@ -1,5 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
-import { FiLogOut, FiUser } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
 import { Button, Menu, MenuItem } from "@carbon/react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@carbon/icons-react";
@@ -14,7 +13,6 @@ const UserMenu = ({ className }: UserMenuProps) => {
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
   const handleLogout = async () => {
     logout();
     setIsOpen(false);
