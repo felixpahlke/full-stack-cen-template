@@ -30,7 +30,7 @@ interface ToastOptions {
   duration?: number;
 }
 
-// function to create a toast
+// functions to create a toast
 export const toast = {
   success: (message: string, options?: ToastOptions) => {
     window.dispatchEvent(
@@ -115,7 +115,6 @@ export const toast = {
 export function Toaster() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Change useState to useEffect for event listener setup
   useEffect(() => {
     const handleToast = (event: ToastEvent) => {
       const {
@@ -145,7 +144,6 @@ export function Toaster() {
 
       setToasts((prev) => [...prev, newToast]);
 
-      // Auto-remove toast after specified timeout or default 5 seconds
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
       }, duration || DEFAULT_DURATION);
@@ -154,7 +152,7 @@ export function Toaster() {
     window.addEventListener(TOAST_EVENT, handleToast as EventListener);
     return () =>
       window.removeEventListener(TOAST_EVENT, handleToast as EventListener);
-  }, []); // Add empty dependency array to run only on mount/unmount
+  }, []);
 
   return (
     <div className="fixed right-4 top-16 z-[9999] flex flex-col">
