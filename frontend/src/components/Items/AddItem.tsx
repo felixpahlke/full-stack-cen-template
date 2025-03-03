@@ -6,7 +6,7 @@ import { type ApiError, type ItemCreate, ItemsService } from "../../client";
 import { handleError } from "../../utils";
 
 import { Form, Modal, Stack, TextInput } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface AddItemProps {
   isOpen: boolean;

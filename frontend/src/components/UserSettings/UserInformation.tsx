@@ -14,7 +14,7 @@ import {
   FormGroup,
   FormLabel,
 } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface UserUpdateForm extends UserUpdateMe {}
 

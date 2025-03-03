@@ -3,10 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Tabs, Tab, TabList, TabPanel, TabPanels } from "@carbon/react";
 
 import type { UserPublic } from "../../client";
-import Appearance from "../../components/UserSettings/Appearance";
-import ChangePassword from "../../components/UserSettings/ChangePassword";
-import DeleteAccount from "../../components/UserSettings/DeleteAccount";
-import UserInformation from "../../components/UserSettings/UserInformation";
+import Appearance from "../../components/userSettings/Appearance";
+import ChangePassword from "../../components/userSettings/ChangePassword";
+import DeleteAccount from "../../components/userSettings/DeleteAccount";
+import UserInformation from "../../components/userSettings/UserInformation";
 
 const tabsConfig = [
   { title: "My profile", component: UserInformation },

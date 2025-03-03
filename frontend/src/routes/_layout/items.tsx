@@ -14,9 +14,9 @@ import { useEffect } from "react";
 import { z } from "zod";
 
 import { ItemsService } from "../../client";
-import ActionBar from "../../components/Common/ActionsBar";
-import ActionsMenu from "../../components/Common/ActionsMenu";
-import AddItem from "../../components/Items/AddItem";
+import ActionBar from "../../components/common/ActionsBar";
+import ActionsMenu from "../../components/common/ActionsMenu";
+import AddItem from "../../components/items/AddItem";
 
 const itemsSearchSchema = z.object({
   page: z.number().catch(1),

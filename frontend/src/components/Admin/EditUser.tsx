@@ -18,7 +18,7 @@ import {
   Stack,
   TextInput,
 } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface EditUserProps {
   user: UserPublic;
@@ -86,7 +86,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
       <Form className="py-4">
         <Stack gap={5}>
           <TextInput
-            id="email"
+            id={`edit-user-email-${user.id}`}
             labelText="Email"
             placeholder="Email"
             type="email"
@@ -99,7 +99,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
           />
 
           <TextInput
-            id="full_name"
+            id={`edit-user-fullname-${user.id}`}
             labelText="Full name"
             placeholder="Full name"
             invalid={!!errors.full_name}
@@ -108,7 +108,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
           />
 
           <PasswordInput
-            id="password"
+            id={`edit-user-password-${user.id}`}
             labelText="Set Password"
             placeholder="Password"
             hidePasswordLabel="Hide password"
@@ -124,7 +124,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
           />
 
           <PasswordInput
-            id="confirm_password"
+            id={`edit-user-confirm-password-${user.id}`}
             labelText="Confirm Password"
             placeholder="Confirm password"
             hidePasswordLabel="Hide password"
@@ -141,13 +141,13 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
 
           <div className="flex space-x-8">
             <Checkbox
-              id="is_superuser"
+              id={`edit-user-is-superuser-${user.id}`}
               labelText="Is superuser?"
               {...form.register("is_superuser")}
             />
 
             <Checkbox
-              id="is_active"
+              id={`edit-user-is-active-${user.id}`}
               labelText="Is active?"
               {...form.register("is_active")}
             />

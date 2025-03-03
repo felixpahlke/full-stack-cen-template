@@ -5,7 +5,7 @@ import { type ApiError, type UpdatePassword, UsersService } from "../../client";
 import { handleError } from "../../utils";
 
 import { Button, Form, PasswordInput, Stack, Tile } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string;
@@ -92,11 +92,7 @@ const ChangePassword = () => {
           />
 
           <div>
-            <Button
-              type="submit"
-              kind="primary"
-              disabled={isPending || !isValid}
-            >
+            <Button type="submit" kind="primary" disabled={isPending}>
               {isPending ? "Saving..." : "Save"}
             </Button>
           </div>

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 
 import { ItemsService, UsersService } from "../../client";
 import { Modal } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface DeleteProps {
   type: string;

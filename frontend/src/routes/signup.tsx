@@ -2,7 +2,7 @@ import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { Logo } from "@/components/Common/Logo";
+import { Logo } from "@/components/common/Logo";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
@@ -36,6 +36,8 @@ function SignUp() {
     },
   });
 
+  const { errors, isValid } = form.formState;
+
   const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
     signUpMutation.mutate(data);
   };
@@ -49,8 +51,8 @@ function SignUp() {
             id="full_name"
             labelText="Full Name"
             placeholder="Full Name"
-            invalid={!!form.formState.errors.full_name}
-            invalidText={form.formState.errors.full_name?.message}
+            invalid={!!errors.full_name}
+            invalidText={errors.full_name?.message}
             {...form.register("full_name", {
               required: "Full Name is required",
               minLength: 3,
@@ -61,8 +63,8 @@ function SignUp() {
             id="email"
             labelText="Email"
             placeholder="Email"
-            invalid={!!form.formState.errors.email}
-            invalidText={form.formState.errors.email?.message}
+            invalid={!!errors.email}
+            invalidText={errors.email?.message}
             {...form.register("email", {
               required: "Email is required",
               pattern: emailPattern,
@@ -73,8 +75,8 @@ function SignUp() {
             id="password"
             labelText="Password"
             placeholder="Password"
-            invalid={!!form.formState.errors.password}
-            invalidText={form.formState.errors.password?.message}
+            invalid={!!errors.password}
+            invalidText={errors.password?.message}
             {...form.register("password", passwordRules())}
           />
 
@@ -82,8 +84,8 @@ function SignUp() {
             id="confirm_password"
             labelText="Repeat Password"
             placeholder="Repeat Password"
-            invalid={!!form.formState.errors.confirm_password}
-            invalidText={form.formState.errors.confirm_password?.message}
+            invalid={!!errors.confirm_password}
+            invalidText={errors.confirm_password?.message}
             {...form.register(
               "confirm_password",
               confirmPasswordRules(form.getValues),
@@ -94,15 +96,15 @@ function SignUp() {
             id="access_password"
             labelText="Access Password"
             placeholder="Access Password"
-            invalid={!!form.formState.errors.access_password}
-            invalidText={form.formState.errors.access_password?.message}
+            invalid={!!errors.access_password}
+            invalidText={errors.access_password?.message}
             {...form.register("access_password", {
               required: "Access Password is required",
             })}
           />
 
           <Button type="submit" className="mt-4 w-full max-w-full">
-            {form.formState.isSubmitting ? "loading..." : "Sign Up"}
+            {signUpMutation.isPending ? "loading..." : "Sign Up"}
           </Button>
 
           <div className="mt-4 flex w-full justify-center gap-2">

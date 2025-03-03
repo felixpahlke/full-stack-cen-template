@@ -1,4 +1,4 @@
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 import type { ApiError } from "./client";
 
 export const emailPattern = {

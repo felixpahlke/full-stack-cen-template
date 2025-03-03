@@ -14,7 +14,7 @@ import {
   Stack,
   TextInput,
 } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface AddUserProps {
   isOpen: boolean;

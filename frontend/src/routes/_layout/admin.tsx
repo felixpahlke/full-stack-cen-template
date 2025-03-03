@@ -15,9 +15,9 @@ import { useEffect } from "react";
 import { z } from "zod";
 
 import { type UserPublic, UsersService } from "../../client";
-import AddUser from "../../components/Admin/AddUser";
-import ActionsBar from "../../components/Common/ActionsBar";
-import ActionsMenu from "../../components/Common/ActionsMenu";
+import AddUser from "../../components/admin/AddUser";
+import ActionsBar from "../../components/common/ActionsBar";
+import ActionsMenu from "../../components/common/ActionsMenu";
 
 const usersSearchSchema = z.object({
   page: z.number().catch(1),
@@ -152,8 +152,8 @@ function UsersTable() {
               ) : (
                 rows.map((row) => (
                   <TableRow key={row.id}>
-                    {row.cells.map((cell) => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
+                    {row.cells.map((cell, i) => (
+                      <TableCell key={i}>{cell.value}</TableCell>
                     ))}
                   </TableRow>
                 ))

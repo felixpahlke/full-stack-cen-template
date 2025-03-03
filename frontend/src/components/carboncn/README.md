@@ -1,6 +1,6 @@
 # CarbonCN
 
-CarbonCN is a fork of shadcn/ui that mimics the Carbon Design System. It provides customizable components that you can add to your project when the standard Carbon components don't meet your specific needs.
+CarbonCN is a fork of shadcn/ui that mimics the Carbon Design System. It provides customizable components that you can add to your project when the standard Carbon components don't meet your specific needs. You can use them in addition to the Carbon components as they are designed to work together.
 
 ## Usage
 

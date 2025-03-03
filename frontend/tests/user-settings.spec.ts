@@ -234,14 +234,13 @@ test.describe("Change password with invalid data", () => {
 test("Appearance tab is visible", async ({ page }) => {
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Appearance" }).click();
-  await expect(page.getByLabel("Appearance")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();
 });
 
 test("User can switch from light mode to dark mode", async ({ page }) => {
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Appearance" }).click();
-  // await page.getByLabel("Appearance").locator("span").nth(3).click();
-  await page.getByLabel("Dark Mode").click();
+  await page.getByText("Dark Mode").click();
   const isDarkMode = await page.evaluate(() =>
     document.documentElement.classList.contains("dark"),
   );
@@ -251,8 +250,7 @@ test("User can switch from light mode to dark mode", async ({ page }) => {
 test("User can switch from dark mode to light mode", async ({ page }) => {
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Appearance" }).click();
-  // await page.getByLabel("Appearance").locator("span").first().click();
-  await page.getByLabel("Light Mode").click();
+  await page.getByText("Light Mode").click();
   const isLightMode = await page.evaluate(
     () => !document.documentElement.classList.contains("dark"),
   );
@@ -262,8 +260,7 @@ test("User can switch from dark mode to light mode", async ({ page }) => {
 test("Selected mode is preserved across sessions", async ({ page }) => {
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Appearance" }).click();
-  // await page.getByLabel("Appearance").locator("span").nth(3).click();
-  await page.getByLabel("Dark Mode").click();
+  await page.getByText("Dark Mode").click();
 
   await logOutUser(page);
 

@@ -5,7 +5,7 @@ import { type ApiError, UsersService } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import { handleError } from "../../utils";
 import { Modal } from "@carbon/react";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 
 interface DeleteProps {
   isOpen: boolean;

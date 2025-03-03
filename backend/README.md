@@ -29,17 +29,21 @@ $ source .venv/bin/activate
 
 Make sure your editor is using the correct Python virtual environment, with the interpreter at `backend/.venv/bin/python`.
 
+_(To do that, press `Cmd+Shift+P` and search for `Python: Select Interpreter` --> Click on `Enter interpreter path` --> Enter interpreter path `backend/.venv/bin/python`.)_
+
 Modify or add SQLModel models for data and SQL tables in `./backend/app/models.py`, API endpoints in `./backend/app/api/`, CRUD (Create, Read, Update, Delete) utils in `./backend/app/crud.py`.
 
 ## VS Code
 
 There are already configurations in place to run the backend through the VS Code debugger, so that you can use breakpoints, pause and explore variables, etc.
 
+Make sure your venv is activated and your Python interpreter is set correctly, explained in the previous section ⬆️.
+
 The setup is also already configured so you can run the tests through the VS Code Python tests tab.
 
-## Docker Compose Override
+## Docker Compose
 
-During development, you can change Docker Compose settings that will only affect the local development environment in the file `docker-compose.override.yml`.
+During development, you can change Docker Compose settings that will only affect the local development environment in the file `docker-compose.yml`.
 
 The changes to that file only affect the local development environment, not the production environment. So, you can add "temporary" changes that help the development workflow.
 
@@ -50,8 +54,6 @@ There is also a command override that runs `fastapi run --reload` instead of the
 ```console
 $ docker compose watch
 ```
-
-There is also a commented out `command` override, you can uncomment it and comment the default one. It makes the backend container run a process that does "nothing", but keeps the container alive. That allows you to get inside your running container and execute commands inside, for example a Python interpreter to test installed dependencies, or start the development server that reloads when it detects changes.
 
 To get inside the container with a `bash` session you can start the stack with:
 
@@ -164,11 +166,3 @@ $ alembic upgrade head
 ```
 
 If you don't want to start with the default models and want to remove them / modify them, from the beginning, without having any previous revision, you can remove the revision files (`.py` Python files) under `./backend/app/alembic/versions/`. And then create a first migration as described above.
-
-## Email Templates
-
-The email templates are in `./backend/app/email-templates/`. Here, there are two directories: `build` and `src`. The `src` directory contains the source files that are used to build the final email templates. The `build` directory contains the final email templates that are used by the application.
-
-Before continuing, ensure you have the [MJML extension](https://marketplace.visualstudio.com/items?itemName=attilabuti.vscode-mjml) installed in your VS Code.
-
-Once you have the MJML extension installed, you can create a new email template in the `src` directory. After creating the new email template and with the `.mjml` file open in your editor, open the command palette with `Ctrl+Shift+P` and search for `MJML: Export to HTML`. This will convert the `.mjml` file to a `.html` file and now you can save it in the build directory.

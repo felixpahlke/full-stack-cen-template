@@ -1,5 +1,5 @@
 import { BrightnessContrast, Light, Moon } from "@carbon/icons-react";
-import { Theme, useTheme } from "../Theme/ThemeProvider";
+import { Theme, useTheme } from "../theme/ThemeProvider";
 import { Button } from "@carbon/react";
 import { Menu, MenuItemRadioGroup } from "@carbon/react";
 import { useRef, useState } from "react";

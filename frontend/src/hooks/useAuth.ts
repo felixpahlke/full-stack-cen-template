@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AxiosError } from "axios";
-import { toast } from "@/components/Common/Toaster";
+import { toast } from "@/components/common/Toaster";
 import {
   type Body_login_login_access_token as AccessToken,
   ApiError,

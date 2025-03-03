@@ -1,5 +1,5 @@
 import { RadioButtonGroup, RadioButton, Tile, Tag } from "@carbon/react";
-import { useTheme } from "../Theme/ThemeProvider";
+import { useTheme } from "../theme/ThemeProvider";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();

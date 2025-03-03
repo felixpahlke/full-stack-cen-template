@@ -3,9 +3,9 @@ import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
 
 import type { ItemPublic, UserPublic } from "../../client";
-import EditUser from "../Admin/EditUser";
-import EditItem from "../Items/EditItem";
-import Delete from "./DeleteAlert";
+import EditUser from "../admin/EditUser";
+import EditItem from "../items/EditItem";
+import Delete from "../common/DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
