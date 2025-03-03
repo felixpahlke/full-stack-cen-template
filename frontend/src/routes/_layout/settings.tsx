@@ -1,12 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Tabs, Tab, TabList, TabPanel, TabPanels } from "@carbon/react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UserPublic } from "../../client";
-import Appearance from "../../components/UserSettings/Appearance";
-import ChangePassword from "../../components/UserSettings/ChangePassword";
-import DeleteAccount from "../../components/UserSettings/DeleteAccount";
-import UserInformation from "../../components/UserSettings/UserInformation";
+import Appearance from "../../components/user-settings/Appearance";
+import ChangePassword from "../../components/user-settings/ChangePassword";
+import DeleteAccount from "../../components/user-settings/DeleteAccount";
+import UserInformation from "../../components/user-settings/UserInformation";
 
 const tabsConfig = [
   { title: "My profile", component: UserInformation },
@@ -27,28 +27,21 @@ function UserSettings() {
     : tabsConfig;
 
   return (
-    <div className="container">
+    <div className="min-w-96">
       <h1 className="py-12 text-2xl font-bold">User Settings</h1>
-      <Tabs defaultValue={finalTabs[0].title.toLowerCase().replace(" ", "-")}>
-        <TabsList className="w-full max-w-md">
+      <Tabs>
+        <TabList className="" aria-label="User Settings">
           {finalTabs.map((tab, index) => (
-            <TabsTrigger
-              key={index}
-              value={tab.title.toLowerCase().replace(" ", "-")}
-              className="w-full"
-            >
-              {tab.title}
-            </TabsTrigger>
+            <Tab key={index}>{tab.title}</Tab>
           ))}
-        </TabsList>
-        {finalTabs.map((tab, index) => (
-          <TabsContent
-            key={index}
-            value={tab.title.toLowerCase().replace(" ", "-")}
-          >
-            <tab.component />
-          </TabsContent>
-        ))}
+        </TabList>
+        <TabPanels>
+          {finalTabs.map((tab, index) => (
+            <TabPanel key={index}>
+              <tab.component />
+            </TabPanel>
+          ))}
+        </TabPanels>
       </Tabs>
     </div>
   );

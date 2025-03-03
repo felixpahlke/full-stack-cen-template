@@ -1,15 +1,8 @@
-import {
-  Button,
-  Form,
-  Link,
-  PasswordInput,
-  Stack,
-  TextInput,
-} from "@carbon/react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
-import { Logo } from "@/components/Common/Logo";
+import { Logo } from "@/components/common/Logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
@@ -49,9 +42,8 @@ function Login() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
       <Form onSubmit={form.handleSubmit(onSubmit)}>
-        <Stack gap={6}>
-          <Logo className="mb-3 w-full" />
-
+        <Stack gap={5}>
+          <Logo className="mb-2 w-full" />
           <TextInput
             id="username"
             labelText="Email"
@@ -63,28 +55,23 @@ function Login() {
               pattern: emailPattern,
             })}
           />
-
-          <div>
-            <PasswordInput
-              id="password"
-              placeholder="Password"
-              labelText="Password"
-              hidePasswordLabel="Hide password"
-              showPasswordLabel="Show password"
-              invalid={!!form.formState.errors.password || !!error}
-              invalidText={form.formState.errors.password?.message || error}
-              {...form.register("password", {
-                required: "Password is required",
-              })}
-            />{" "}
-          </div>
-
-          <Button type="submit" className="w-full max-w-full">
+          <PasswordInput
+            id="password"
+            placeholder="Password"
+            labelText="Password"
+            hidePasswordLabel="Hide password"
+            showPasswordLabel="Show password"
+            invalid={!!form.formState.errors.password || !!error}
+            invalidText={form.formState.errors.password?.message || error}
+            {...form.register("password", {
+              required: "Password is required",
+            })}
+          />{" "}
+          <Button type="submit" className="mt-4 w-full max-w-full">
             {form.formState.isSubmitting ? "Loading..." : "Log In"}
           </Button>
-
           <div className="flex w-full justify-center gap-2">
-            Don't have an account? <Link href="/signup">Sign up</Link>
+            Don't have an account? <Link to="/signup">Sign up</Link>
           </div>
         </Stack>
       </Form>

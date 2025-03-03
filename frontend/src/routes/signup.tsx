@@ -1,16 +1,8 @@
-import { Logo } from "@/components/Common/Logo";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Link } from "@/components/ui/link";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { type SubmitHandler, useForm } from "react-hook-form";
+
+import { Logo } from "@/components/common/Logo";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
@@ -44,125 +36,83 @@ function SignUp() {
     },
   });
 
+  const { errors } = form.formState;
+
   const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
     signUpMutation.mutate(data);
   };
 
   return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center space-y-6 p-4"
-        >
-          <Logo className="w-full" />
-
-          <FormField
-            control={form.control}
-            name="full_name"
-            rules={{ required: "Full Name is required", minLength: 3 }}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Full Name"
-                    className={fieldState.error ? "border-red-500" : ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+    <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
+      <Form onSubmit={form.handleSubmit(onSubmit)}>
+        <Stack gap={5}>
+          <Logo className="mb-2 w-full" />
+          <TextInput
+            id="full_name"
+            labelText="Full Name"
+            placeholder="Full Name"
+            invalid={!!errors.full_name}
+            invalidText={errors.full_name?.message}
+            {...form.register("full_name", {
+              required: "Full Name is required",
+              minLength: 3,
+            })}
           />
 
-          <FormField
-            control={form.control}
-            name="email"
-            rules={{
+          <TextInput
+            id="email"
+            labelText="Email"
+            placeholder="Email"
+            invalid={!!errors.email}
+            invalidText={errors.email?.message}
+            {...form.register("email", {
               required: "Email is required",
               pattern: emailPattern,
-            }}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Email"
-                    className={fieldState.error ? "border-cds-text-error" : ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            })}
+          />
+
+          <PasswordInput
+            id="password"
+            labelText="Password"
+            placeholder="Password"
+            invalid={!!errors.password}
+            invalidText={errors.password?.message}
+            {...form.register("password", passwordRules())}
+          />
+
+          <PasswordInput
+            id="confirm_password"
+            labelText="Repeat Password"
+            placeholder="Repeat Password"
+            invalid={!!errors.confirm_password}
+            invalidText={errors.confirm_password?.message}
+            {...form.register(
+              "confirm_password",
+              confirmPasswordRules(form.getValues),
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="password"
-            rules={passwordRules()}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Password"
-                    className={fieldState.error ? "border-cds-text-error" : ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+          <PasswordInput
+            id="access_password"
+            labelText="Access Password"
+            placeholder="Access Password"
+            invalid={!!errors.access_password}
+            invalidText={errors.access_password?.message}
+            {...form.register("access_password", {
+              required: "Access Password is required",
+            })}
           />
 
-          <FormField
-            control={form.control}
-            name="confirm_password"
-            rules={confirmPasswordRules(form.getValues)}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Repeat Password"
-                    className={fieldState.error ? "border-red-500" : ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="access_password"
-            rules={{ required: "Access Password is required" }}
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="Access Password"
-                    className={fieldState.error ? "border-red-500" : ""}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button type="submit">
-            {form.formState.isSubmitting ? "loading..." : "Sign Up"}
+          <Button type="submit" className="mt-4 w-full max-w-full">
+            {signUpMutation.isPending ? "loading..." : "Sign Up"}
           </Button>
 
-          <div className="flex w-full justify-center gap-2">
+          <div className="mt-4 flex w-full justify-center gap-2">
             Already have an account? <Link to="/login">Log In</Link>
           </div>
-        </form>
+        </Stack>
       </Form>
-    </>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { Loading } from "@carbon/react";
 
-import { Header } from "../components/Common/Header";
+import { Header } from "../components/common/Header";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 
 export const Route = createFileRoute("/_layout")({

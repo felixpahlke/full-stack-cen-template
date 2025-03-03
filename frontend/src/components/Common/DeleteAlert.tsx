@@ -3,19 +3,8 @@ import { useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { ItemsService, UsersService } from "../../client";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Modal } from "@carbon/react";
+import { toast } from "@/components/common/Toaster";
 
 interface DeleteProps {
   type: string;
@@ -26,7 +15,7 @@ interface DeleteProps {
 
 const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient();
-  const cancelRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef(null);
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -65,36 +54,27 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete {type}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {type === "User" && (
-              <span>
-                All items associated with this user will also be{" "}
-                <strong>permanently deleted. </strong>
-              </span>
-            )}
-            Are you sure? You will not be able to undo this action.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel ref={cancelRef} disabled={isSubmitting}>
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button
-              variant="destructive"
-              onClick={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-            >
-              Delete
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Modal
+      open={isOpen}
+      onRequestClose={onClose}
+      modalHeading={`Delete ${type}`}
+      primaryButtonText={isSubmitting ? "Deleting..." : "Delete"}
+      primaryButtonDisabled={isSubmitting}
+      secondaryButtonText="Cancel"
+      onRequestSubmit={handleSubmit(onSubmit)}
+      danger
+      launcherButtonRef={buttonRef}
+    >
+      <div className="py-4">
+        {type === "User" && (
+          <p>
+            All items associated with this user will also be{" "}
+            <strong>permanently deleted.</strong>
+          </p>
+        )}
+        <p>Are you sure? You will not be able to undo this action.</p>
+      </div>
+    </Modal>
   );
 };
 

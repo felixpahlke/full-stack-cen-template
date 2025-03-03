@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { useRef } from "react";
 
 import {
   type ApiError,
@@ -9,24 +10,8 @@ import {
 } from "../../client";
 import { handleError } from "../../utils";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Form, Modal, Stack, TextInput } from "@carbon/react";
+import { toast } from "@/components/common/Toaster";
 
 interface EditItemProps {
   item: ItemPublic;
@@ -38,10 +23,17 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
   const queryClient = useQueryClient();
 
   const form = useForm<ItemUpdate>({
-    defaultValues: item,
+    mode: "onBlur",
+    criteriaMode: "all",
+    defaultValues: {
+      title: item.title,
+      description: item.description,
+    },
   });
 
-  const mutation = useMutation({
+  const { errors, isValid } = form.formState;
+
+  const { mutate: updateItem, isPending } = useMutation({
     mutationFn: (data: ItemUpdate) =>
       ItemsService.updateItem({ id: item.id, requestBody: data }),
     onSuccess: () => {
@@ -58,66 +50,46 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
   });
 
   const onSubmit: SubmitHandler<ItemUpdate> = (data) => {
-    mutation.mutate(data);
+    updateItem(data);
   };
 
+  const buttonRef = useRef(null);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-8 px-4 pb-2">
-              <FormField
-                control={form.control}
-                name="title"
-                rules={{ required: "Title is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Title"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Description"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? "Saving..." : "Save"}
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <Modal
+      open={isOpen}
+      onRequestClose={onClose}
+      modalHeading="Edit Item"
+      primaryButtonText={isPending ? "Saving..." : "Save"}
+      secondaryButtonText="Cancel"
+      onRequestSubmit={form.handleSubmit(onSubmit)}
+      primaryButtonDisabled={isPending || !isValid}
+      launcherButtonRef={buttonRef}
+    >
+      <Form className="py-4">
+        <Stack gap={5}>
+          <TextInput
+            id="title"
+            labelText="Title"
+            placeholder="Title"
+            invalid={!!errors.title}
+            invalidText={errors.title?.message}
+            {...form.register("title", {
+              required: "Title is required",
+            })}
+          />
+
+          <TextInput
+            id="description"
+            labelText="Description"
+            placeholder="Description"
+            invalid={!!errors.description}
+            invalidText={errors.description?.message}
+            {...form.register("description")}
+          />
+        </Stack>
+      </Form>
+    </Modal>
   );
 };
 

@@ -1,17 +1,11 @@
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Edit, MoreVertical, Trash } from "lucide-react";
 import { useState } from "react";
+import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
+import { Edit, TrashCan } from "@carbon/icons-react";
 
 import type { ItemPublic, UserPublic } from "../../client";
-import EditUser from "../Admin/EditUser";
-import EditItem from "../Items/EditItem";
-import Delete from "./DeleteAlert";
+import EditUser from "../admin/EditUser";
+import EditItem from "../items/EditItem";
+import Delete from "../common/DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
@@ -25,28 +19,31 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild disabled={disabled}>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 justify-center p-0"
-            disabled={disabled}
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            <span>Edit {type}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsDeleteModalOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" />
-            <span className="text-destructive">Delete {type}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <OverflowMenu
+        size="sm"
+        flipped
+        disabled={disabled}
+        ariaLabel="Actions menu"
+      >
+        <OverflowMenuItem
+          itemText={
+            <div className="flex items-center gap-2">
+              <Edit size={16} /> Edit {type}
+            </div>
+          }
+          onClick={() => setIsEditModalOpen(true)}
+        />
+        <OverflowMenuItem
+          itemText={
+            <div className="flex items-center gap-2">
+              <TrashCan size={16} /> Delete {type}
+            </div>
+          }
+          onClick={() => setIsDeleteModalOpen(true)}
+          isDelete
+          hasDivider
+        />
+      </OverflowMenu>
       {type === "User" ? (
         <EditUser
           user={value as UserPublic}
