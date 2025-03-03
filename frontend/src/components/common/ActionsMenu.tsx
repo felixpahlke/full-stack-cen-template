@@ -5,7 +5,7 @@ import { Edit, TrashCan } from "@carbon/icons-react";
 import type { ItemPublic, UserPublic } from "../../client";
 import EditUser from "../admin/EditUser";
 import EditItem from "../items/EditItem";
-import Delete from "../common/DeleteAlert";
+import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
