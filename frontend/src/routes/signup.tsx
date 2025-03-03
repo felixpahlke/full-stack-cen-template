@@ -36,7 +36,7 @@ function SignUp() {
     },
   });
 
-  const { errors, isValid } = form.formState;
+  const { errors } = form.formState;
 
   const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
     signUpMutation.mutate(data);

@@ -22,7 +22,7 @@ const ChangePassword = () => {
     },
   });
 
-  const { errors, isValid } = form.formState;
+  const { errors } = form.formState;
 
   const { mutate: updatePassword, isPending } = useMutation({
     mutationFn: (data: UpdatePassword) =>
