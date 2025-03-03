@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { Header } from "../components/Common/Header";
+import { Header } from "../components/common/Header";
 import useAuth from "../hooks/useAuth";
 import { Loading } from "@carbon/react";
 

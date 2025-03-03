@@ -9,8 +9,6 @@ export const Route = createFileRoute("/_layout/")({
 function Dashboard() {
   const { user: currentUser } = useAuth();
 
-  console.log("currentUser", currentUser);
-
   return (
     <div className="flex flex-col py-12">
       <h2 className="text-2xl">
