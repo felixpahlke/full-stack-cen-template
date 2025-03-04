@@ -127,42 +127,53 @@ When the tests are run, a file `htmlcov/index.html` is generated, you can open i
 
 ## Migrations
 
-As during local development your app directory is mounted as a volume inside the container, you can also run the migrations with `alembic` commands inside the container and the migration code will be in your app directory (instead of being only inside the container). So you can add it to your git repository.
+Whenever your models in `./backend/app/models.py` are changed, you need to create a migration to update the database schema. This is handled with Alembic.
 
-Make sure you create a "revision" of your models and that you "upgrade" your database with that revision every time you change them. As this is what will update the tables in your database. Otherwise, your application will have errors.
+### Prerequisites for migrations
 
-- Start an interactive session in the backend container:
+1. Make sure your virtual environment is activated:
 
-```console
-$ docker compose exec backend bash
+   ```bash
+   cd backend
+   source .venv/bin/activate
+   ```
+
+2. Ensure your Docker Compose stack is running so the database is available:
+
+   ```bash
+   docker compose watch
+   ```
+
+### Creating and applying migrations
+
+After changing a model (for example, adding a column), create a revision:
+
+```bash
+cd backend
+alembic revision --autogenerate -m "Add column last_name to User model"
 ```
 
-- Alembic is already configured to import your SQLModel models from `./backend/app/models.py`.
+This will generate new migration files in the `./backend/app/alembic/versions/` directory.
 
-- After changing a model (for example, adding a column), inside the container, create a revision, e.g.:
+To apply the migration to your local database:
 
-```console
-$ alembic revision --autogenerate -m "Add column last_name to User model"
+```bash
+alembic upgrade head
 ```
 
-- Commit to the git repository the files generated in the alembic directory.
+### Important notes
 
-- After creating the revision, run the migration in the database (this is what will actually change the database):
+- Always commit migration files to your repository. When deployed to production, these migrations will be automatically applied to your production database on container startup.
+- If you don't want to use migrations at all, uncomment the lines in `./backend/app/core/db.py` that contain:
 
-```console
-$ alembic upgrade head
-```
+  ```python
+  SQLModel.metadata.create_all(engine)
+  ```
 
-If you don't want to use migrations at all, uncomment the lines in the file at `./backend/app/core/db.py` that end in:
+  and comment the line in `scripts/prestart.sh` that contains:
 
-```python
-SQLModel.metadata.create_all(engine)
-```
+  ```console
+  $ alembic upgrade head
+  ```
 
-and comment the line in the file `scripts/prestart.sh` that contains:
-
-```console
-$ alembic upgrade head
-```
-
-If you don't want to start with the default models and want to remove them / modify them, from the beginning, without having any previous revision, you can remove the revision files (`.py` Python files) under `./backend/app/alembic/versions/`. And then create a first migration as described above.
+- If you want to start with a clean migration history, you can remove all files under `./backend/app/alembic/versions/` and create your first migration as described above.
