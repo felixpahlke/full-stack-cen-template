@@ -112,7 +112,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone --depth=1 -b oauth-proxy git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone -b oauth-proxy git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
