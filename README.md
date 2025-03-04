@@ -8,7 +8,7 @@
   - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
 - 🚀 [React](https://react.dev) for the frontend.
   - 💃 Using TypeScript, hooks, Vite, and other parts of a modern frontend stack.
-  - 🎨 [Carboncn UI](https://www.carboncn.dev/) & [Carbon](https://carbondesignsystem.com/) for the frontend components.
+  - 🎨 [Carbon](https://carbondesignsystem.com/) & [Carboncn UI](https://www.carboncn.dev/) (optionally) for the frontend components.
   - 🤖 An automatically generated frontend client.
   - 🦇 Dark mode support.
 - 🐋 [Docker Compose](https://www.docker.com) & [colima](https://github.com/abiosoft/colima/) for development.
@@ -25,6 +25,14 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 - [CE Starter 🚀](https://github.ibm.com/CE-Starter/)
 - [Tutorials](https://github.ibm.com/CE-Starter/full-stack-cen-template-tutorials)
 
+## Flavours
+
+This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
+
+- `main` - The default flavour, with user-management inside the app.
+- `oauth-proxy` - users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
+- `backend-only` - FastAPI backend only, no frontend.
+
 ## Screenshots
 
 <table>
@@ -32,14 +40,14 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 <tr>
 <td>
 
-### Dashboard Login
+### Login
 
 ![API docs](.docs/img/login.png)
 
 </td>
 <td>
 
-### Dashboard - Admin
+### Admin
 
 ![API docs](.docs/img/dashboard.png)
 
@@ -48,14 +56,14 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 <tr>
 <td>
 
-### Dashboard - Create User
+### Create User
 
 ![API docs](.docs/img/dashboard-create.png)
 
 </td>
 <td>
 
-### Dashboard - Items
+### Items
 
 ![API docs](.docs/img/dashboard-items.png)
 
@@ -64,14 +72,14 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 <tr>
 <td>
 
-### Dashboard - User Settings
+### User Settings
 
 ![API docs](.docs/img/dashboard-user-settings.png)
 
 </td>
 <td>
 
-### Dashboard - Dark Mode
+### Dark Mode
 
 ![API docs](.docs/img/dashboard-dark.png)
 
@@ -93,18 +101,18 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 
 ### How to Use It
 
-1. Setup with create-cen-app and choose "full-stack-cen-template"
+#### Setup with create-cen-app and choose "full-stack-cen-template"
 
 ```bash
 npm create cen-app@latest
 ```
 
-2. Or if you want to clone it and pull updates from the original template:
+#### Or clone manually (commands may vary by flavour - check the specific branch):
 
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone --depth=1 -b backend-only git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -123,6 +131,12 @@ git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 
 ```bash
 git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
+```
+
+- Rename branch to main:
+
+```bash
+git branch -m main
 ```
 
 - Push the code to your new repository:
@@ -146,10 +160,10 @@ upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.gi
 upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
 ```
 
-- Pull the latest changes without merging:
+- Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
-git pull --no-commit upstream main
+git pull --no-commit upstream backend-only
 ```
 
 This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
