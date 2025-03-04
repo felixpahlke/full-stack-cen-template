@@ -107,24 +107,18 @@ This template is available in different flavours, which are represented by diffe
 npm create cen-app@latest
 ```
 
-#### Or if you want to clone it and pull updates from the original template:
+#### Or clone manually (commands may vary by flavour - check the specific branch):
 
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone --depth=1 git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
 
 ```bash
 cd my-full-stack
-```
-
-- If you are not using the `main` branch, checkout the correct branch for your use case:
-
-```bash
-git checkout <branch-name>
 ```
 
 - Set the new origin to your new repository (copy from GitHub interface):
@@ -142,7 +136,7 @@ git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen
 - Push the code to your new repository:
 
 ```bash
-git push -u origin main # or choose the branch you want to use
+git push -u origin main
 ```
 
 ### Update From the Original Template
@@ -160,7 +154,7 @@ upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.gi
 upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
 ```
 
-- Pull the latest changes without merging:
+- Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
 git pull --no-commit upstream main
