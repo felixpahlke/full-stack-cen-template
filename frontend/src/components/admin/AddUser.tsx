@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { useRef } from "react";
 
 import { type UserCreate, UsersService } from "../../client";
 import type { ApiError } from "../../client/core/ApiError";
@@ -62,8 +61,6 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     createUser(data);
   };
 
-  const buttonRef = useRef(null);
-
   return (
     <Modal
       open={isOpen}
@@ -73,7 +70,6 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
       secondaryButtonText="Cancel"
       onRequestSubmit={form.handleSubmit(onSubmit)}
       primaryButtonDisabled={isPending || !isValid}
-      launcherButtonRef={buttonRef}
     >
       <Form className="py-4">
         <Stack gap={5}>

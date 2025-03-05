@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { ItemsService, UsersService } from "../../client";
@@ -15,7 +14,6 @@ interface DeleteProps {
 
 const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
   const queryClient = useQueryClient();
-  const buttonRef = useRef(null);
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -63,7 +61,6 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
       secondaryButtonText="Cancel"
       onRequestSubmit={handleSubmit(onSubmit)}
       danger
-      launcherButtonRef={buttonRef}
     >
       <div className="py-4">
         {type === "User" && (
