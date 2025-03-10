@@ -13,10 +13,6 @@ from app.api.deps import (
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
-    Item,
-    User,
-)
-from app.schemas import (
     Message,
     UpdatePassword,
     UserCreate,
@@ -25,6 +21,10 @@ from app.schemas import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+)
+from app.tables import (
+    Item,
+    User,
 )
 
 router = APIRouter()
