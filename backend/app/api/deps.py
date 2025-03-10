@@ -11,7 +11,7 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.core.db import engine
 from app.core.singleton import Singleton
-from app.schemas import TokenPayload, User
+from app.models import TokenPayload, User
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from app.api.deps import CurrentUser
-from app.schemas import User
+from app.models import User
 
 router = APIRouter()
 
