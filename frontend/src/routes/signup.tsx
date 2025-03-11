@@ -1,11 +1,21 @@
-import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import { Logo } from "@/components/common/Logo";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Logo } from "@/components/common/logo";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
-import { confirmPasswordRules, emailPattern, passwordRules } from "../utils";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -18,15 +28,26 @@ export const Route = createFileRoute("/signup")({
   },
 });
 
-interface UserRegisterForm extends UserRegister {
-  confirm_password: string;
-}
+const formSchema = z
+  .object({
+    email: z
+      .string()
+      .email("Please enter a valid email address")
+      .min(1, "Email is required"),
+    full_name: z.string().min(3, "Full name must be at least 3 characters"),
+    password: z.string().min(1, "Password is required"),
+    confirm_password: z.string().min(1, "Please confirm your password"),
+    access_password: z.string().min(1, "Access password is required"),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
 
 function SignUp() {
-  const { signUpMutation } = useAuth();
-  const form = useForm({
-    mode: "onBlur",
-    criteriaMode: "all",
+  const { signUpMutation, error, resetError } = useAuth();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       full_name: "",
@@ -34,83 +55,107 @@ function SignUp() {
       confirm_password: "",
       access_password: "",
     },
+    mode: "onBlur",
   });
 
-  const { errors } = form.formState;
-
-  const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
-    signUpMutation.mutate(data);
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (resetError) resetError();
+    signUpMutation.mutate(data as UserRegister);
   };
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
-      <Form onSubmit={form.handleSubmit(onSubmit)}>
-        <Stack gap={5}>
-          <Logo className="mb-2 w-full" />
-          <TextInput
-            id="full_name"
-            labelText="Full Name"
-            placeholder="Full Name"
-            invalid={!!errors.full_name}
-            invalidText={errors.full_name?.message}
-            {...form.register("full_name", {
-              required: "Full Name is required",
-              minLength: 3,
-            })}
-          />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Logo className="mb-3 w-full" />
 
-          <TextInput
-            id="email"
-            labelText="Email"
-            placeholder="Email"
-            invalid={!!errors.email}
-            invalidText={errors.email?.message}
-            {...form.register("email", {
-              required: "Email is required",
-              pattern: emailPattern,
-            })}
-          />
-
-          <PasswordInput
-            id="password"
-            labelText="Password"
-            placeholder="Password"
-            invalid={!!errors.password}
-            invalidText={errors.password?.message}
-            {...form.register("password", passwordRules())}
-          />
-
-          <PasswordInput
-            id="confirm_password"
-            labelText="Repeat Password"
-            placeholder="Repeat Password"
-            invalid={!!errors.confirm_password}
-            invalidText={errors.confirm_password?.message}
-            {...form.register(
-              "confirm_password",
-              confirmPasswordRules(form.getValues),
+          <FormField
+            control={form.control}
+            name="full_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
           />
 
-          <PasswordInput
-            id="access_password"
-            labelText="Access Password"
-            placeholder="Access Password"
-            invalid={!!errors.access_password}
-            invalidText={errors.access_password?.message}
-            {...form.register("access_password", {
-              required: "Access Password is required",
-            })}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
 
-          <Button type="submit" className="mt-4 w-full max-w-full">
-            {signUpMutation.isPending ? "loading..." : "Sign Up"}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Create Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirm_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="access_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Access Code</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                {error && (
+                  <p className="text-sm font-medium text-destructive">
+                    {error}
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting || signUpMutation.isPending}
+          >
+            {signUpMutation.isPending ? "Loading..." : "Sign Up"}
           </Button>
 
-          <div className="mt-4 flex w-full justify-center gap-2">
+          <div className="flex w-full justify-center gap-2">
             Already have an account? <Link to="/login">Log In</Link>
           </div>
-        </Stack>
+        </form>
       </Form>
     </div>
   );

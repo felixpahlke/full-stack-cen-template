@@ -1,18 +1,20 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Tabs, Tab, TabList, TabPanel, TabPanels } from "@carbon/react";
+import { useState } from "react";
 
 import type { UserPublic } from "../../client";
-import Appearance from "../../components/user-settings/Appearance";
-import ChangePassword from "../../components/user-settings/ChangePassword";
-import DeleteAccount from "../../components/user-settings/DeleteAccount";
-import UserInformation from "../../components/user-settings/UserInformation";
+import Appearance from "../../components/user-settings/appearance";
+import ChangePassword from "../../components/user-settings/change-password";
+import DeleteAccount from "../../components/user-settings/delete-account";
+import UserInformation from "../../components/user-settings/user-information";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tabsConfig = [
-  { title: "My profile", component: UserInformation },
-  { title: "Password", component: ChangePassword },
-  { title: "Appearance", component: Appearance },
-  { title: "Danger zone", component: DeleteAccount },
+  { id: "profile", title: "My profile", component: UserInformation },
+  { id: "password", title: "Password", component: ChangePassword },
+  { id: "appearance", title: "Appearance", component: Appearance },
+  { id: "danger", title: "Danger zone", component: DeleteAccount },
 ];
 
 export const Route = createFileRoute("/_layout/settings")({
@@ -25,23 +27,28 @@ function UserSettings() {
   const finalTabs = currentUser?.is_superuser
     ? tabsConfig.slice(0, 3)
     : tabsConfig;
+  const [activeTab, setActiveTab] = useState(finalTabs[0].id);
 
   return (
     <div className="min-w-96">
-      <h1 className="py-12 text-2xl font-bold">User Settings</h1>
-      <Tabs>
-        <TabList className="" aria-label="User Settings">
-          {finalTabs.map((tab, index) => (
-            <Tab key={index}>{tab.title}</Tab>
+      <h1 className="py-2 text-2xl font-bold">User Settings</h1>
+      <Tabs
+        className="mt-6"
+        defaultValue={activeTab}
+        onValueChange={setActiveTab}
+      >
+        <TabsList className="mb-4">
+          {finalTabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.title}
+            </TabsTrigger>
           ))}
-        </TabList>
-        <TabPanels>
-          {finalTabs.map((tab, index) => (
-            <TabPanel key={index}>
-              <tab.component />
-            </TabPanel>
-          ))}
-        </TabPanels>
+        </TabsList>
+        {finalTabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id}>
+            <tab.component />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );

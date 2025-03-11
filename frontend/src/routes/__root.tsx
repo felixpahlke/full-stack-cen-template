@@ -1,7 +1,7 @@
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import React, { Suspense } from "react";
 
-import NotFound from "../components/common/NotFound";
+import NotFound from "../components/common/not-found";
 
 const loadDevtools = () =>
   Promise.all([
@@ -23,7 +23,7 @@ const TanStackDevtools =
 
 export const Route = createRootRoute({
   component: () => (
-    <div className="min-h-[calc(100dvh-47px)] bg-cds-background">
+    <div className="bg-cds-background min-h-[calc(100dvh-47px)]">
       <Outlet />
       <Suspense>
         <TanStackDevtools />

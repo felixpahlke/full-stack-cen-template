@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { AxiosError } from "axios";
-import { toast } from "@/components/common/Toaster";
+import { toast } from "sonner";
 import {
   type Body_login_login_access_token as AccessToken,
   ApiError,
@@ -59,7 +59,7 @@ const useAuth = () => {
       }
 
       toast.error("Something went wrong.", {
-        caption: errDetail,
+        description: errDetail,
       });
     },
     onSettled: () => {

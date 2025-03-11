@@ -6,10 +6,9 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { OpenAPI } from "./client";
 
-import "./styles/globals.scss";
 import "./styles/tailwind.scss";
-import { Toaster } from "@/components/common/Toaster";
-import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { ThemeProvider } from "./components/theme/theme-provider";
+import { Toaster } from "./components/ui/sonner";
 
 // this is set at build time
 OpenAPI.BASE = import.meta.env.VITE_API_URL;

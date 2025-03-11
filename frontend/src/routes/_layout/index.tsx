@@ -10,7 +10,7 @@ function Dashboard() {
   const { user: currentUser } = useAuth();
 
   return (
-    <div className="flex flex-col py-12">
+    <div className="flex flex-col">
       <h2 className="text-2xl">
         Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
       </h2>

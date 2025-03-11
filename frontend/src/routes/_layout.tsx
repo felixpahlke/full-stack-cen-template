@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { Loading } from "@carbon/react";
 
-import { Header } from "../components/common/Header";
+import { Header } from "../components/common/header";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 
 export const Route = createFileRoute("/_layout")({
@@ -24,7 +24,7 @@ function Layout() {
       {isLoading ? (
         <Loading />
       ) : (
-        <div className="max-w-screen-xl mx-auto flex px-8 pb-24 pt-[47px]">
+        <div className="mx-auto flex px-8 pb-24 pt-[47px]">
           <Outlet />
         </div>
       )}

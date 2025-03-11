@@ -1,11 +1,21 @@
-import { Button, Form, PasswordInput, Stack, TextInput } from "@carbon/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import { Logo } from "@/components/common/Logo";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Logo } from "@/components/common/logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
-import { emailPattern } from "../utils";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -18,22 +28,29 @@ export const Route = createFileRoute("/login")({
   },
 });
 
+const formSchema = z.object({
+  username: z
+    .string()
+    .email("Please enter a valid email address")
+    .min(1, "Email is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
 function Login() {
   const { loginMutation, error, resetError } = useAuth();
-  const form = useForm({
-    mode: "onBlur",
-    criteriaMode: "all",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
       password: "",
     },
   });
 
-  const onSubmit: SubmitHandler<AccessToken> = async (data) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     resetError();
 
     try {
-      await loginMutation.mutateAsync(data);
+      await loginMutation.mutateAsync(data as AccessToken);
     } catch {
       // error is handled by useAuth hook
     }
@@ -41,39 +58,55 @@ function Login() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
-      <Form onSubmit={form.handleSubmit(onSubmit)}>
-        <Stack gap={5}>
-          <Logo className="mb-2 w-full" />
-          <TextInput
-            id="username"
-            labelText="Email"
-            placeholder="Email"
-            invalid={!!form.formState.errors.username}
-            invalidText={form.formState.errors.username?.message}
-            {...form.register("username", {
-              required: "Username is required",
-              pattern: emailPattern,
-            })}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Logo className="mb-3 w-full" />
+
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <PasswordInput
-            id="password"
-            placeholder="Password"
-            labelText="Password"
-            hidePasswordLabel="Hide password"
-            showPasswordLabel="Show password"
-            invalid={!!form.formState.errors.password || !!error}
-            invalidText={form.formState.errors.password?.message || error}
-            {...form.register("password", {
-              required: "Password is required",
-            })}
-          />{" "}
-          <Button type="submit" className="mt-4 w-full max-w-full">
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} />
+                </FormControl>
+                {error && (
+                  <p className="text-sm font-medium text-destructive">
+                    {error}
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Loading..." : "Log In"}
           </Button>
+
           <div className="flex w-full justify-center gap-2">
             Don't have an account? <Link to="/signup">Sign up</Link>
           </div>
-        </Stack>
+        </form>
       </Form>
     </div>
   );

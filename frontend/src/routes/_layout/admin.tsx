@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-import UsersTable from "@/components/admin/UsersTable";
-import AddUser from "../../components/admin/AddUser";
-import ActionsBar from "../../components/common/ActionsBar";
+import UsersTable from "../../components/admin/users-table";
+import AddUser from "../../components/admin/add-user";
+import ActionsBar from "../../components/common/actions-bar";
 
 const usersSearchSchema = z.object({
   page: z.number().catch(1),
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_layout/admin")({
 function Admin() {
   return (
     <div className="w-full">
-      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
+      <h1 className="py-2 text-center text-2xl font-bold md:text-left">
         Users Management
       </h1>
 
