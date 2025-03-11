@@ -26,7 +26,7 @@ function Layout() {
           <Loader2 className="h-10 w-10 animate-spin" />
         </div>
       ) : (
-        <div className="mx-auto flex max-w-screen-xl px-8 pb-24 pt-[47px]">
+        <div className="mx-auto flex px-8 pb-24 pt-[47px]">
           <Outlet />
         </div>
       )}
