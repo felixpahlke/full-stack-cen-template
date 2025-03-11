@@ -24,8 +24,8 @@ export const Logo = ({
         })}
         src={
           activeTheme === "dark"
-            ? "/assets/images/ibm-bee-white.png"
-            : "/assets/images/ibm-bee-black.png"
+            ? "/assets/images/logo-light.png"
+            : "/assets/images/logo-dark.png"
         }
         alt="IBM-Client-Engineering"
       />

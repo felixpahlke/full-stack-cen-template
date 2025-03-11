@@ -4,7 +4,15 @@ import { useForm } from "react-hook-form";
 import { type ApiError, UsersService } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import { handleError } from "../../utils";
-import { Modal } from "@carbon/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface DeleteProps {
@@ -40,22 +48,30 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onRequestClose={onClose}
-      modalHeading="Confirmation Required"
-      primaryButtonText={isSubmitting ? "Deleting..." : "Confirm"}
-      secondaryButtonText="Cancel"
-      primaryButtonDisabled={isSubmitting}
-      onRequestSubmit={handleSubmit(onSubmit)}
-      danger
-    >
-      <p className="mb-4">
-        All your account data will be <strong>permanently deleted.</strong> If
-        you are sure, please click <strong>"Confirm"</strong> to proceed. This
-        action cannot be undone.
-      </p>
-    </Modal>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirmation Required</DialogTitle>
+          <DialogDescription className="mb-4">
+            All your account data will be <strong>permanently deleted.</strong>{" "}
+            If you are sure, please click <strong>"Confirm"</strong> to proceed.
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={isSubmitting}
+            onClick={handleSubmit(onSubmit)}
+          >
+            {isSubmitting ? "Deleting..." : "Confirm"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
