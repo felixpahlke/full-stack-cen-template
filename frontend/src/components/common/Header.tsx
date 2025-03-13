@@ -32,12 +32,16 @@ export function Header() {
   }
 
   return (
-    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
+    <header className="bg-background sticky top-0 z-50 flex h-12 w-full items-center border-b">
       <div className="flex h-14 w-full items-center gap-2 px-4">
         {isMobile ? (
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground h-8 w-8"
+              >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>

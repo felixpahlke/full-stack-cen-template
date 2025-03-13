@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Logo } from "@/components/common/Logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
+import { Link } from "@/components/ui/link";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -69,7 +70,7 @@ function Login() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -84,7 +85,7 @@ function Login() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input placeholder="Password" type="password" {...field} />
                 </FormControl>
                 {error && (
                   <p className="text-destructive text-sm font-medium">

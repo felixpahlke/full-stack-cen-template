@@ -55,72 +55,70 @@ export default function UsersTable() {
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Full name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isPending ? (
             <TableRow>
-              <TableHead>Full name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableCell colSpan={5}>
+                <div className="h-4 w-full animate-pulse bg-gray-200" />
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isPending ? (
-              <TableRow>
-                <TableCell colSpan={5}>
-                  <div className="h-4 w-full animate-pulse bg-gray-200" />
-                </TableCell>
-              </TableRow>
-            ) : users?.data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  No users found
-                </TableCell>
-              </TableRow>
-            ) : (
-              users?.data.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className={!user.full_name ? "text-gray-500" : ""}>
-                        {user.full_name || "N/A"}
+          ) : users?.data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center">
+                No users found
+              </TableCell>
+            </TableRow>
+          ) : (
+            users?.data.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span className={!user.full_name ? "text-gray-500" : ""}>
+                      {user.full_name || "N/A"}
+                    </span>
+                    {currentUser?.id === user.id && (
+                      <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                        You
                       </span>
-                      {currentUser?.id === user.id && (
-                        <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                          You
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    {user.is_superuser ? "Superuser" : "User"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`h-2 w-2 rounded-full ${
-                          user.is_active ? "bg-green-500" : "bg-red-500"
-                        }`}
-                      />
-                      {user.is_active ? "Active" : "Inactive"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <ActionsMenu
-                      type="User"
-                      value={user}
-                      disabled={currentUser?.id === user.id}
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  {user.is_superuser ? "Superuser" : "User"}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-2 w-2 rounded-full ${
+                        user.is_active ? "bg-green-500" : "bg-red-500"
+                      }`}
                     />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    {user.is_active ? "Active" : "Inactive"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <ActionsMenu
+                    type="User"
+                    value={user}
+                    disabled={currentUser?.id === user.id}
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
       <div className="mt-4 flex items-center justify-end gap-4">
         <Button
           variant="outline"

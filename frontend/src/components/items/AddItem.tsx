@@ -80,7 +80,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Description" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,10 +105,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending || !form.formState.isValid}
-              >
+              <Button type="submit" disabled={isPending}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

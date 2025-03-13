@@ -52,52 +52,50 @@ export default function ItemsTable() {
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isPending ? (
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableCell colSpan={4}>
+                <div className="h-4 w-full animate-pulse bg-gray-200" />
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isPending ? (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <div className="h-4 w-full animate-pulse bg-gray-200" />
+          ) : items?.data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">
+                No items found
+              </TableCell>
+            </TableRow>
+          ) : (
+            items?.data.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.id}</TableCell>
+                <TableCell>
+                  <div className="max-w-[150px] truncate">{item.title}</div>
+                </TableCell>
+                <TableCell>
+                  <div
+                    className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
+                  >
+                    {item.description || "N/A"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <ActionsMenu type="Item" value={item} />
                 </TableCell>
               </TableRow>
-            ) : items?.data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  No items found
-                </TableCell>
-              </TableRow>
-            ) : (
-              items?.data.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>
-                    <div className="max-w-[150px] truncate">{item.title}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div
-                      className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
-                    >
-                      {item.description || "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <ActionsMenu type="Item" value={item} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          )}
+        </TableBody>
+      </Table>
       <div className="mt-4 flex items-center justify-end gap-4">
         <Button
           variant="outline"

@@ -90,7 +90,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="user@example.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,7 +116,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Full name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,7 +131,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,7 +150,11 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Confirm password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,10 +199,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending || !form.formState.isValid}
-              >
+              <Button type="submit" disabled={isPending}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

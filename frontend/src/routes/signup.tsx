@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   confirmPasswordRules,
   namePattern,
 } from "../utils";
+import { Link } from "@/components/ui/link";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -71,7 +72,7 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Full Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -89,7 +90,7 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Email Address</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,7 +105,7 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Create Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input placeholder="Password" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -119,7 +120,11 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input
+                    placeholder="Confirm Password"
+                    type="password"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -134,7 +139,7 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Access Code</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <Input placeholder="Access Code" type="password" {...field} />
                 </FormControl>
                 {error && (
                   <p className="text-destructive text-sm font-medium">
