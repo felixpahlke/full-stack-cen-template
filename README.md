@@ -112,7 +112,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone -b main-custom-ui git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -131,6 +131,12 @@ git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 
 ```bash
 git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
+```
+
+- Rename branch to main:
+
+```bash
+git branch -m main
 ```
 
 - Push the code to your new repository:
@@ -157,7 +163,7 @@ upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.gi
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
-git pull --no-commit upstream main
+git pull --no-commit upstream main-custom-ui
 ```
 
 This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
