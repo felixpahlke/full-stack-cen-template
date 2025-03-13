@@ -1,29 +1,47 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { type ApiError, type ItemCreate, ItemsService } from "../../client";
 import { handleError } from "../../utils";
 
-import { Form, Modal, Stack, TextInput } from "@carbon/react";
-import { toast } from "@/components/common/Toaster";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface AddItemProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface FormValues {
+  title: string;
+  description: string;
+}
+
 const AddItem = ({ isOpen, onClose }: AddItemProps) => {
   const queryClient = useQueryClient();
-  const form = useForm<ItemCreate>({
-    mode: "onBlur",
-    criteriaMode: "all",
+  const form = useForm<FormValues>({
     defaultValues: {
       title: "",
       description: "",
     },
+    mode: "onBlur",
   });
-
-  const { errors, isValid } = form.formState;
 
   const { mutate: createItem, isPending } = useMutation({
     mutationFn: (data: ItemCreate) =>
@@ -41,44 +59,60 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
     },
   });
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  const onSubmit = (data: FormValues) => {
     createItem(data);
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onRequestClose={onClose}
-      modalHeading="Add Item"
-      primaryButtonText={isPending ? "Saving..." : "Save"}
-      secondaryButtonText="Cancel"
-      onRequestSubmit={form.handleSubmit(onSubmit)}
-      primaryButtonDisabled={isPending || !isValid}
-    >
-      <Form className="py-4">
-        <Stack gap={5}>
-          <TextInput
-            id="title"
-            labelText="Title"
-            placeholder="Title"
-            invalid={!!errors.title}
-            invalidText={errors.title?.message}
-            {...form.register("title", {
-              required: "Title is required",
-            })}
-          />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Item</DialogTitle>
+        </DialogHeader>
 
-          <TextInput
-            id="description"
-            labelText="Description"
-            placeholder="Description"
-            invalid={!!errors.description}
-            invalidText={errors.description?.message}
-            {...form.register("description")}
-          />
-        </Stack>
-      </Form>
-    </Modal>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              rules={{ required: "Title is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Description" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose} type="button">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

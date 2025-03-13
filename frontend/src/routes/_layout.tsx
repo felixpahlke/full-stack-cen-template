@@ -1,8 +1,8 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { Header } from "../components/common/Header";
-import useAuth from "../hooks/useAuth";
-import { Loading } from "@carbon/react";
+import { Header } from "@/components/common/Header";
+import useAuth from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -15,9 +15,11 @@ function Layout() {
     <div className="relative">
       <Header />
       {isLoading ? (
-        <Loading />
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin" />
+        </div>
       ) : (
-        <div className="max-w-screen-xl mx-auto flex px-8 pb-24 pt-[47px]">
+        <div className="mx-auto flex px-8 pb-24 pt-[47px]">
           <Outlet />
         </div>
       )}

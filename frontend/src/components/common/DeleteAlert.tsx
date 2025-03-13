@@ -2,8 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import { ItemsService } from "../../client";
-import { Modal } from "@carbon/react";
-import { toast } from "@/components/common/Toaster";
+import { toast } from "sonner";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface DeleteProps {
   type: string;
@@ -40,7 +49,7 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: [type === "Item" ? "items" : "users"],
+        queryKey: ["items"],
       });
     },
   });
@@ -50,26 +59,29 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
   };
 
   return (
-    <Modal
-      open={isOpen}
-      onRequestClose={onClose}
-      modalHeading={`Delete ${type}`}
-      primaryButtonText={isSubmitting ? "Deleting..." : "Delete"}
-      primaryButtonDisabled={isSubmitting}
-      secondaryButtonText="Cancel"
-      onRequestSubmit={handleSubmit(onSubmit)}
-      danger
-    >
-      <div className="py-4">
-        {type === "User" && (
-          <p>
-            All items associated with this user will also be{" "}
-            <strong>permanently deleted.</strong>
-          </p>
-        )}
-        <p>Are you sure? You will not be able to undo this action.</p>
-      </div>
-    </Modal>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {type}</DialogTitle>
+          <DialogDescription>
+            <p>Are you sure? You will not be able to undo this action.</p>
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,11 +1,11 @@
 {
-  "$schema": "https://carboncn.dev/schema.json",
-  "style": "default",
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
   "rsc": false,
   "tsx": true,
   "tailwind": {
     "config": "tailwind.config.js",
-    "css": "src/globals.css",
+    "css": "src/styles/tailwind.scss",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -13,8 +13,9 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@/components/carboncn",
+    "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
-  }
+  },
+  "iconLibrary": "lucide"
 }

@@ -1,11 +1,6 @@
-import { Theme as CarbonThemeProvider } from "@carbon/react";
 import { createContext, useContext, useEffect, useState } from "react";
 
-const LIGHT_THEME: CarbonTheme = "white";
-const DARK_THEME: CarbonTheme = "g100";
-
-type CarbonTheme = "g10" | "g90" | "g100" | "white";
-export type Theme = "light" | "dark" | "system";
+type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -15,14 +10,14 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
-  actualTheme: "light" | "dark";
   setTheme: (theme: Theme) => void;
+  activeTheme: "dark" | "light";
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
-  actualTheme: "light",
   setTheme: () => null,
+  activeTheme: "light",
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -30,47 +25,54 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "carbon-theme",
+  storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");
+  const [activeTheme, setActiveTheme] = useState<"dark" | "light">("light");
 
   useEffect(() => {
+    const root = window.document.documentElement;
+
+    root.classList.remove("light", "dark");
+
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
         : "light";
 
-      setActualTheme(systemTheme);
+      root.classList.add(systemTheme);
+      setActiveTheme(systemTheme);
       return;
     }
 
-    setActualTheme(theme);
+    root.classList.add(theme);
+    setActiveTheme(theme as "dark" | "light");
   }, [theme]);
 
+  // Listen for system theme changes when in system mode
   useEffect(() => {
-    document.documentElement.classList.remove(
-      "cds--white",
-      "cds--g10",
-      "cds--g90",
-      "cds--g100",
-      "dark",
-    );
+    if (theme !== "system") return;
 
-    const carbonTheme = actualTheme === "dark" ? DARK_THEME : LIGHT_THEME;
-    document.documentElement.classList.add(`cds--${carbonTheme}`);
-    if (actualTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    }
-  }, [actualTheme]);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? "dark" : "light";
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(newTheme);
+      setActiveTheme(newTheme);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [theme]);
 
   const value = {
     theme,
-    actualTheme,
+    activeTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
@@ -79,11 +81,7 @@ export function ThemeProvider({
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      <CarbonThemeProvider
-        theme={actualTheme === "dark" ? DARK_THEME : LIGHT_THEME}
-      >
-        {children}
-      </CarbonThemeProvider>
+      {children}
     </ThemeProviderContext.Provider>
   );
 }

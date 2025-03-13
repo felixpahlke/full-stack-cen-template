@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useTheme } from "../theme/ThemeProvider";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface LogoProps {
   className?: string;
@@ -12,10 +12,10 @@ export const Logo = ({
   logoSize = "md",
   logoOnly = false,
 }: LogoProps) => {
-  const { actualTheme } = useTheme();
+  const { activeTheme } = useTheme();
 
   return (
-    <div className={cn("flex items-center justify-center text-xl", className)}>
+    <div className={cn("flex items-center justify-center", className)}>
       <img
         className={cn({
           "w-8": logoSize === "sm",
@@ -23,9 +23,9 @@ export const Logo = ({
           "w-16": logoSize === "lg",
         })}
         src={
-          actualTheme === "dark"
-            ? "/assets/images/ibm-bee-white.png"
-            : "/assets/images/ibm-bee-black.png"
+          activeTheme === "dark"
+            ? "/assets/images/logo-light.png"
+            : "/assets/images/logo-dark.png"
         }
         alt="IBM-Client-Engineering"
       />

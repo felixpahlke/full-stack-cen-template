@@ -1,5 +1,8 @@
-import { RadioButtonGroup, RadioButton, Tile, Tag } from "@carbon/react";
-import { useTheme } from "../theme/ThemeProvider";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();
@@ -9,35 +12,36 @@ const Appearance = () => {
   };
 
   return (
-    <Tile className="max-w-md">
-      <h3 className="mb-4 text-lg font-medium">Appearance</h3>
-      <RadioButtonGroup
-        className="mt-4"
-        name="theme-selection"
-        valueSelected={theme}
-        onChange={(value) =>
-          handleThemeChange(value ? value.toString() : "system")
-        }
-        orientation="vertical"
-      >
-        <RadioButton
-          id="light"
-          labelText={
-            <div className="flex items-center">
+    <Card className="max-w-md">
+      <CardContent className="pt-6">
+        <h3 className="mb-4 text-lg font-medium">Appearance</h3>
+        <RadioGroup
+          className="mt-4 space-y-3"
+          value={theme}
+          onValueChange={handleThemeChange}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="light" id="light" />
+            <Label htmlFor="light" className="flex items-center">
               <span className="mr-2">Light Mode</span>
               {theme === "light" && (
-                <Tag type="blue" size="sm" className="my-0">
+                <Badge variant="secondary" className="ml-2">
                   Default
-                </Tag>
+                </Badge>
               )}
-            </div>
-          }
-          value="light"
-        />
-        <RadioButton id="dark" labelText="Dark Mode" value="dark" />
-        <RadioButton id="system" labelText="System Default" value="system" />
-      </RadioButtonGroup>
-    </Tile>
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="dark" id="dark" />
+            <Label htmlFor="dark">Dark Mode</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="system" id="system" />
+            <Label htmlFor="system">System Default</Label>
+          </div>
+        </RadioGroup>
+      </CardContent>
+    </Card>
   );
 };
 

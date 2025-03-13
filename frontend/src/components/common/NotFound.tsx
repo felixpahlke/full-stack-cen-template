@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "@carbon/react";
+import { Button } from "@/components/ui/button";
+
 const NotFound = () => {
   return (
     <div className="mx-auto flex h-screen max-w-sm flex-col items-center justify-center text-center">
-      <h1 className="text-primary mb-4 text-8xl font-bold leading-none">404</h1>
+      <h1 className="mb-4 text-8xl font-bold leading-none text-primary">404</h1>
       <p className="text-md">Oops!</p>
       <p className="text-md">Page not found.</p>
       <Link to="/">

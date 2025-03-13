@@ -1,10 +1,18 @@
 import { useState } from "react";
-import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
-import { Edit, TrashCan } from "@carbon/icons-react";
+import { Edit, MoreVertical, Trash } from "lucide-react";
 
 import type { ItemPublic } from "../../client";
 import EditItem from "../items/EditItem";
 import Delete from "./DeleteAlert";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface ActionsMenuProps {
   type: string;
@@ -18,38 +26,33 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
 
   return (
     <>
-      <OverflowMenu
-        size="sm"
-        flipped
-        disabled={disabled}
-        ariaLabel="Actions menu"
-      >
-        <OverflowMenuItem
-          itemText={
-            <div className="flex items-center gap-2">
-              <Edit size={16} /> Edit {type}
-            </div>
-          }
-          onClick={() => setIsEditModalOpen(true)}
-        />
-        <OverflowMenuItem
-          itemText={
-            <div className="flex items-center gap-2">
-              <TrashCan size={16} /> Delete {type}
-            </div>
-          }
-          onClick={() => setIsDeleteModalOpen(true)}
-          isDelete
-          hasDivider
-        />
-      </OverflowMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={disabled}>
+          <Button variant="ghost" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit {type}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete {type}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <EditItem
         item={value as ItemPublic}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
       />
-
       <Delete
         type={type}
         id={value.id}

@@ -1,19 +1,19 @@
-import {
-  DataTable,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Button,
-} from "@carbon/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ItemsService } from "../../client";
 import ActionsMenu from "../common/ActionsMenu";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 const PER_PAGE = 10;
 
@@ -50,80 +50,62 @@ export default function ItemsTable() {
     }
   }, [page, queryClient, hasNextPage]);
 
-  const headers = [
-    { header: "ID", key: "id" },
-    { header: "Title", key: "title" },
-    { header: "Description", key: "description" },
-    { header: "Actions", key: "actions" },
-  ];
-
-  const rows =
-    items?.data.map((item) => ({
-      id: item.id,
-      title: <div className="max-w-[150px] truncate">{item.title}</div>,
-      description: (
-        <div
-          className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
-        >
-          {item.description || "N/A"}
-        </div>
-      ),
-      actions: <ActionsMenu type="Item" value={item} />,
-    })) || [];
-
   return (
     <>
-      <DataTable rows={rows} headers={headers}>
-        {({ rows, headers, getHeaderProps, getTableProps }) => (
-          <Table {...getTableProps()}>
-            <TableHead>
-              <TableRow>
-                {headers.map((header) => (
-                  <TableHeader
-                    {...getHeaderProps({ header, isSortable: false })}
-                    key={header.key}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isPending ? (
+            <TableRow>
+              <TableCell colSpan={4}>
+                <div className="h-4 w-full animate-pulse bg-gray-200" />
+              </TableCell>
+            </TableRow>
+          ) : items?.data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">
+                No items found
+              </TableCell>
+            </TableRow>
+          ) : (
+            items?.data.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.id}</TableCell>
+                <TableCell>
+                  <div className="max-w-[150px] truncate">{item.title}</div>
+                </TableCell>
+                <TableCell>
+                  <div
+                    className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
                   >
-                    {header.header}
-                  </TableHeader>
-                ))}
+                    {item.description || "N/A"}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <ActionsMenu type="Item" value={item} />
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {isPending ? (
-                <TableRow>
-                  {headers.map((_, i) => (
-                    <TableCell key={i}>
-                      <div className="h-4 w-full animate-pulse bg-gray-200" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ) : (
-                rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.cells.map((cell, i) => (
-                      <TableCell key={i}>{cell.value}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </DataTable>
+            ))
+          )}
+        </TableBody>
+      </Table>
       <div className="mt-4 flex items-center justify-end gap-4">
         <Button
-          kind="secondary"
+          variant="outline"
           onClick={() => setPage(page - 1)}
           disabled={!hasPreviousPage}
         >
           Previous
         </Button>
         <span>Page {page}</span>
-        <Button
-          kind="primary"
-          disabled={!hasNextPage}
-          onClick={() => setPage(page + 1)}
-        >
+        <Button disabled={!hasNextPage} onClick={() => setPage(page + 1)}>
           Next
         </Button>
       </div>
