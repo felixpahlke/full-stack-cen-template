@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { UserPublic } from "../../client";
 import useAuth from "../../hooks/useAuth";
-import { ModeToggle } from "../theme/theme-switcher";
+import { ModeToggle } from "../theme/ThemeSwitcher";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import UserMenu from "./user-menu";
-import { Logo } from "./logo";
+import UserMenu from "./UserMenu";
+import { Logo } from "./Logo";
 
 export function Header() {
   const { logout } = useAuth();
@@ -32,7 +32,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex w-full items-center border-b bg-background">
+    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
       <div className="flex h-14 w-full items-center gap-2 px-4">
         {isMobile ? (
           <Sheet>
@@ -42,21 +42,21 @@ export function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+            <SheetContent side="left" className="sm:w-[300px] w-[240px]">
               <nav className="mt-6 flex flex-col space-y-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.title}
                     to={item.path}
                     search={item.search}
-                    className="text-lg font-medium text-foreground/60 transition-colors hover:text-foreground/80"
+                    className="text-foreground/60 hover:text-foreground/80 text-lg font-medium transition-colors"
                   >
                     {item.title}
                   </Link>
                 ))}
                 <Link
                   to="/settings"
-                  className="text-lg font-medium text-foreground/60 transition-colors hover:text-foreground/80"
+                  className="text-foreground/60 hover:text-foreground/80 text-lg font-medium transition-colors"
                 >
                   User Settings
                 </Link>
@@ -78,16 +78,16 @@ export function Header() {
 
         <Separator
           orientation="vertical"
-          className="mr-2 hidden h-4 md:block"
+          className="md:block mr-2 hidden h-4"
         />
 
-        <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+        <nav className="md:flex hidden items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => (
             <Link
               key={item.title}
               to={item.path}
               search={item.search}
-              className="text-foreground/60 transition-colors hover:text-foreground/80"
+              className="text-foreground/60 hover:text-foreground/80 transition-colors"
             >
               {item.title}
             </Link>

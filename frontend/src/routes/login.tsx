@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Logo } from "@/components/common/logo";
+import { Logo } from "@/components/common/Logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 
@@ -86,7 +86,7 @@ function Login() {
                   <Input type="password" {...field} />
                 </FormControl>
                 {error && (
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="text-destructive text-sm font-medium">
                     {error}
                   </p>
                 )}

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Edit, MoreVertical, Trash } from "lucide-react";
 
 import type { ItemPublic, UserPublic } from "../../client";
-import EditUser from "../admin/edit-user";
-import EditItem from "../items/edit-item";
-import Delete from "./delete-alert";
+import EditUser from "../admin/EditUser";
+import EditItem from "../items/EditItem";
+import Delete from "./DeleteAlert";
 
 import {
   DropdownMenu,

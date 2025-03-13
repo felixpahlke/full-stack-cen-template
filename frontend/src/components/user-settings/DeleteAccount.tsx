@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import DeleteConfirmation from "./delete-confirmation";
+import DeleteConfirmation from "./DeleteConfirmation";
 
 const DeleteAccount = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +17,7 @@ const DeleteAccount = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Permanently delete your data and everything associated with your
             account.
           </p>

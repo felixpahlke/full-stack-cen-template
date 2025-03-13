@@ -7,7 +7,7 @@ import { StrictMode } from "react";
 import { OpenAPI } from "./client";
 
 import "./styles/tailwind.scss";
-import { ThemeProvider } from "./components/theme/theme-provider";
+import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { Toaster } from "./components/ui/sonner";
 
 // this is set at build time

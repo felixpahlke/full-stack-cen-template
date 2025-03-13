@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { type UserPublic, UsersService } from "../../client";
-import ActionsMenu from "../common/actions-menu";
+import ActionsMenu from "../common/ActionsMenu";
 
 import {
   Table,

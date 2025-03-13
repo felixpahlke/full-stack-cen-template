@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme/theme-provider";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface LogoProps {
   className?: string;

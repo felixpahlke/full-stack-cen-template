@@ -3,10 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import type { UserPublic } from "../../client";
-import Appearance from "../../components/user-settings/appearance";
-import ChangePassword from "../../components/user-settings/change-password";
-import DeleteAccount from "../../components/user-settings/delete-account";
-import UserInformation from "../../components/user-settings/user-information";
+import Appearance from "@/components/user-settings/Appearance";
+import ChangePassword from "@/components/user-settings/ChangePassword";
+import DeleteAccount from "@/components/user-settings/DeleteAccount";
+import UserInformation from "@/components/user-settings/UserInformation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

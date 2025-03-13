@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { useTheme } from "../theme/theme-provider";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();

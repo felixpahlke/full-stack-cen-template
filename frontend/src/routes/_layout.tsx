@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { Header } from "../components/common/header";
-import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { Header } from "@/components/common/Header";
+import useAuth, { isLoggedIn } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_layout")({
