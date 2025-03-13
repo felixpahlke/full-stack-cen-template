@@ -9,7 +9,6 @@ import { ModeToggle } from "../theme/ThemeSwitcher";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserMenu from "./UserMenu";
-import { Logo } from "./Logo";
 
 export function Header() {
   const { logout } = useAuth();
