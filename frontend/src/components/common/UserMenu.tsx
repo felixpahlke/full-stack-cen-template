@@ -36,7 +36,7 @@ const UserMenu = ({ className }: UserMenuProps) => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="w-10"
+                size="icon"
                 aria-label="User menu"
                 data-testid="user-menu"
               >
@@ -59,7 +59,7 @@ const UserMenu = ({ className }: UserMenuProps) => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="flex items-center text-destructive"
+                className="text-destructive flex items-center"
               >
                 <FiLogOut className="mr-2 h-4 w-4" />
                 Log out
