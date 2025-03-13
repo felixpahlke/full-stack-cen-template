@@ -75,8 +75,9 @@ export function Header() {
           </Sheet>
         ) : (
           <Link to="/" className="mr-6 flex items-center space-x-2">
-            <Logo logoOnly logoSize="sm" />
-            <span className="font-bold">Client Engineering</span>
+            <span className="text-sm">
+              IBM <span className="font-semibold">Client Engineering</span>
+            </span>
           </Link>
         )}
 
@@ -85,13 +86,13 @@ export function Header() {
           className="md:block mr-2 hidden h-4"
         />
 
-        <nav className="md:flex hidden items-center space-x-6 text-sm font-medium">
+        <nav className="md:flex hidden items-center space-x-8 pl-4 text-sm">
           {navItems.map((item) => (
             <Link
               key={item.title}
               to={item.path}
               search={item.search}
-              className="text-foreground/60 hover:text-foreground/80 transition-colors"
+              className="text-muted-foreground hover:text-foreground/80 transition-colors"
             >
               {item.title}
             </Link>
