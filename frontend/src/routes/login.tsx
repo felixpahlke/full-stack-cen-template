@@ -1,7 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/common/Logo";
 import type { Body_login_login_access_token as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { emailPattern } from "../utils";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -28,26 +27,23 @@ export const Route = createFileRoute("/login")({
   },
 });
 
-const formSchema = z.object({
-  username: z
-    .string()
-    .email("Please enter a valid email address")
-    .min(1, "Email is required"),
-  password: z.string().min(1, "Password is required"),
-});
+interface FormValues {
+  username: string;
+  password: string;
+}
 
 function Login() {
   const { loginMutation, error, resetError } = useAuth();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
     defaultValues: {
       username: "",
       password: "",
     },
+    mode: "onBlur",
   });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    resetError();
+  const onSubmit = async (data: FormValues) => {
+    if (resetError) resetError();
 
     try {
       await loginMutation.mutateAsync(data as AccessToken);
@@ -65,6 +61,10 @@ function Login() {
           <FormField
             control={form.control}
             name="username"
+            rules={{
+              required: "Email is required",
+              pattern: emailPattern,
+            }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
@@ -79,6 +79,7 @@ function Login() {
           <FormField
             control={form.control}
             name="password"
+            rules={{ required: "Password is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>

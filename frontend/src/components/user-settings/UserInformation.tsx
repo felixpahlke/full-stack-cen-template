@@ -1,12 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import { type ApiError, type UserUpdateMe, UsersService } from "../../client";
 import useAuth from "../../hooks/useAuth";
-import { handleError } from "../../utils";
+import { handleError, emailPattern } from "../../utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,18 +18,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-const formSchema = z.object({
-  full_name: z.string().optional(),
-  email: z.string().email("Invalid email address"),
-});
+interface FormValues {
+  full_name: string;
+  email: string;
+}
 
 const UserInformation = () => {
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
   const { user: currentUser } = useAuth();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
     defaultValues: {
       full_name: currentUser?.full_name || "",
       email: currentUser?.email || "",
@@ -64,7 +61,7 @@ const UserInformation = () => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = (data: FormValues) => {
     updateUser(data);
   };
 
@@ -100,6 +97,10 @@ const UserInformation = () => {
               <FormField
                 control={form.control}
                 name="email"
+                rules={{
+                  required: "Email is required",
+                  pattern: emailPattern,
+                }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>

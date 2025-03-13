@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import { type ApiError, type ItemCreate, ItemsService } from "../../client";
 import { handleError } from "../../utils";
@@ -30,15 +28,14 @@ interface AddItemProps {
   onClose: () => void;
 }
 
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-});
+interface FormValues {
+  title: string;
+  description: string;
+}
 
 const AddItem = ({ isOpen, onClose }: AddItemProps) => {
   const queryClient = useQueryClient();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
     defaultValues: {
       title: "",
       description: "",
@@ -62,7 +59,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = (data: FormValues) => {
     createItem(data);
   };
 
@@ -78,6 +75,7 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
             <FormField
               control={form.control}
               name="title"
+              rules={{ required: "Title is required" }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Title</FormLabel>

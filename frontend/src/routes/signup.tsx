@@ -1,7 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/common/Logo";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import {
+  emailPattern,
+  passwordRules,
+  confirmPasswordRules,
+  namePattern,
+} from "../utils";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -28,26 +32,9 @@ export const Route = createFileRoute("/signup")({
   },
 });
 
-const formSchema = z
-  .object({
-    email: z
-      .string()
-      .email("Please enter a valid email address")
-      .min(1, "Email is required"),
-    full_name: z.string().min(3, "Full name must be at least 3 characters"),
-    password: z.string().min(1, "Password is required"),
-    confirm_password: z.string().min(1, "Please confirm your password"),
-    access_password: z.string().min(1, "Access password is required"),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
-
 function SignUp() {
   const { signUpMutation, error, resetError } = useAuth();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm({
     defaultValues: {
       email: "",
       full_name: "",
@@ -58,7 +45,7 @@ function SignUp() {
     mode: "onBlur",
   });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: any) => {
     if (resetError) resetError();
     signUpMutation.mutate(data as UserRegister);
   };
@@ -72,6 +59,14 @@ function SignUp() {
           <FormField
             control={form.control}
             name="full_name"
+            rules={{
+              required: "Full name is required",
+              minLength: {
+                value: 3,
+                message: "Full name must be at least 3 characters",
+              },
+              pattern: namePattern,
+            }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
@@ -86,6 +81,10 @@ function SignUp() {
           <FormField
             control={form.control}
             name="email"
+            rules={{
+              required: "Email is required",
+              pattern: emailPattern,
+            }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email Address</FormLabel>
@@ -100,6 +99,7 @@ function SignUp() {
           <FormField
             control={form.control}
             name="password"
+            rules={passwordRules()}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Create Password</FormLabel>
@@ -114,6 +114,7 @@ function SignUp() {
           <FormField
             control={form.control}
             name="confirm_password"
+            rules={confirmPasswordRules(form.getValues)}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
@@ -128,6 +129,7 @@ function SignUp() {
           <FormField
             control={form.control}
             name="access_password"
+            rules={{ required: "Access password is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Access Code</FormLabel>

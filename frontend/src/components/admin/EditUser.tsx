@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import {
   type ApiError,
@@ -9,7 +7,13 @@ import {
   type UserUpdate,
   UsersService,
 } from "../../client";
-import { handleError } from "../../utils";
+import {
+  handleError,
+  emailPattern,
+  passwordRules,
+  confirmPasswordRules,
+  namePattern,
+} from "../../utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,29 +41,10 @@ interface EditUserProps {
   onClose: () => void;
 }
 
-const formSchema = z
-  .object({
-    email: z.string().email("Invalid email address"),
-    full_name: z.string().optional(),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .optional()
-      .or(z.literal("")),
-    confirm_password: z.string().optional().or(z.literal("")),
-    is_superuser: z.boolean().default(false),
-    is_active: z.boolean().default(true),
-  })
-  .refine((data) => !data.password || data.password === data.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
-
 const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm({
     defaultValues: {
       email: user.email,
       full_name: user.full_name || "",
@@ -87,7 +72,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = (data: any) => {
     // Remove empty password
     if (data.password === "") {
       data.password = undefined;
@@ -111,6 +96,10 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="email"
+              rules={{
+                required: "Email is required",
+                pattern: emailPattern,
+              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
@@ -125,6 +114,14 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="full_name"
+              rules={{
+                required: "Full name is required",
+                minLength: {
+                  value: 3,
+                  message: "Full name must be at least 3 characters",
+                },
+                pattern: namePattern,
+              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full name</FormLabel>
@@ -139,6 +136,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="password"
+              rules={passwordRules()}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Set Password</FormLabel>
@@ -153,6 +151,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="confirm_password"
+              rules={confirmPasswordRules(form.getValues)}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
