@@ -112,7 +112,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone -b oauth-proxy git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone -b oauth-proxy-custom-ui git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -163,7 +163,7 @@ upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.gi
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
-git pull --no-commit upstream oauth-proxy
+git pull --no-commit upstream oauth-proxy-custom-ui
 ```
 
 This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
