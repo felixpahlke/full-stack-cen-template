@@ -172,14 +172,85 @@ read -p "Press enter once you've added the deploy key..."
 
 # Deploy Database
 print_status "Deploying PostgreSQL database..."
-oc new-app --template=postgresql-persistent \
-    --param=POSTGRESQL_USER=$POSTGRES_USER \
-    --param=POSTGRESQL_PASSWORD=$POSTGRES_PASSWORD
+# Create persistent volume claim for PostgreSQL
+print_status "Creating persistent volume claim for PostgreSQL..."
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgresql-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+
+# Deploy PostgreSQL using container image
+print_status "Deploying PostgreSQL container..."
+cat << EOF | oc apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        name: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:12
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "$POSTGRES_USER"
+        - name: POSTGRES_PASSWORD
+          value: "$POSTGRES_PASSWORD"
+        - name: POSTGRES_DB
+          value: "app"
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: "/var/lib/postgresql/data"
+      volumes:
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: postgresql-data
+EOF
+
+# Create PostgreSQL service
+print_status "Creating PostgreSQL service..."
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgresql
+EOF
 
 print_status "Waiting for PostgreSQL to be ready..."
 # Wait for deployment to complete
 sleep 2  # Give OpenShift a moment to create resources
-oc rollout status dc/postgresql --timeout=300s
+oc rollout status deployment/postgresql --timeout=300s
 
 # Wait for the pod to be ready
 sleep 2
@@ -188,11 +259,7 @@ while [[ $(oc get pods -l name=postgresql -o 'jsonpath={..status.conditions[?(@.
     sleep 5
 done
 
-print_status "Creating application database..."
-sleep 2
-# More robust pod name detection
-POD_NAME=$(oc get pods -l name=postgresql -o jsonpath='{.items[0].metadata.name}')
-oc exec $POD_NAME -- psql -c 'CREATE DATABASE app;'
+print_success "PostgreSQL deployment completed successfully!"
 
 # Deploy Frontend
 print_status "Deploying frontend..."
@@ -336,7 +403,7 @@ oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[
 
 # Group resources as one application
 print_status "Grouping resources as one application..."
-oc label deployment/frontend deployment/backend dc/postgresql deployment/oauth-proxy app.kubernetes.io/part-of=$APP_NAME
+oc label deployment/frontend deployment/backend deployment/postgresql deployment/oauth-proxy app.kubernetes.io/part-of=$APP_NAME
 
 # Setup CI/CD webhooks
 print_status "Getting webhook URLs..."
