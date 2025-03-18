@@ -31,7 +31,7 @@ Make sure your editor is using the correct Python virtual environment, with the 
 
 _(To do that, press `Cmd+Shift+P` and search for `Python: Select Interpreter` --> Click on `Enter interpreter path` --> Enter interpreter path `backend/.venv/bin/python`.)_
 
-Modify or add SQLModel models for data and SQL tables in `./backend/app/models.py`, API endpoints in `./backend/app/api/`, CRUD (Create, Read, Update, Delete) utils in `./backend/app/crud.py`.
+Modify or add SQLModel models for data and SQL tables in `./backend/app/tables.py`, API endpoints in `./backend/app/api/`, CRUD (Create, Read, Update, Delete) utils in `./backend/app/crud.py`.
 
 ## VS Code
 
@@ -127,7 +127,7 @@ When the tests are run, a file `htmlcov/index.html` is generated, you can open i
 
 ## Migrations
 
-Whenever your models in `./backend/app/models.py` are changed, you need to create a migration to update the database schema. This is handled with Alembic.
+Whenever your models in `./backend/app/tables.py` are changed, you need to create a migration to update the database schema. This is handled with Alembic.
 
 ### Prerequisites for migrations
 
