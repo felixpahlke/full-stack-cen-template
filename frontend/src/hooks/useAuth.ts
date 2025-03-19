@@ -9,6 +9,7 @@ const useAuth = () => {
   } = useQuery({
     queryKey: ["currentUser"],
     queryFn: UsersService.readUserMe,
+    retry: false,
   });
 
   const logout = () => {
