@@ -30,8 +30,10 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
 
 - `main` - The default flavour, with user-management inside the app.
-- `oauth-proxy` - users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
+- `oauth-proxy` - Users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
 - `backend-only` - FastAPI backend only, no frontend.
+- `main-custom-ui` - User-management inside the app, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
+- `oauth-proxy-custom-ui` - Auth like in `oauth-proxy`, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
 
 ## Screenshots
 
@@ -112,7 +114,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone -b main-custom-ui git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git my-full-stack
+git clone -b main-custom-ui git@github.ibm.com:CE-Starter/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -130,7 +132,7 @@ git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 - Add the template repository as upstream to get future updates:
 
 ```bash
-git remote add upstream git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git
+git remote add upstream git@github.ibm.com:CE-Starter/full-stack-cen-template.git
 ```
 
 - Rename branch to main:
@@ -156,8 +158,8 @@ git remote -v
 
 origin    git@github.ibm.com:my-username/my-full-stack.git (fetch)
 origin    git@github.ibm.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:technology-garage-dach/full-stack-cen-template.git (push)
+upstream    git@github.ibm.com:CE-Starter/full-stack-cen-template.git (fetch)
+upstream    git@github.ibm.com:CE-Starter/full-stack-cen-template.git (push)
 ```
 
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
