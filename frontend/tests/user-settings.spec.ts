@@ -224,8 +224,7 @@ test.describe("Change password with invalid data", () => {
     await page.getByLabel("Current Password").fill(password);
     await page.getByLabel("New Password").fill(newPassword);
     await page.getByLabel("Confirm Password").fill(confirmPassword);
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText("Passwords do not match")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 });
 

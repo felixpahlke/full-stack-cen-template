@@ -121,7 +121,7 @@ function SignUp() {
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Confirm Password"
+                    placeholder="Repeat Password"
                     type="password"
                     {...field}
                   />
@@ -137,12 +137,16 @@ function SignUp() {
             rules={{ required: "Access password is required" }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Access Code</FormLabel>
+                <FormLabel>Access Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="Access Code" type="password" {...field} />
+                  <Input
+                    placeholder="Access Password"
+                    type="password"
+                    {...field}
+                  />
                 </FormControl>
                 {error && (
-                  <p className="text-destructive text-sm font-medium">
+                  <p className="text-sm font-medium text-destructive">
                     {error}
                   </p>
                 )}
