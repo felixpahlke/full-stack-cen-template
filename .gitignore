@@ -3,6 +3,7 @@ node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
+git-push.sh
 /playwright/.cache/
 
 .env
