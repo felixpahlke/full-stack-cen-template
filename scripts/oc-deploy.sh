@@ -420,7 +420,7 @@ metadata:
   namespace: $PROJECT_NAME
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: "system:webhook"
 subjects:
   - apiGroup: rbac.authorization.k8s.io
