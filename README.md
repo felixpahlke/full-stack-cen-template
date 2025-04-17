@@ -32,6 +32,7 @@ This template is available in different flavours, which are represented by diffe
 - `main` - The default flavour, with user-management inside the app.
 - `oauth-proxy` - Users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
 - `backend-only` - FastAPI backend only, no frontend.
+- `backend-only-no-db` - FastAPI backend only, no frontend, no database.
 - `main-custom-ui` - User-management inside the app, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
 - `oauth-proxy-custom-ui` - Auth like in `oauth-proxy`, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
 
