@@ -32,6 +32,7 @@ This template is available in different flavours, which are represented by diffe
 - `main` - The default flavour, with user-management inside the app.
 - `oauth-proxy` - Users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
 - `backend-only` - FastAPI backend only, no frontend.
+- `backend-only-no-db` - FastAPI backend only, no frontend, no database.
 - `main-custom-ui` - User-management inside the app, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
 - `oauth-proxy-custom-ui` - Auth like in `oauth-proxy`, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
 
@@ -114,7 +115,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone -b backend-only git@github.ibm.com:CE-Starter/full-stack-cen-template.git my-full-stack
+git clone -b backend-only-no-db git@github.ibm.com:CE-Starter/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -165,7 +166,7 @@ upstream    git@github.ibm.com:CE-Starter/full-stack-cen-template.git (push)
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
-git pull --no-commit upstream backend-only
+git pull --no-commit upstream backend-only-no-db
 ```
 
 This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
