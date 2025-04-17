@@ -5,7 +5,7 @@ def test_hello_world(client: TestClient) -> None:
     """
     Test the hello world endpoint returns the expected response.
     """
-    response = client.get("/hello")
+    response = client.get("/api/v1/example/hello")
     assert response.status_code == 200
     content = response.json()
     assert content["message"] == "Hello, World!"
