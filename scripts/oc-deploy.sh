@@ -148,9 +148,6 @@ while true; do
     fi
 done
 
-read -p "Choose a Postgres username: " POSTGRES_USER
-read -p "Choose a Postgres password: " POSTGRES_PASSWORD
-
 # API key with validation
 while true; do
     read -p "Choose an API key (must be 16 or 32 characters long): " API_KEY
@@ -176,97 +173,6 @@ print_status "${GREEN}Please add this public key to your GitLab/GitHub repositor
 echo -e "${TEAL}$(cat $HOME/.ssh/$PROJECT_NAME/ocp-key.pub)${NC}"
 read -p "Press enter once you've added the deploy key..."
 
-# Deploy Database
-print_status "Deploying PostgreSQL database..."
-# Create persistent volume claim for PostgreSQL
-print_status "Creating persistent volume claim for PostgreSQL..."
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgresql-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-EOF
-
-# Deploy PostgreSQL using container image
-print_status "Deploying PostgreSQL container..."
-cat << EOF | oc apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgresql
-  labels:
-    app: postgresql
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgresql
-  template:
-    metadata:
-      labels:
-        app: postgresql
-        name: postgresql
-    spec:
-      containers:
-      - name: postgresql
-        image: postgres:12
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_USER
-          value: "$POSTGRES_USER"
-        - name: POSTGRES_PASSWORD
-          value: "$POSTGRES_PASSWORD"
-        - name: POSTGRES_DB
-          value: "app"
-        - name: PGDATA
-          value: "/var/lib/postgresql/data/pgdata"
-        volumeMounts:
-        - name: postgresql-data
-          mountPath: "/var/lib/postgresql/data"
-      volumes:
-      - name: postgresql-data
-        persistentVolumeClaim:
-          claimName: postgresql-data
-EOF
-
-# Create PostgreSQL service
-print_status "Creating PostgreSQL service..."
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgresql
-  labels:
-    app: postgresql
-spec:
-  ports:
-  - port: 5432
-    targetPort: 5432
-  selector:
-    app: postgresql
-EOF
-
-print_status "Waiting for PostgreSQL to be ready..."
-# Wait for deployment to complete
-sleep 2  # Give OpenShift a moment to create resources
-oc rollout status deployment/postgresql --timeout=300s
-
-# Wait for the pod to be ready
-sleep 2
-while [[ $(oc get pods -l name=postgresql -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
-    print_status "Waiting for PostgreSQL pod to be ready..."
-    sleep 5
-done
-
-print_success "PostgreSQL deployment completed successfully!"
-
 # Deploy Backend
 print_status "Deploying backend..."
 oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret $GIT_URL
@@ -278,13 +184,8 @@ oc create route edge backend --service=backend --port=8000
 print_status "Setting up backend environment..."
 
 oc create secret generic backend-envs \
-    --from-literal=POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    --from-literal=POSTGRES_DB=app \
     --from-literal=BACKEND_CORS_ORIGINS="*" \
-    --from-literal=POSTGRES_PORT=5432 \
-    --from-literal=POSTGRES_SERVER=postgresql \
     --from-literal=PROJECT_NAME=$PROJECT_NAME \
-    --from-literal=POSTGRES_USER=$POSTGRES_USER \
     --from-literal=ENVIRONMENT=production \
     --from-literal=API_KEY=$API_KEY
 
@@ -293,7 +194,7 @@ oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[
 
 # Group resources as one application
 print_status "Grouping resources as one application..."
-oc label deployment/backend deployment/postgresql app.kubernetes.io/part-of=$APP_NAME
+oc label deployment/backend app.kubernetes.io/part-of=$APP_NAME
 
 # Setup CI/CD webhooks
 print_status "Getting webhook URLs..."

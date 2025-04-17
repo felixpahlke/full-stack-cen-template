@@ -1,16 +1,16 @@
 from fastapi import APIRouter
 
 from app.api.deps import APIKeyDep
-from app.api.routes import items, utils
+from app.api.routes import example, utils
 
 unsecured_api_router = APIRouter()
 unsecured_api_router.include_router(utils.router, prefix="/utils", tags=["utils"])
 
 secured_api_router = APIRouter(dependencies=[APIKeyDep])
 secured_api_router.include_router(
-    items.router,
-    prefix="/items",
-    tags=["items"],
+    example.router,
+    prefix="/example",
+    tags=["example"],
 )
 
 api_router = APIRouter()

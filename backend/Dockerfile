@@ -31,7 +31,7 @@ ENV PYTHONPATH=/app
 
 COPY ./scripts /app/scripts
 
-COPY ./pyproject.toml ./uv.lock ./alembic.ini /app/
+COPY ./pyproject.toml ./uv.lock /app/
 
 COPY ./app /app/app
 
@@ -40,14 +40,7 @@ COPY ./app /app/app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-
-RUN if [ -f /app/scripts/prestart.sh ]; then chmod +x /app/scripts/prestart.sh; fi
-
 USER root
-
-COPY ./scripts/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 8000
 

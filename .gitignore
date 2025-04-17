@@ -4,5 +4,6 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+git-push.sh
 
 .env

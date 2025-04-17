@@ -1,38 +1,6 @@
 services:
-  db:
-    image: postgres:12
-    restart: "no"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 10s
-    volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env
-    environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-
-  adminer:
-    image: adminer
-    restart: "no"
-    depends_on:
-      - db
-    environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    ports:
-      - "8080:8080"
-
   backend:
     restart: "no"
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
     env_file:
       - .env
     environment:
@@ -67,6 +35,3 @@ services:
             - .venv
         - path: ./backend/pyproject.toml
           action: rebuild
-
-volumes:
-  app-db-data:
