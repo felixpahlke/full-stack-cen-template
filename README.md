@@ -104,7 +104,7 @@ This template is available in different flavours, which are represented by diffe
 
 ### How to Use It
 
-#### Setup with create-cen-app and choose "full-stack-cen-template"
+#### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
 
 ```bash
 npm create cen-app@latest
