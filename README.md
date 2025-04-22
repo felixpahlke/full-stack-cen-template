@@ -22,8 +22,8 @@ _This Template is based on [full-stack-fastapi-template](https://github.com/fast
 
 Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
 
-- [CE Starter 🚀](https://github.ibm.com/CE-Starter/)
-- [Tutorials](https://github.ibm.com/CE-Starter/full-stack-cen-template-tutorials)
+- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
+- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
 
 ## Flavours
 
@@ -115,7 +115,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone -b oauth-proxy git@github.ibm.com:CE-Starter/full-stack-cen-template.git my-full-stack
+git clone -b oauth-proxy git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -133,7 +133,7 @@ git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 - Add the template repository as upstream to get future updates:
 
 ```bash
-git remote add upstream git@github.ibm.com:CE-Starter/full-stack-cen-template.git
+git remote add upstream git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git
 ```
 
 - Rename branch to main:
@@ -159,8 +159,8 @@ git remote -v
 
 origin    git@github.ibm.com:my-username/my-full-stack.git (fetch)
 origin    git@github.ibm.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:CE-Starter/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:CE-Starter/full-stack-cen-template.git (push)
+upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (fetch)
+upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (push)
 ```
 
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
