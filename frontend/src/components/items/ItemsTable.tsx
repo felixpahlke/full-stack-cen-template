@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ItemsService } from "../../client";
@@ -28,7 +28,7 @@ function getItemsQueryOptions({ page }: { page: number }) {
 export default function ItemsTable() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const page = 1; // This would need to be updated to use route search params
+  const { page } = useSearch({ from: "/_layout/items" });
   const setPage = (page: number) =>
     navigate({ search: (prev: any) => ({ ...prev, page }) });
 
