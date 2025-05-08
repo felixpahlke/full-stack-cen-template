@@ -10,7 +10,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { type UserPublic, UsersService } from "../../client";
@@ -29,7 +29,8 @@ function getUsersQueryOptions({ page }: { page: number }) {
 export default function UsersTable() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
-  const { page } = { page: 1 }; // This should be replaced with your route's search params
+
+  const { page } = useSearch({ from: "/_layout/admin" });
   const navigate = useNavigate();
   const setPage = (page: number) =>
     navigate({ search: (prev: any) => ({ ...prev, page }) });
