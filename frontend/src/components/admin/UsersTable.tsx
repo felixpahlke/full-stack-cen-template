@@ -29,9 +29,9 @@ export default function UsersTable() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
   const { page } = useSearch({ from: "/_layout/admin" });
-  const navigate = useNavigate();
-  const setPage = (page: number) =>
-    navigate({ search: (prev: any) => ({ ...prev, page }) });
+  const navigate = useNavigate({ from: "/admin" });
+  const setPage = (newPage: number) =>
+    navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: users,
@@ -42,10 +42,9 @@ export default function UsersTable() {
     placeholderData: (prevData) => prevData,
   });
 
-  const totalPages = Math.ceil((users?.count ?? 0) / PER_PAGE);
-
   const hasNextPage = !isPlaceholderData && users?.data.length === PER_PAGE;
   const hasPreviousPage = page > 1;
+  const totalPages = Math.ceil((users?.count ?? 0) / PER_PAGE);
 
   useEffect(() => {
     if (hasNextPage) {

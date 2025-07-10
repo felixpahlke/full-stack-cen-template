@@ -23,8 +23,7 @@ export function Header() {
   const navItems: {
     title: string;
     path: string;
-    search?: { page: number };
-  }[] = [{ title: "Items", path: "/items", search: { page: 1 } }];
+  }[] = [{ title: "Items", path: "/items" }];
 
   if (currentUser?.is_superuser) {
     navItems.push({ title: "Admin", path: "/admin" });
@@ -51,7 +50,6 @@ export function Header() {
                   <Link
                     key={item.title}
                     to={item.path}
-                    search={item.search}
                     className="text-foreground/60 hover:text-foreground/80 text-lg font-medium transition-colors"
                   >
                     {item.title}
@@ -90,7 +88,6 @@ export function Header() {
             <Link
               key={item.title}
               to={item.path}
-              search={item.search}
               className="text-muted-foreground hover:text-foreground/80 transition-colors"
             >
               {item.title}
