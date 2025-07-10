@@ -38,7 +38,7 @@ Open your browser at http://localhost:4180/  (this is the Oauth-Proxy, forwardin
 - From the top level project directory, run the script:
 
 ```bash
-./scripts/generate-frontend-client.sh
+./scripts/generate-client.sh
 ```
 
 - Commit the changes.

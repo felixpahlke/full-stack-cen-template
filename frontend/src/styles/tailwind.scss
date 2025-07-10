@@ -1,4 +1,4 @@
-@import "preflight.scss";
+@use "preflight.scss";
 
 @tailwind base;
 @tailwind components;
@@ -11,7 +11,4 @@
   body {
     @apply bg-cds-background text-cds-text-primary;
   }
-  // html {
-  //   @apply font-sans;
-  // }
 }

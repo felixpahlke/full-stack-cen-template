@@ -5,7 +5,7 @@ import NotFound from "../components/common/NotFound";
 
 const loadDevtools = () =>
   Promise.all([
-    import("@tanstack/router-devtools"),
+    import("@tanstack/react-router-devtools"),
     import("@tanstack/react-query-devtools"),
   ]).then(([routerDevtools, reactQueryDevtools]) => {
     return {
@@ -23,7 +23,7 @@ const TanStackDevtools =
 
 export const Route = createRootRoute({
   component: () => (
-    <div className="min-h-[calc(100dvh-47px)] bg-cds-background">
+    <div className="bg-cds-background min-h-[calc(100dvh-47px)]">
       <Outlet />
       <Suspense>
         <TanStackDevtools />

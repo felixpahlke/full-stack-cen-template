@@ -22,8 +22,7 @@ export function Header() {
   const navItems: {
     title: string;
     path: string;
-    search?: { page: number };
-  }[] = [{ title: "Items", path: "/items", search: { page: 1 } }];
+  }[] = [{ title: "Items", path: "/items" }];
 
   return (
     <HeaderContainer
@@ -44,12 +43,7 @@ export function Header() {
               className="hidden lg:flex"
             >
               {navItems.map((item) => (
-                <HeaderMenuItem
-                  as={Link}
-                  key={item.title}
-                  to={item.path}
-                  search={item.search}
-                >
+                <HeaderMenuItem as={Link} key={item.title} to={item.path}>
                   {item.title}
                 </HeaderMenuItem>
               ))}

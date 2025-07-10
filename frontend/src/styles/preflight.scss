@@ -67,8 +67,9 @@
 :where(kbd:not([class^="cds--"])),
 :where(samp:not([class^="cds--"])),
 :where(pre:not([class^="cds--"])) {
-  font-family: "fontFamily.mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    "fontFamily.mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
   font-size: 1em;
 }
 

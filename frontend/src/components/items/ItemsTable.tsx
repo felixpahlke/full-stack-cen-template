@@ -27,10 +27,10 @@ function getItemsQueryOptions({ page }: { page: number }) {
 
 export default function ItemsTable() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: "/items" });
   const { page } = useSearch({ from: "/_layout/items" });
-  const setPage = (page: number) =>
-    navigate({ search: (prev: any) => ({ ...prev, page }) });
+  const setPage = (newPage: number) =>
+    navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: items,
