@@ -5,7 +5,7 @@ export const $Body_login_login_access_token = {
       contains: [
         {
           type: "string",
-          pattern: "password",
+          pattern: "^password$",
         },
         {
           type: "null",
@@ -19,6 +19,7 @@ export const $Body_login_login_access_token = {
     password: {
       type: "string",
       isRequired: true,
+      format: "password",
     },
     scope: {
       type: "string",
