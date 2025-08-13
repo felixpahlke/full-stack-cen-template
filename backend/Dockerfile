@@ -4,6 +4,10 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app/
 
+# Set writable config dir so fastapi-cli doesn't try to use /.config
+ENV XDG_CONFIG_HOME=/app/.config
+RUN mkdir -p /app/.config && chmod -R 777 /app/.config
+
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:0.7.19 /uv /bin/uv
