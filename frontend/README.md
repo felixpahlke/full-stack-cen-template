@@ -21,6 +21,8 @@ npm install
 
 ## Frontend development
 
+_Note: for more detailed tips, e.g. on how to **create a new page**, see the tutorials [here](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials/tree/main/full-stack-tutorial-watsonx-chat)_
+
 The frontend will be started in development mode with hot reloading, inside the Docker Compose stack, so you don't have to worry about the correct node version or other dependencies.
 
 ```bash
