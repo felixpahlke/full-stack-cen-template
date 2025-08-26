@@ -9,7 +9,9 @@
 
 Start the local development environment with Docker Compose following the guide in [../.docs/development.md](../.docs/development.md).
 
-## General Workflow
+## Backend Development
+
+_Note: for more detailed tips, e.g. on how to **create a new API endpoint**, see the tutorials [here](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials/tree/main/full-stack-tutorial-watsonx-chat)_
 
 By default, the dependencies are managed with [uv](https://docs.astral.sh/uv/), go there and install it.
 
