@@ -17,7 +17,7 @@ function Layout() {
       {isLoading ? (
         <Loading />
       ) : (
-        <div className="max-w-screen-xl mx-auto flex px-8 pb-24 pt-[47px]">
+        <div className="mx-auto flex max-w-7xl px-8 pb-24 pt-[47px]">
           <Outlet />
         </div>
       )}

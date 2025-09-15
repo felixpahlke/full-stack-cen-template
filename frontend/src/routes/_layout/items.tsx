@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_layout/items")({
 function Items() {
   return (
     <div className="w-full">
-      <h1 className="md:text-left py-12 text-center text-2xl font-bold">
+      <h1 className="sm:text-left py-12 text-center text-2xl font-bold">
         Items Management
       </h1>
 
