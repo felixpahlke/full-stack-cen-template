@@ -29,12 +29,20 @@ Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) bui
 
 This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
 
-- `main` - The default flavour, with user-management inside the app.
-- `oauth-proxy` - Users are managed by the Identity Provider (IdP) of your choice (e.g. Keycloak or AppID) via OAuth proxy.
-- `backend-only` - FastAPI backend only, no frontend.
-- `backend-only-no-db` - FastAPI backend only, no frontend, no database.
-- `main-custom-ui` - User-management inside the app, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
-- `oauth-proxy-custom-ui` - Auth like in `oauth-proxy`, frontend built with shadcn/ui, which is easily adaptable to look like any customers UI.
+| Branch                  | Auth                   | UI        | Pros             | Cons               |
+| ----------------------- | ---------------------- | --------- | ---------------- | ------------------ |
+| `oauth-proxy`           | OAuth proxy with IdP   | Carbon    | prod-friendly    | Needs AppID        |
+| `oauth-proxy-custom-ui` | OAuth proxy with IdP   | shadcn/ui | prod-friendly    | Needs AppID        |
+| `local-auth`            | In‑app user management | Carbon    | easy to start up | less prod-friendly |
+| `local-auth-custom-ui`  | In‑app user management | shadcn/ui | easy to start up | less prod-friendly |
+| `backend-only`          | API Key                | —         |
+| `backend-only-no-db`    | API Key                | —         |
+
+<br />
+
+> The custom-ui flavours are easily adaptable to look like any customers UI, so choose those if Carbon is not the right fit.
+
+> Prefer the `oauth-proxy` flavours, unless you have a specific reason to not use it.
 
 ## Screenshots
 
