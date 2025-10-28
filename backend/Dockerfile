@@ -10,7 +10,7 @@ RUN mkdir -p /app/.config && chmod -R 777 /app/.config
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-COPY --from=ghcr.io/astral-sh/uv:0.7.19 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.8.19 /uv /bin/uv
 
 # Place executables in the environment at the front of the path
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#using-the-environment
