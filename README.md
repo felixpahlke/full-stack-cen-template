@@ -12,8 +12,7 @@
   - 🤖 An automatically generated frontend client.
   - 🦇 Dark mode support.
 - 🐋 [Docker Compose](https://www.docker.com) & [colima](https://github.com/abiosoft/colima/) for development.
-- 🔒 Secure password hashing by default.
-- 🔑 JWT (JSON Web Token) authentication.
+- 🔒 Authentication via OAuth proxy with IdP (e.g. AppID) or in-app user management.
 - 🚢 Deployment instructions using OpenShift.
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
@@ -44,71 +43,33 @@ This template is available in different flavours, which are represented by diffe
 
 > Prefer the `oauth-proxy` flavours, unless you have a specific reason to not use it.
 
-## Screenshots
+> **NOTE:** The `main` branch has been renamed to `local-auth` and `oauth-proxy` is the new default branch.
 
-<table>
-<tbody>
-<tr>
-<td>
+## Screenshots
 
 ### Login
 
 ![API docs](.docs/img/login.png)
 
-</td>
-<td>
+### Dashboard
+
+![API docs](.docs/img/dashboard-landing.png)
 
 ### Admin
 
-![API docs](.docs/img/dashboard.png)
-
-</td>
-</tr>
-<tr>
-<td>
-
-### Create User
-
-![API docs](.docs/img/dashboard-create.png)
-
-</td>
-<td>
+![API docs](.docs/img/dashboard-admin.png)
 
 ### Items
 
 ![API docs](.docs/img/dashboard-items.png)
 
-</td>
-</tr>
-<tr>
-<td>
-
-### User Settings
-
-![API docs](.docs/img/dashboard-user-settings.png)
-
-</td>
-<td>
-
 ### Dark Mode
 
-![API docs](.docs/img/dashboard-dark.png)
-
-</td>
-</tr>
-<tr>
-<td>
+![API docs](.docs/img/dark-mode.png)
 
 ### Interactive API Documentation
 
 ![API docs](.docs/img/docs.png)
-
-</td>
-<td></td>
-</tr>
-
-  </tbody>
-</table>
 
 ### How to Use It
 
