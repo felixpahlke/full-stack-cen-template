@@ -104,9 +104,9 @@ Always verify the container name prefix matches the current project directory to
 2. If not running, start it
 3. Verify the database container is healthy
 
-ALWAYS use Alembic for schema changes. Never modify database directly using following commands:
+ALWAYS use Alembic for schema changes. Never modify database directly using following commands. BEFORE running the Alembic commands ALWAYS navigate to the backend and activate the venv by executing `cd backend && source .venv/bin/activate`:
 ```bash
-cd backend && source .venv/bin/activate && alembic revision --autogenerate -m "Add column X to table Y"
+alembic revision --autogenerate -m "Add column X to table Y"
 ```
 if the revision was successfull, run the following command to apply all pending migrations:
 ```bash
@@ -148,8 +148,8 @@ alembic upgrade head
 4. Create route file in `backend/app/api/routes/`
 5. Register router in `backend/app/api/main.py`
 6. **Ensure that THIS app is running:** See section: [Checking if Application is Running](#Checking-if-Application-is-Running)
-7. Naviagte to the backend, activate the venv and then create the migration: `cd backend && source .venv/bin/activate && alembic revision --autogenerate -m "message"`
-8. Afterwards, apply that migration: `alembic upgrade head`
+7. Create and apply the migration as mentioned in the section [Database Migrations (Alembic)](#Database-Migrations-(Alembic)): `cd backend && source .venv/bin/activate && alembic revision --autogenerate -m "message"`
+8. Afterwards, apply that migration: `cd backend && source .venv/bin/activate && alembic upgrade head`
 9. Regenerate client: `./scripts/generate-client.sh`. This updates `frontend/src/client/` - never edit these files manually.
 10. If the user requests dummy data to be able to see the changes create an endpoint in the `backend/app/api/routes/utils.py` files that generates random items for the newly created tables. Be sure to use the `CurrentUser` dependency if the objects require a User ID, because otherwise the user will not be able to see the data, as the read operations filter objects for the current user. Lastly, request the user to execute
 
