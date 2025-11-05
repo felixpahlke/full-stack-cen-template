@@ -4,6 +4,7 @@ set -e
 set -x
 
 cd backend
+source .venv/bin/activate 
 python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
 cd ..
 node frontend/modify-openapi-operationids.js
