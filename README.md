@@ -17,6 +17,19 @@
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
 
+## AI-Assisted Development
+
+This project includes an [AGENTS.md](./AGENTS.md) file that provides comprehensive guidelines for agentic AI assistants like [**Bob**](https://www.ibm.com/products/bob) to autonomously implement new features. The file contains:
+
+- 📋 Project structure and conventions
+- 🔧 Backend and frontend development rules
+- 🚀 Essential workflows for common tasks
+- ⚠️ Common mistakes to avoid
+
+These guidelines enable AI assistants to understand the codebase and its conventions which leads to more robust and consistent code.
+
+> **Note:** You can customize or delete the AGENTS.md file to influence the behavior of your coding assistant.
+
 ## Sample Applications & Tutorials
 
 Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
