@@ -39,6 +39,14 @@ This template is available in different flavours, which are represented by diffe
 > **NOTE:** The `main` branch has been renamed to `local-auth` and `oauth-proxy` is the new default branch.
 
 
+## Sample Applications & Tutorials
+
+Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
+
+- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
+- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
+
+
 ## AI-Assisted Development
 
 This project includes an [AGENTS.md](./AGENTS.md) file that provides comprehensive guidelines for agentic AI assistants like [**Bob**](https://www.ibm.com/products/bob) to autonomously implement new features. The file contains:
@@ -52,12 +60,6 @@ These guidelines enable AI assistants to understand the codebase and its convent
 
 > **NOTE:** You can customize or delete the AGENTS.md file to influence the behavior of your coding assistant.
 
-## Sample Applications & Tutorials
-
-Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
-
-- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
-- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
 
 ## Screenshots
 
