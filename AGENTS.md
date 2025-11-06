@@ -113,7 +113,16 @@ if the revision was successfull, run the following command to apply all pending 
 alembic upgrade head
 ```
 
-# Frontend Conventions/Rules: 
+# Frontend Conventions/Rules:
+
+## UI Design System
+- **Use IBM Carbon Design System** for all UI components
+- Import components from `@carbon/react`
+- **Use Carbon Icons** for all icons - import from `@carbon/icons-react`
+- Follow Carbon Design guidelines for consistency and accessibility
+- **Theming:** Use the `ThemeProvider` from `@/components/theme/ThemeProvider` which wraps Carbon's `Theme` component and access theme state with `useTheme()` hook
+
+**Note:** Refer to [Carbon Design System documentation](https://carbondesignsystem.com/) for component usage.
 
 ## File Structure
 
