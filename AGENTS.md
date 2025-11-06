@@ -124,6 +124,22 @@ alembic upgrade head
 
 **Note:** Refer to [Carbon Design System documentation](https://carbondesignsystem.com/) for component usage.
 
+## Styling with Tailwind CSS
+
+The project uses **Tailwind CSS** alongside Carbon Design System for utility-based styling:
+
+### Carbon Design Tokens in Tailwind
+- **Carbon tokens are mapped to Tailwind** via the `cds-*` prefix (defined in `frontend/src/styles/carbon-tw-mapping.ts`)
+- Use `cds-*` classes for theme-aware colors that automatically adapt to light/dark mode
+
+### Best Practices
+- **ALWAYS** use Tailwind for styling
+- **DON'T** use arbitrary color values like `text-red-500` for semantic colors - use `text-cds-support-error` instead
+- **DO** use Tailwind for layout and spacing utilities
+- **DO** combine Carbon components with Tailwind utility classes for layout
+- **DON'T** override Carbon component styles unless absolutely necessary
+- **DO** use `cds-*` color classes to ensure proper theme support
+
 ## File Structure
 
 - **`frontend/src/routes/`** - File-based routing (TanStack Router)
