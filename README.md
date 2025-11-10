@@ -17,13 +17,6 @@
 
 _This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
 
-## Sample Applications & Tutorials
-
-Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
-
-- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
-- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
-
 ## Flavours
 
 This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
@@ -45,19 +38,31 @@ This template is available in different flavours, which are represented by diffe
 
 > **NOTE:** The `main` branch has been renamed to `local-auth` and `oauth-proxy` is the new default branch.
 
+## Sample Applications & Tutorials
+
+Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
+
+- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
+- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
+
+## AI-Assisted Development
+
+This project includes an [AGENTS.md](./AGENTS.md) file that provides comprehensive guidelines for agentic AI assistants like [**Bob**](https://www.ibm.com/products/bob) to autonomously implement new features. The file contains:
+
+- 📋 Project structure and conventions
+- 🔧 Backend and frontend development rules
+- 🚀 Essential workflows for common tasks
+- ⚠️ Common mistakes to avoid
+
+These guidelines enable AI assistants to understand the codebase and its conventions which leads to more robust and consistent code.
+
+> **NOTE:** You can customize or delete the AGENTS.md file to influence the behavior of your coding assistant.
+
 ## Screenshots
-
-### Login
-
-![API docs](.docs/img/login.png)
 
 ### Dashboard
 
 ![API docs](.docs/img/dashboard-landing.png)
-
-### Admin
-
-![API docs](.docs/img/dashboard-admin.png)
 
 ### Items
 
