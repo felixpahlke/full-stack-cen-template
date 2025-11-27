@@ -137,21 +137,27 @@ EOF
     print_status "Getting webhook URLs..." "webhooks"
     local frontend_base_url
     local frontend_secret
-    local frontend_webhook
+    local frontend_webhook=""
     local backend_base_url
     local backend_secret
     local backend_webhook
     
-    frontend_base_url=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | sed 's/.*\(https:\/\/[^ ]*\).*/\1/')
-    frontend_secret=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
-    frontend_webhook=${frontend_base_url/<secret>/$frontend_secret}
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+        frontend_base_url=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | sed 's/.*\(https:\/\/[^ ]*\).*/\1/')
+        frontend_secret=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
+        frontend_webhook=${frontend_base_url/<secret>/$frontend_secret}
+        
+        # Store webhook URLs in output collector
+        add_deployment_output "frontend_webhook" "$frontend_webhook"
+    else
+        print_status "Skipping frontend webhook retrieval (backend-only mode)" "webhooks"
+    fi
     
     backend_base_url=$(oc describe bc/backend | grep "Webhook Generic" -A 1 | tail -n 1 | sed 's/.*\(https:\/\/[^ ]*\).*/\1/')
     backend_secret=$(oc get bc backend -o jsonpath='{.spec.triggers[*].generic.secret}')
     backend_webhook=${backend_base_url/<secret>/$backend_secret}
     
     # Store webhook URLs in output collector
-    add_deployment_output "frontend_webhook" "$frontend_webhook"
     add_deployment_output "backend_webhook" "$backend_webhook"
     
     # Try to create GitHub webhooks automatically
@@ -160,15 +166,21 @@ EOF
         local frontend_webhook_created=false
         local backend_webhook_created=false
         
-        if create_github_webhook "$GIT_SSH_URL" "$frontend_webhook" "frontend"; then
-            frontend_webhook_created=true
+        if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+            if create_github_webhook "$GIT_SSH_URL" "$frontend_webhook" "frontend"; then
+                frontend_webhook_created=true
+            fi
+        else
+            # In backend-only mode, we consider frontend "created" for the success check logic, 
+            # or we just skip it. Let's skip calling the create function.
+            frontend_webhook_created=true # mock true to satisfy the ALL check if we used the old logic, but better to adjust logic
         fi
         
         if create_github_webhook "$GIT_SSH_URL" "$backend_webhook" "backend"; then
             backend_webhook_created=true
         fi
         
-        # Mark as configured if both webhooks were created
+        # Mark as configured if both webhooks were created (or just backend if backend-only)
         if [[ "$frontend_webhook_created" == "true" && "$backend_webhook_created" == "true" ]]; then
             add_deployment_output "github_webhooks_configured" "true"
         fi

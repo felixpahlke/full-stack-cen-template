@@ -59,14 +59,17 @@ create_initial_app_env_secret() {
     local secret_key_generated=false
     
     # Generate a secure random secret key if not provided or too short
-    if [[ -z "${SECRET_KEY:-}" ]] || [[ ${#SECRET_KEY} -lt 8 ]]; then
-        SECRET_KEY=$(openssl rand -hex 32)
-        export SECRET_KEY
-        secret_key_generated=true
-        print_success "Generated secure secret key for backend" "secrets"
-        
-        # Store in output collector
-        add_deployment_output "secret_key_generated" "$SECRET_KEY"
+    # Skip this for backend-only deployment if SECRET_KEY is not required
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+        if [[ -z "${SECRET_KEY:-}" ]] || [[ ${#SECRET_KEY} -lt 8 ]]; then
+            SECRET_KEY=$(openssl rand -hex 32)
+            export SECRET_KEY
+            secret_key_generated=true
+            print_success "Generated secure secret key for backend" "secrets"
+            
+            # Store in output collector
+            add_deployment_output "secret_key_generated" "$SECRET_KEY"
+        fi
     fi
     
     # Create or update application environment secret
@@ -90,12 +93,16 @@ create_initial_app_env_secret() {
 # Function to update application environment secret with frontend/backend URLs
 update_app_env_secret_with_urls() {
     local secret_name="$APP_NAME-env"
-    local frontend_url
+    local frontend_url=""
     local backend_url
     
-    # Get the frontend and backend URLs from the routes
-    frontend_url=$(oc get route frontend -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+    # Get the backend URL
     backend_url=$(oc get route backend -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+    
+    # Get the frontend URL only if not backend-only deployment
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+        frontend_url=$(oc get route frontend -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+    fi
     
     # If OAuth is enabled, these routes might not exist (which is expected).
     # We will defer the URL updates to the OAuth phase in that case.
@@ -104,29 +111,38 @@ update_app_env_secret_with_urls() {
         return 0
     fi
     
-    if [[ -z "$frontend_url" || -z "$backend_url" ]]; then
-        print_error "Could not get frontend or backend URLs. Make sure the routes are created." "secrets"
-        return 1
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" && -z "$frontend_url" ]] || [[ -z "$backend_url" ]]; then
+        if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "true" && -n "$backend_url" ]]; then
+             # Backend only and we have backend url, that's fine
+             :
+        else
+            print_error "Could not get URLs (Backend: $backend_url, Frontend: $frontend_url). Make sure the routes are created." "secrets"
+            return 1
+        fi
     fi
     
-    print_status "Updating $secret_name secret with frontend and backend URLs..." "secrets"
+    print_status "Updating $secret_name secret with URLs..." "secrets"
     
     # Set BACKEND_CORS_ORIGINS if not already set, or append backend URL if it exists
-    if [[ -z "${BACKEND_CORS_ORIGINS:-}" ]]; then
-        export BACKEND_CORS_ORIGINS="https://$frontend_url"
-    else
-        # Add backend URL to existing BACKEND_CORS_ORIGINS if not already present
-        if [[ ! "$BACKEND_CORS_ORIGINS" =~ "https://$frontend_url" ]]; then
-            export BACKEND_CORS_ORIGINS="$BACKEND_CORS_ORIGINS,https://$frontend_url"
-            print_status "Added frontend URL to existing BACKEND_CORS_ORIGINS" "secrets"
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+        if [[ -z "${BACKEND_CORS_ORIGINS:-}" ]]; then
+            export BACKEND_CORS_ORIGINS="https://$frontend_url"
+        else
+            # Add backend URL to existing BACKEND_CORS_ORIGINS if not already present
+            if [[ ! "$BACKEND_CORS_ORIGINS" =~ "https://$frontend_url" ]]; then
+                export BACKEND_CORS_ORIGINS="$BACKEND_CORS_ORIGINS,https://$frontend_url"
+                print_status "Added frontend URL to existing BACKEND_CORS_ORIGINS" "secrets"
+            fi
         fi
+        add_deployment_output "frontend_url" "$frontend_url"
+    else
+        print_status "Backend-only deployment: skipping frontend URL in BACKEND_CORS_ORIGINS" "secrets"
     fi
     
     # Set DOMAIN for backend
     export DOMAIN="$backend_url"
     
     # Store URLs in output collector
-    add_deployment_output "frontend_url" "$frontend_url"
     add_deployment_output "backend_url" "$backend_url"
     add_deployment_output "backend_cors_origins" "$BACKEND_CORS_ORIGINS"
     add_deployment_output "domain" "$DOMAIN"
@@ -142,7 +158,10 @@ update_app_env_secret_with_urls() {
     # Execute the command
     eval "$secret_cmd"
     
-    print_success "Updated environment secret with frontend URL: https://$frontend_url and backend URL: https://$backend_url" "secrets"
+    print_success "Updated environment secret with backend URL: https://$backend_url" "secrets"
+    if [[ -n "$frontend_url" ]]; then
+        print_success "  and frontend URL: https://$frontend_url" "secrets"
+    fi
     return 0
 }
 
