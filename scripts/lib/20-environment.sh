@@ -24,6 +24,20 @@ declare -a REQUIRED_VARS=(
     "POSTGRES_PASSWORD"
 )
 
+# Required variables for Backend Only deployment
+declare -a BACKEND_ONLY_REQUIRED_VARS=(
+    "APP_NAME"
+    "PROJECT_NAME"
+    "GIT_SSH_URL"
+    "API_KEY"
+    "ENVIRONMENT"
+    "POSTGRES_SERVER"
+    "POSTGRES_PORT"
+    "POSTGRES_DB"
+    "POSTGRES_USER"
+    "POSTGRES_PASSWORD"
+)
+
 # OAuth2 Proxy variables (conditionally required - all or nothing)
 declare -a OAUTH_VARS=(
     "OAUTH2_PROXY_COOKIE_SECRET"
@@ -37,6 +51,11 @@ declare -a PASSWORD_VARS=(
     "FIRST_SUPERUSER_PASSWORD"
     "POSTGRES_PASSWORD"
     "SECRET_KEY"
+)
+
+# Password variables for Backend Only deployment
+declare -a BACKEND_ONLY_PASSWORD_VARS=(
+    "POSTGRES_PASSWORD"
 )
 
 #############################################
@@ -130,11 +149,43 @@ validate_oauth_vars() {
 validate_required_vars() {
     local missing_vars=()
     local invalid_vars=()
+    local vars_to_check=()
+    local password_vars_to_check=()
+    
+    # Select variable sets based on deployment mode
+    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "true" ]]; then
+        print_status "Using backend-only variable requirements..." "environment"
+        vars_to_check=("${BACKEND_ONLY_REQUIRED_VARS[@]}")
+        password_vars_to_check=("${BACKEND_ONLY_PASSWORD_VARS[@]}")
+    else
+        vars_to_check=("${REQUIRED_VARS[@]}")
+        password_vars_to_check=("${PASSWORD_VARS[@]}")
+    fi
+    
+    # Filter out DB variables if DEPLOY_DB is false
+    if [[ "${DEPLOY_DB:-true}" == "false" ]]; then
+        print_status "Adjusting requirements for No-DB deployment..." "environment"
+        local db_filtered_vars=()
+        for var in "${vars_to_check[@]}"; do
+            if [[ ! "$var" =~ ^POSTGRES_ ]]; then
+                db_filtered_vars+=("$var")
+            fi
+        done
+        vars_to_check=("${db_filtered_vars[@]}")
+        
+        local db_filtered_pass_vars=()
+        for var in "${password_vars_to_check[@]}"; do
+            if [[ ! "$var" =~ ^POSTGRES_ ]]; then
+                db_filtered_pass_vars+=("$var")
+            fi
+        done
+        password_vars_to_check=("${db_filtered_pass_vars[@]}")
+    fi
     
     print_status "Validating required environment variables..." "environment"
     
     # Check if all required variables are set
-    for var_name in "${REQUIRED_VARS[@]}"; do
+    for var_name in "${vars_to_check[@]}"; do
         if [[ -z "${!var_name:-}" ]]; then
             missing_vars+=("$var_name")
         fi
@@ -153,6 +204,19 @@ validate_required_vars() {
     # Validate specific variables
     local vars_to_validate=("APP_NAME" "PROJECT_NAME" "GIT_SSH_URL" "FIRST_SUPERUSER" "API_KEY")
     for var_name in "${vars_to_validate[@]}"; do
+        # Skip validation if variable is not in our checked list (e.g. FIRST_SUPERUSER in backend-only mode)
+        local is_in_check_list=false
+        for v in "${vars_to_check[@]}"; do
+            if [[ "$v" == "$var_name" ]]; then
+                is_in_check_list=true
+                break
+            fi
+        done
+        
+        if [[ "$is_in_check_list" == "false" ]]; then
+            continue
+        fi
+        
         local validation_func=$(get_validation_function "$var_name")
         local var_value="${!var_name:-}"
         
@@ -164,7 +228,7 @@ validate_required_vars() {
     done
     
     # Validate password lengths
-    for var_name in "${PASSWORD_VARS[@]}"; do
+    for var_name in "${password_vars_to_check[@]}"; do
         local var_value="${!var_name:-}"
         
         # Skip empty optional passwords

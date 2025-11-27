@@ -221,7 +221,17 @@ group_resources() {
     print_status "Grouping resources as one application..." "deployment"
     
     # Label core deployments
-    oc label deployment/frontend deployment/backend deployment/postgresql app.kubernetes.io/part-of="$APP_NAME" --overwrite
+    local resources_to_label=("deployment/backend")
+    
+    if resource_exists "deployment" "postgresql"; then
+        resources_to_label+=("deployment/postgresql")
+    fi
+    
+    if resource_exists "deployment" "frontend"; then
+        resources_to_label+=("deployment/frontend")
+    fi
+    
+    oc label "${resources_to_label[@]}" app.kubernetes.io/part-of="$APP_NAME" --overwrite
     
     # Label OAuth proxy if it exists
     if resource_exists "deployment" "oauth-proxy"; then
