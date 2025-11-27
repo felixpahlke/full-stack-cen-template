@@ -1,0 +1,11 @@
+# Environment files
+*.env
+
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+.terraform.lock*
+
+# Terraform variable files
+terraform.tfvars
+*.auto.tfvars
