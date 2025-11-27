@@ -1,232 +1,266 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# OpenShift Deployment Script (Refactored)
+#
+# This script deploys an application to OpenShift with the following features:
+# - Modular library structure for maintainability
+# - Idempotent operations (can be run multiple times without side effects)
+# - Variables loaded dynamically from .env.production file
+# - Comprehensive validation for all required variables
+# - Best practices for bash scripting
+# - Sensitive values are masked in output
+# - Dynamic secret creation from environment variables
+# - Automatic VITE_ prefix injection for frontend
+# - SSH key management with GitHub deploy key verification
+# - Database reset functionality
+# - GitHub webhook automation
+# - Clean summary output at the end
+#
+# Usage: ./oc-deploy.sh [OPTIONS]
+#
+# For detailed documentation, see scripts/README.md
+#
 
-# Make the script executable
-# chmod +x scripts/deploy.sh
+set -eo pipefail
 
-# Color codes for pretty output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-TEAL='\033[0;36m'
-NC='\033[0m' # No Color
+# Get directories
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+LIB_DIR="$SCRIPT_DIR/lib"
 
-# Function to print colored status messages
-print_status() {
-    echo -e "${TEAL}==>${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}==>${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}==>${NC} $1"
-}
-
-# Function to validate project name
-validate_name() {
-    local name=$1
-    if [[ ! $name =~ ^[a-z0-9-]+$ ]]; then
-        return 1
+# Source all library files in order
+for lib_file in "$LIB_DIR"/*.sh; do
+    if [[ -f "$lib_file" ]]; then
+        # shellcheck source=/dev/null
+        source "$lib_file"
     fi
+done
+
+# Default environment file location (project root)
+ENV_FILE="$PROJECT_ROOT/.env.production"
+
+# Default GitHub host (can be overridden in .env.production)
+# Set to github.ibm.com for IBM GitHub Enterprise
+# Set to github.com for public GitHub
+DEFAULT_GITHUB_HOST="github.ibm.com"
+
+# Flags
+RESET_PROD_DB=false
+REGENERATE_SSH_KEY=false
+SHOW_HELP=false
+SHOW_ENV_VALUES=false
+DEPLOY_BACKEND_ONLY=false
+FLAG_BACKEND_ONLY=false
+DEPLOY_DB=true
+FLAG_NO_DB=false
+
+#############################################
+# Argument Parsing
+#############################################
+
+# Parse command line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                SHOW_HELP=true
+                shift
+                ;;
+            --env-file)
+                ENV_FILE="$2"
+                shift 2
+                ;;
+            --backend-only)
+                FLAG_BACKEND_ONLY=true
+                shift
+                ;;
+            --no-db)
+                FLAG_NO_DB=true
+                shift
+                ;;
+            --reset-prod-db)
+                RESET_PROD_DB=true
+                shift
+                ;;
+            --regenerate-ssh-key)
+                REGENERATE_SSH_KEY=true
+                shift
+                ;;
+            --show-env-values)
+                SHOW_ENV_VALUES=true
+                shift
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+#############################################
+# Main Execution
+#############################################
+
+# Main function
+main() {
+    # Parse arguments
+    parse_arguments "$@"
+    
+    # Show help if requested
+    if [[ "$SHOW_HELP" == "true" ]]; then
+        show_help
+        exit 0
+    fi
+    
+    echo
+    echo -e "${TEAL}Welcome to the OpenShift Deployment Script!${NC}"
+    echo
+    
+    # ============================================================
+    # PHASE 1: INITIALIZATION
+    # ============================================================
+    print_section_header "PHASE 1: INITIALIZATION"
+    
+    # Load environment variables from file
+    load_env_file "$ENV_FILE" "$SHOW_ENV_VALUES" || exit 1
+    
+    # Flag overrides environment file for backend-only deployment
+    if [[ "$FLAG_BACKEND_ONLY" == "true" ]]; then
+        DEPLOY_BACKEND_ONLY=true
+        print_status "Backend-only deployment enabled via flag (overrides environment file)"
+    elif [[ "${DEPLOY_BACKEND_ONLY}" == "true" ]]; then
+        print_status "Backend-only deployment enabled via environment file"
+    fi
+    
+    # Handle No-DB flag/env
+    if [[ "$FLAG_NO_DB" == "true" ]]; then
+        DEPLOY_DB=false
+        print_status "Database deployment disabled via flag"
+    elif [[ "${DEPLOY_DB}" == "false" ]]; then
+        print_status "Database deployment disabled via environment variable"
+    fi
+    
+    # Export for libraries to use
+    export DEPLOY_BACKEND_ONLY
+    export DEPLOY_DB
+    
+    # Validate all required variables
+    validate_required_vars || exit 1
+    
+    # ============================================================
+    # PHASE 2: PREREQUISITES CHECK
+    # ============================================================
+    print_section_header "PHASE 2: PREREQUISITES CHECK"
+    
+    # Check OpenShift client and login
+    check_oc_version || exit 1
+    check_oc_login || exit 1
+    
+    # ============================================================
+    # PHASE 3: PROJECT SETUP
+    # ============================================================
+    print_section_header "PHASE 3: PROJECT SETUP"
+    
+    # Setup project
+    setup_project || exit 1
+    
+    # Handle SSH key regeneration flag
+    if [[ "$REGENERATE_SSH_KEY" == "true" ]]; then
+        delete_ssh_keys || exit 1
+    fi
+    
+    # Setup SSH keys
+    setup_ssh_keys || exit 1
+    
+    # Handle database reset flag
+    if [[ "$RESET_PROD_DB" == "true" ]]; then
+        reset_production_database || exit 1
+        print_deployment_summary
+        exit 0
+    fi
+    
+    # ============================================================
+    # PHASE 4: DATABASE DEPLOYMENT
+    # ============================================================
+    print_section_header "PHASE 4: DATABASE DEPLOYMENT"
+    
+    # Create the initial app environment secret
+    create_initial_app_env_secret || exit 1
+    
+    # Deploy database
+    if [[ "$DEPLOY_DB" == "true" ]]; then
+        deploy_database || exit 1
+    else
+        print_status "Skipping database deployment (DEPLOY_DB=false)"
+    fi
+
+    # Pre-configure OAuth to avoid backend restarts
+    if is_oauth_enabled; then
+        print_status "OAuth2 Proxy is enabled. Pre-configuring secrets to avoid backend restarts..."
+        # Order matters: we need the route first to get the URL for the secret
+        create_oauth_proxy_service || exit 1
+        create_oauth_proxy_route || exit 1
+        create_oauth_proxy_secret || exit 1
+        update_backend_with_oauth_url || exit 1
+    fi
+    
+    # ============================================================
+    # PHASE 5: APPLICATION DEPLOYMENT
+    # ============================================================
+    print_section_header "PHASE 5: APPLICATION DEPLOYMENT"
+    
+    # Deploy frontend and backend
+    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+        deploy_frontend || exit 1
+    else
+        print_status "Skipping frontend deployment (backend-only mode)"
+    fi
+    
+    deploy_backend || exit 1
+    
+    # Update the app environment secret with frontend/backend URLs
+    update_app_env_secret_with_urls || exit 1
+    
+    # Deploy OAuth2 Proxy (optional)
+    # Requires all OAuth2 Proxy environment variables to be configured in .env.production
+    # See scripts/.env.production.example for required variables
+    if is_oauth_enabled; then
+        print_status "OAuth2 Proxy is enabled, deploying..."
+        deploy_oauth_proxy || exit 1
+    fi
+    
+    # ============================================================
+    # PHASE 6: CONFIGURATION
+    # ============================================================
+    print_section_header "PHASE 6: CONFIGURATION"
+    
+    # Configure frontend and backend
+    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+        configure_frontend || exit 1
+    fi
+    
+    configure_backend || exit 1
+    
+    # Group resources
+    group_resources || exit 1
+    
+    # ============================================================
+    # PHASE 7: POST-DEPLOYMENT
+    # ============================================================
+    print_section_header "PHASE 7: POST-DEPLOYMENT"
+    
+    # Setup webhooks
+    setup_webhooks || exit 1
+    
+    # Print deployment summary
+    print_deployment_summary
+    
     return 0
 }
 
-# Function to validate email
-validate_email() {
-    local email=$1
-    if [[ ! $email =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-        return 1
-    fi
-    return 0
-}
+# Execute main function with all arguments
+main "$@"
 
-# Function to validate git SSH URL
-validate_git_url() {
-    local url=$1
-    # Check if URL starts with git@ or ssh:// and ends with .git
-    if [[ ! $url =~ ^(git@|ssh://).+\.git$ ]]; then
-        return 1
-    fi
-    return 0
-}
-
-# Function to validate API key length
-validate_api_key() {
-    local key=$1
-    local len=${#key}
-    if [[ $len -eq 16 ]] || [[ $len -eq 32 ]]; then
-        return 0
-    fi
-    return 1
-}
-
-# Check OpenShift client version
-print_status "Checking OpenShift client version..."
-OC_VERSION=$(oc version | grep "Client Version:" | awk '{print $3}' | cut -d'.' -f2)
-if [ -z "$OC_VERSION" ] || [ "$OC_VERSION" -lt "14" ]; then
-    print_error "OpenShift client version 4.14 or higher is required"
-    print_error "Current version: $(oc version | grep "Client Version:")"
-    exit 1
-fi
-
-# Check OpenShift instance and login status
-print_status "Checking OpenShift instance and login status..."
-if ! oc whoami --show-server &>/dev/null || ! oc whoami &>/dev/null; then
-    print_error "Not logged into OpenShift. Please login first using:"
-    echo "oc login --token=<token> --server=<server-url>"
-    exit 1
-fi
-
-OPENSHIFT_SERVER=$(oc whoami --show-server)
-echo -e "${TEAL}You are about to deploy to:${NC}"
-echo -e "${TEAL}$OPENSHIFT_SERVER${NC}"
-read -p "Do you want to continue? (y/n): " CONTINUE
-
-if [[ ! $CONTINUE =~ ^[Yy]$ ]]; then
-    print_error "Deployment cancelled"
-    exit 1
-fi
-
-# Collect all required inputs
-echo
-echo -e "${TEAL}Welcome to the OpenShift Deployment Script!${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo -e "${TEAL}Please provide the following information:${NC}"
-echo -e "${GREEN}----------------------------------------${NC}"
-echo
-
-# Project name with validation
-while true; do
-    read -p "Choose an OpenShift project name (lowercase letters, numbers and hyphens only): " PROJECT_NAME
-    if validate_name "$PROJECT_NAME"; then
-        break
-    else
-        print_error "Invalid project name. Use only lowercase letters, numbers and hyphens."
-    fi
-done
-
-# Check if project exists
-if oc get project "$PROJECT_NAME" &>/dev/null; then
-    print_status "Project '$PROJECT_NAME' already exists."
-    read -p "Do you want to switch to this project and continue deployment? (y/n): " USE_EXISTING
-    if [[ $USE_EXISTING =~ ^[Yy]$ ]]; then
-        oc project "$PROJECT_NAME" || {
-            print_error "Failed to switch to project"
-            exit 1
-        }
-    else
-        print_error "Deployment cancelled"
-        exit 1
-    fi
-else
-    # Create new project
-    print_status "Creating new project..."
-    oc new-project "$PROJECT_NAME" || {
-        print_error "Failed to create project"
-        exit 1
-    }
-fi
-
-# App name
-while true; do
-    read -p "Choose an application name (lowercase letters, numbers and hyphens only): " APP_NAME
-    if validate_name "$APP_NAME"; then
-        break
-    else
-        print_error "Invalid app name. Use only lowercase letters, numbers and hyphens."
-    fi
-done
-
-# Git URL with validation
-while true; do
-    read -p "Your Git Repository URL (ssh format, e.g. git@github.com:user/repo.git): " GIT_URL
-    if validate_git_url "$GIT_URL"; then
-        break
-    else
-        print_error "Invalid Git SSH URL. Must start with git@ or ssh:// and end with .git"
-    fi
-done
-
-# API key with validation
-while true; do
-    read -p "Choose an API key (must be 16 or 32 characters long): " API_KEY
-    if validate_api_key "$API_KEY"; then
-        break
-    else
-        print_error "Invalid API key length. Must be exactly 16 or 32 characters."
-    fi
-done
-
-# Create SSH keys
-print_status "Creating SSH key pair in ~/.ssh/$PROJECT_NAME/..."
-mkdir -p $HOME/.ssh/$PROJECT_NAME
-ssh-keygen -N '' -f $HOME/.ssh/$PROJECT_NAME/ocp-key -C "openshift-deploy-key" -q <<< y > /dev/null
-
-# Create OpenShift secret
-print_status "Creating OpenShift secret..."
-oc create secret generic git-secret \
-    --from-file=ssh-privatekey=$HOME/.ssh/$PROJECT_NAME/ocp-key \
-    --type=kubernetes.io/ssh-auth
-
-print_status "${GREEN}Please add this public key to your GitLab/GitHub repository as a deploy key:${NC}"
-echo -e "${TEAL}$(cat $HOME/.ssh/$PROJECT_NAME/ocp-key.pub)${NC}"
-read -p "Press enter once you've added the deploy key..."
-
-# Deploy Backend
-print_status "Deploying backend..."
-oc new-app --name=backend --strategy=docker --context-dir=backend --source-secret=git-secret $GIT_URL
-
-print_status "Exposing backend service..."
-oc create route edge backend --service=backend --port=8000
-
-# Setup backend environment
-print_status "Setting up backend environment..."
-
-oc create secret generic backend-envs \
-    --from-literal=BACKEND_CORS_ORIGINS="*" \
-    --from-literal=PROJECT_NAME=$PROJECT_NAME \
-    --from-literal=ENVIRONMENT=production \
-    --from-literal=API_KEY=$API_KEY
-
-print_status "Applying backend environment..."
-oc patch deployment backend --patch '{"spec":{"template":{"spec":{"containers":[{"name":"backend","envFrom":[{"secretRef":{"name":"backend-envs"}}]}]}}}}'
-
-# Group resources as one application
-print_status "Grouping resources as one application..."
-oc label deployment/backend app.kubernetes.io/part-of=$APP_NAME
-
-# Setup CI/CD webhooks
-print_status "Getting webhook URLs..."
-
-# Create RoleBinding for webhook access
-print_status "Creating RoleBinding for webhook access..."
-cat << EOF | oc apply -f -
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-  name: webhook-access-unauthenticated
-  namespace: $PROJECT_NAME
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: "system:webhook"
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: "system:unauthenticated"
-EOF
-
-BACKEND_BASE_URL=$(oc describe bc/backend | grep "Webhook Generic" -A 1 | tail -n 1 | tr -d ' ')
-BACKEND_SECRET=$(oc get bc backend -o jsonpath='{.spec.triggers[*].generic.secret}')
-BACKEND_WEBHOOK=${BACKEND_BASE_URL/<secret>/$BACKEND_SECRET}
-
-print_success "Deployment completed successfully!"
-echo
-echo "Backend Webhook URL:"
-echo $BACKEND_WEBHOOK
-echo
-print_status "Please add this webhook URL to your GitLab/GitHub repository"
-echo
+# Made with Bob

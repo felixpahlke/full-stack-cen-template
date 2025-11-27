@@ -1,5 +1,13 @@
+# VSC
 .vscode
+
+# Node
 node_modules/
+
+# Environment files
+*.env*
+!.env*.example
+
 /test-results/
 /playwright-report/
 /blob-report/
@@ -7,4 +15,3 @@ git-push.sh
 /playwright/.cache/
 git-push.sh
 
-.env
