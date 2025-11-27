@@ -49,6 +49,10 @@ RESET_PROD_DB=false
 REGENERATE_SSH_KEY=false
 SHOW_HELP=false
 SHOW_ENV_VALUES=false
+DEPLOY_BACKEND_ONLY=false
+FLAG_BACKEND_ONLY=false
+DEPLOY_DB=true
+FLAG_NO_DB=false
 
 #############################################
 # Argument Parsing
@@ -65,6 +69,14 @@ parse_arguments() {
             --env-file)
                 ENV_FILE="$2"
                 shift 2
+                ;;
+            --backend-only)
+                FLAG_BACKEND_ONLY=true
+                shift
+                ;;
+            --no-db)
+                FLAG_NO_DB=true
+                shift
                 ;;
             --reset-prod-db)
                 RESET_PROD_DB=true
@@ -114,6 +126,26 @@ main() {
     # Load environment variables from file
     load_env_file "$ENV_FILE" "$SHOW_ENV_VALUES" || exit 1
     
+    # Flag overrides environment file for backend-only deployment
+    if [[ "$FLAG_BACKEND_ONLY" == "true" ]]; then
+        DEPLOY_BACKEND_ONLY=true
+        print_status "Backend-only deployment enabled via flag (overrides environment file)"
+    elif [[ "${DEPLOY_BACKEND_ONLY}" == "true" ]]; then
+        print_status "Backend-only deployment enabled via environment file"
+    fi
+    
+    # Handle No-DB flag/env
+    if [[ "$FLAG_NO_DB" == "true" ]]; then
+        DEPLOY_DB=false
+        print_status "Database deployment disabled via flag"
+    elif [[ "${DEPLOY_DB}" == "false" ]]; then
+        print_status "Database deployment disabled via environment variable"
+    fi
+    
+    # Export for libraries to use
+    export DEPLOY_BACKEND_ONLY
+    export DEPLOY_DB
+    
     # Validate all required variables
     validate_required_vars || exit 1
     
@@ -158,7 +190,11 @@ main() {
     create_initial_app_env_secret || exit 1
     
     # Deploy database
-    deploy_database || exit 1
+    if [[ "$DEPLOY_DB" == "true" ]]; then
+        deploy_database || exit 1
+    else
+        print_status "Skipping database deployment (DEPLOY_DB=false)"
+    fi
 
     # Pre-configure OAuth to avoid backend restarts
     if is_oauth_enabled; then
@@ -176,7 +212,12 @@ main() {
     print_section_header "PHASE 5: APPLICATION DEPLOYMENT"
     
     # Deploy frontend and backend
-    deploy_frontend || exit 1
+    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+        deploy_frontend || exit 1
+    else
+        print_status "Skipping frontend deployment (backend-only mode)"
+    fi
+    
     deploy_backend || exit 1
     
     # Update the app environment secret with frontend/backend URLs
@@ -196,7 +237,10 @@ main() {
     print_section_header "PHASE 6: CONFIGURATION"
     
     # Configure frontend and backend
-    configure_frontend || exit 1
+    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+        configure_frontend || exit 1
+    fi
+    
     configure_backend || exit 1
     
     # Group resources

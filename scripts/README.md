@@ -79,18 +79,39 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 
 The deployment script uses `scripts/.env.production` for all configuration. See [`scripts/.env.production.example`](scripts/.env.production.example) for a complete template with detailed comments.
 
-### Required Variables
+### Deployment Modes & Required Variables
 
-| Variable                   | Description            | Validation                             |
-| -------------------------- | ---------------------- | -------------------------------------- |
-| `APP_NAME`                 | Application name       | Lowercase, alphanumeric, hyphens only  |
-| `PROJECT_NAME`             | OpenShift project name | Lowercase, alphanumeric, hyphens only  |
-| `GIT_SSH_URL`              | Git repository SSH URL | Format: `git@github.com:user/repo.git` |
-| `FIRST_SUPERUSER`          | Admin email            | Valid email format                     |
-| `FIRST_SUPERUSER_PASSWORD` | Admin password         | Minimum 8 characters                   |
-| `API_KEY`                  | API security key       | 16, 32, or 64 characters               |
-| `SECRET_KEY`               | Backend secret key     | Minimum 8 characters                   |
-| `POSTGRES_PASSWORD`        | Database password      | Minimum 8 characters                   |
+The script supports different deployment modes which require different sets of variables.
+
+#### 1. Full Stack (Default)
+
+Requires all standard variables: `APP_NAME`, `PROJECT_NAME`, `GIT_SSH_URL`, `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SECRET_KEY`, plus all `POSTGRES_*` variables.
+
+#### 2. Backend Only (`--backend-only`)
+
+Skips frontend deployment.
+
+- **Removes Requirement:** `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SIGNUP_ACCESS_PASSWORD`, `SECRET_KEY`
+- **Adds Requirement:** `API_KEY` (Must be set in `.env.production`)
+
+#### 3. No Database (`--no-db`)
+
+Skips PostgreSQL deployment.
+
+- **Removes Requirement:** All `POSTGRES_*` variables (`POSTGRES_SERVER`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`)
+
+### Required Variables Reference
+
+| Variable                   | Description            | Validation                                   |
+| -------------------------- | ---------------------- | -------------------------------------------- |
+| `APP_NAME`                 | Application name       | Lowercase, alphanumeric, hyphens only        |
+| `PROJECT_NAME`             | OpenShift project name | Lowercase, alphanumeric, hyphens only        |
+| `GIT_SSH_URL`              | Git repository SSH URL | Format: `git@github.com:user/repo.git`       |
+| `FIRST_SUPERUSER`          | Admin email            | Valid email format (Full Stack only)         |
+| `FIRST_SUPERUSER_PASSWORD` | Admin password         | Minimum 8 characters (Full Stack only)       |
+| `API_KEY`                  | API security key       | 16, 32, or 64 characters (Backend Only only) |
+| `SECRET_KEY`               | Backend secret key     | Minimum 8 characters (Full Stack only)       |
+| `POSTGRES_PASSWORD`        | Database password      | Minimum 8 characters (If DB enabled)         |
 
 ### Optional Variables
 
@@ -165,6 +186,12 @@ WEBHOOK_BRANCH_FILTER=main  # Only build on main branch updates
 # Show environment values during deployment (for debugging)
 ./scripts/oc-deploy.sh --show-env-values
 
+# Deploy only the backend (skips frontend)
+./scripts/oc-deploy.sh --backend-only
+
+# Skip database deployment
+./scripts/oc-deploy.sh --no-db
+
 # Display help
 ./scripts/oc-deploy.sh --help
 ```
@@ -172,6 +199,9 @@ WEBHOOK_BRANCH_FILTER=main  # Only build on main branch updates
 ### Combining Options
 
 ```bash
+# Backend-only deployment without database
+./scripts/oc-deploy.sh --backend-only --no-db
+
 # Reset database and regenerate SSH keys
 ./scripts/oc-deploy.sh --reset-prod-db --regenerate-ssh-key
 ```
@@ -225,6 +255,13 @@ WEBHOOK_BRANCH_FILTER=main  # Only build on main branch updates
 - Color-coded status messages
 - Library context prefixes for clarity
 - Deployment summary at completion
+
+### ✅ Flexible Deployment Modes
+
+- **Full Stack:** Deploys Frontend, Backend, and Database (Default)
+- **Backend Only:** Deploys only Backend and Database (Use `--backend-only` or `DEPLOY_BACKEND_ONLY=true`)
+- **No Database:** Deploys application without managing a PostgreSQL instance (Use `--no-db` or `DEPLOY_DB=false`)
+- **Backend Only + No DB:** Deploys only the Backend service (Great for lightweight APIs)
 
 ## Deployment Phases
 

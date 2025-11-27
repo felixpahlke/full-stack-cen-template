@@ -240,6 +240,8 @@ ${GREEN}USAGE:${NC}
 ${GREEN}OPTIONS:${NC}
     -h, --help              Show this help message and exit
     --env-file PATH         Specify custom environment file (default: scripts/.env.production)
+    --backend-only          Deploy only the backend application (skips frontend)
+    --no-db                 Skip database deployment (assumes external DB or none required)
     --reset-prod-db         Reset production database (deletes and recreates PostgreSQL storage)
     --regenerate-ssh-key    Delete and regenerate SSH keys for GitHub access
     --show-env-values       Display environment variable names and values during loading (default: silent)
@@ -282,6 +284,12 @@ ${GREEN}EXAMPLES:${NC}
 
     # Show environment variable values (for debugging)
     $0 --show-env-values
+
+    # Backend-only deployment
+    $0 --backend-only
+
+    # Backend-only deployment without database
+    $0 --backend-only --no-db
 
 ${GREEN}PREREQUISITES:${NC}
     - OpenShift CLI (oc) version 4.14 or higher
