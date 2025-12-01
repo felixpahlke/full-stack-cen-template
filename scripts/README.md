@@ -19,10 +19,10 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 1. **Copy the environment template:**
 
    ```bash
-   cp scripts/.env.production.example scripts/.env.production
+   cp .env.production.example .env.production
    ```
 
-2. **Configure required variables** in `scripts/.env.production`:
+2. **Configure required variables** in `.env.production`:
 
    ```bash
    APP_NAME=my-app
@@ -77,7 +77,7 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 
 ### Environment File Structure
 
-The deployment script uses `scripts/.env.production` for all configuration. See [`scripts/.env.production.example`](scripts/.env.production.example) for a complete template with detailed comments.
+The deployment script uses `.env.production` for all configuration. See [`.env.production.example`](../.env.production.example) for a complete template with detailed comments.
 
 ### Deployment Modes & Required Variables
 
@@ -475,8 +475,6 @@ The script follows a modular architecture with clear separation of concerns:
 ```
 scripts/
 ├── oc-deploy.sh              # Main orchestration script (215 lines)
-├── .env.production           # Configuration file
-├── .env.production.example   # Configuration template
 └── lib/                      # Modular libraries
     ├── 00-common.sh          # Utilities & output
     ├── 10-validation.sh      # Input validation
