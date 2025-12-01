@@ -142,6 +142,13 @@ main() {
         print_status "Database deployment disabled via environment variable"
     fi
     
+    # Enforce that --no-db requires backend-only mode
+    if [[ "$DEPLOY_DB" == "false" && "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+        print_error "The --no-db option (or DEPLOY_DB=false) is only supported in Backend-Only mode."
+        print_error "Please also use --backend-only or set DEPLOY_BACKEND_ONLY=true."
+        exit 1
+    fi
+    
     # Export for libraries to use
     export DEPLOY_BACKEND_ONLY
     export DEPLOY_DB
