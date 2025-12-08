@@ -100,6 +100,8 @@ metadata:
     app: postgresql
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgresql
@@ -164,10 +166,52 @@ EOF
         print_status "Service postgresql already exists, skipping creation" "database"
     fi
     
-    # If PostgreSQL deployment already existed, trigger a rollout restart to pick up new env vars
+    # If PostgreSQL deployment already existed, check if credentials changed
     if [[ "$postgres_exists" == "true" ]]; then
-        print_status "Restarting PostgreSQL deployment to apply updated environment variables..." "database"
-        oc rollout restart deployment/postgresql
+        print_status "Checking if PostgreSQL credentials changed..." "database"
+        
+        # Get current credentials from running pod
+        local current_db=""
+        local current_user=""
+        local current_password=""
+        local needs_restart=false
+        
+        # Check if any pod is running
+        if oc get pods -l name=postgresql -o jsonpath='{.items[0].status.phase}' 2>/dev/null | grep -q "Running"; then
+            # Get values from the running pod
+            current_db=$(oc exec deployment/postgresql -- printenv POSTGRES_DB 2>/dev/null || echo "")
+            current_user=$(oc exec deployment/postgresql -- printenv POSTGRES_USER 2>/dev/null || echo "")
+            current_password=$(oc exec deployment/postgresql -- printenv POSTGRES_PASSWORD 2>/dev/null || echo "")
+            
+            # Compare with environment variables
+            if [[ "$current_db" != "$POSTGRES_DB" || "$current_user" != "$POSTGRES_USER" || "$current_password" != "$POSTGRES_PASSWORD" ]]; then
+                 print_warning "PostgreSQL credentials changed in configuration!" "database"
+                 echo -e "${YELLOW}Warning: Changing these variables does NOT update the running database credentials.${NC}"
+                 echo -e "${YELLOW}The database was initialized with different credentials.${NC}"
+                 echo -e "${YELLOW}To apply these changes, the database must be COMPLETELY RESET and REINITIALIZED.${NC}"
+                 echo -e "${RED}⚠️  THIS WILL DELETE ALL EXISTING DATA! ⚠️${NC}"
+                 
+                 read -p "Do you want to reset the database to apply new credentials? (yes/no): " RESET_DB
+                 
+                 if [[ "$RESET_DB" == "yes" ]]; then
+                     reset_production_database
+                     return $?
+                 else
+                     print_warning "Proceeding without database reset. Credentials may be mismatched." "database"
+                     needs_restart=true
+                 fi
+            else
+                 print_status "PostgreSQL credentials unchanged. Skipping restart." "database"
+            fi
+        else
+            print_warning "PostgreSQL pod not running. Triggering restart to ensure consistency..." "database"
+            needs_restart=true
+        fi
+        
+        if [[ "$needs_restart" == "true" ]]; then
+            print_status "Restarting PostgreSQL deployment..." "database"
+            oc rollout restart deployment/postgresql
+        fi
     fi
     
     print_status "Waiting for PostgreSQL to be ready..." "database"
