@@ -6,26 +6,28 @@ In this guide, we will look at two ways to deploy to OpenShift:
 
 ### 1. Using the OpenShift Deployment Script ([../scripts/oc-deploy.sh](../scripts/oc-deploy.sh))
 
-Prerequisites:
+Quick start:
 
-- OpenShift CLI installed (`brew install openshift-cli`)
-- Code pushed to a Git repository (GitHub/GitLab)
-- Access to an OpenShift instance
-- Logged in to OpenShift CLI (`oc login --token=<token> --server=<server-url>`) - _( you can grab the token from the OpenShift UI in the top right corner )_
+1. **Install & login**
+   - Have the OpenShift CLI installed (`brew install openshift-cli`)
+   - Authenticate to OpenShift: `oc login --token=<token> --server=<server-url>` _(token is available in the OpenShift UI, top right corner)_
+2. **Prepare env file**
+   ```bash
+   cp .env.production.example .env.production
+   ```
+3. **Fill required values** in `.env.production` (minimum set):
+   - `APP_NAME` – app name (lowercase, hyphenated)
+   - `PROJECT_NAME` – OpenShift project (lowercase, hyphenated)
+   - `GIT_SSH_URL` – repo SSH URL
+   - `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SECRET_KEY`
+   - `POSTGRES_PASSWORD`
+4. **Run the deployment**
+   ```bash
+   ./scripts/oc-deploy.sh
+   ```
+   If needed, make it executable first: `chmod +x scripts/oc-deploy.sh`
 
-To use the script:
-
-```bash
-./scripts/oc-deploy.sh
-```
-
-you might have to change the permissions of the script
-
-```bash
-chmod +x scripts/oc-deploy.sh
-```
-
-The script will guide you through the deployment process and handle all the necessary steps automatically.
+The script guides you through deployment and handles the steps automatically.
 
 _Note: All the steps in the script can be done manually over the terminal with the OpenShift CLI if you prefer to do so._
 
