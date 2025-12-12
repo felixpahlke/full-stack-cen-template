@@ -35,8 +35,7 @@ COPY ./app /app/app
 
 # Sync the project
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
-RUN --mount=type=cache,target=/root/.cache/uv \
-uv sync
+RUN --mount=type=cache,target=/root/.cache/uv uv sync
 
 RUN if [ -f /app/scripts/prestart.sh ]; then chmod +x /app/scripts/prestart.sh; fi
 
