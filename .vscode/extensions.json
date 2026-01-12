@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "esbenp.prettier-vscode"
+    ],
+    "unwantedRecommendations": [
+        "ms-python.autopep8",
+        "ms-python.yapf"
+    ]
+}
