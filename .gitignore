@@ -1,5 +1,8 @@
 # VSC
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
 
 # Node
 node_modules/
