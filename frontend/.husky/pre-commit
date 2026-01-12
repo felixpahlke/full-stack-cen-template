@@ -1,0 +1,17 @@
+#!/bin/sh
+
+cd frontend
+if [ ! -d "node_modules" ]; then
+  echo "Missing node_modules. Run 'npm install' before committing."
+  exit 1
+fi
+npx lint-staged --allow-empty
+npm run typecheck
+
+cd ../backend
+if [ ! -f ".venv/bin/activate" ]; then
+    echo "Missing virtualenv. Run 'uv venv; source .venv/bin/activate; uv sync' before committing."
+    exit 1
+fi
+. .venv/bin/activate
+pre-commit run --hook-stage=pre-commit
