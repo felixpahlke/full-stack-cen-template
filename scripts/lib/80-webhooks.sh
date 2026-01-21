@@ -142,7 +142,7 @@ EOF
     local backend_secret
     local backend_webhook
     
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         frontend_base_url=$(oc describe bc/frontend | grep "Webhook Generic" -A 1 | tail -n 1 | sed 's/.*\(https:\/\/[^ ]*\).*/\1/')
         frontend_secret=$(oc get bc frontend -o jsonpath='{.spec.triggers[*].generic.secret}')
         frontend_webhook=${frontend_base_url/<secret>/$frontend_secret}
@@ -166,7 +166,7 @@ EOF
         local frontend_webhook_created=false
         local backend_webhook_created=false
         
-        if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+        if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
             if create_github_webhook "$GIT_SSH_URL" "$frontend_webhook" "frontend"; then
                 frontend_webhook_created=true
             fi
