@@ -1,201 +1,113 @@
 # OpenShift Deployment
 
-In this guide, we will look at two ways to deploy to OpenShift:
+Deploy your application to OpenShift using the automated deployment script.
 
----
+## Quick Start
 
-### 1. Using the OpenShift Deployment Script ([../scripts/oc-deploy.sh](../scripts/oc-deploy.sh))
+### 1. Prerequisites
 
-Quick start:
+- **OpenShift CLI** installed (`brew install openshift-cli`)
+- **Git** installed
 
-1. **Install & login**
-   - Have the OpenShift CLI installed (`brew install openshift-cli`)
-   - Authenticate to OpenShift: `oc login --token=<token> --server=<server-url>` _(token is available in the OpenShift UI, top right corner)_
-2. **Prepare env file**
-   ```bash
-   cp .env.production.example .env.production
-   ```
-3. **Fill required values** in `.env.production` (minimum set):
-   - `APP_NAME` – app name (lowercase, hyphenated)
-   - `PROJECT_NAME` – OpenShift project (lowercase, hyphenated)
-   - `GIT_SSH_URL` – repo SSH URL
-   - `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SECRET_KEY`
-   - `POSTGRES_PASSWORD`
-4. **Run the deployment**
-   ```bash
-   ./scripts/oc-deploy.sh
-   ```
-   If needed, make it executable first: `chmod +x scripts/oc-deploy.sh`
+### 2. Create Environment File
 
-The script guides you through deployment and handles the steps automatically.
-
-_Note: All the steps in the script can be done manually over the terminal with the OpenShift CLI if you prefer to do so._
-
----
-
-### 2. Using the OpenShift UI
-
-The steps should be performed in this exact order.
-
-1. [Preparation](#preparation)
-2. [Deploying the Database](#database)
-3. [Deploying the Backend](#backend) ⚠️ It will run with errors until the [config map](#env-config-map) is finished (which we can only finish in the end).
-4. [Deploying the Frontend](#frontend)
-5. [Finish up the Env Config Map](#env-config-map)
-6. [Setup a deployment hook](#setup-a-deployment-hook)
-
-## Preparation
-
-1. If not already done, have this codebase pushed to your Gitlab/Github repo
-2. Create AccessToken (Gitlab) for your project in Gitlab or create and ssh key (Github) (❗️Currently only tested with Gitlab AccessToken❗️)
-3. Get OpenShift Instance, Open the Console and access the "Developer View"
-4. Create a new project in OpenShift
-5. Put the AccessToken in OpenShift as a Secret (Source Secret) (❗️Currently only tested with Gitlab AccessToken❗️)
-   - Username is empty
-   - Password is the token
-
-![Source Secret](./img/openshif-deployment-source-secret.png)
-
-## Database
-
-1. In you project click "+Add" → Developer Catalog → Database → PostgreSQL → Instantiate Template
-2. Fill out the Template according to the Screeshot, **MAKE SURE TO CHANGE THE PASSWORD** of the PostgreSQL User.
-3. Click "Create"
-4. If you are not automatically redirected, you can monitor the instanciation progress in "Topology".
-
-![Database](./img/openshift-postgres-deployment.png)
-
-❗️Sometimes the database "app" is not created automatically, you can create it manually though.
-
-- In Topology click on your database Deployment and then click the running pod.
-- Click the "Terminal" tab.
-- type "psql"
-- with "\l" you can list all databases
-- with "CREATE DATABASE app;" you can create the database
-
-## Backend
-
-1. In you project click "+Add" → import from git
-2. Input your repo-url and open "Advanced Git Options"
-3. Then enter `/backend` as Context dir
-4. Select the Source Secret, that you have set up before in [Preperation](#preperation)
-
-![advanced options (backend)](<./img/openshift-deployment-config(1).png>)
-
-5. Select Dockerfile as Import Strategy
-6. Define the Name of the Dockerfile to `Dockerfile`
-7. Name your Application (Name for everything alltogether) and this particular Service (the backend)
-   ❗️ make sure to use `backend` as name for the service, otherwise the frontend will not be able to find it ❗️
-
-![application (backend)](<./img/openshift-deployment-config(2).png>)
-
-8. Set the port to `8000`
-9. If not already set choose "create route"
-
-![ports (backend)](<./img/openshift-deployment-config(3).png>)
-
-10. Click "Create" and - again, monitor the deployment progress in "Topology"
-11. Move your database container into the application group (with "⇧shift" + drag&drop)
-
-**<mark>Don't worry, deployment will run with errors at this point, since config map is not set yet - we will solve this later</mark>**
-
-## Frontend
-
-We start with the deployment of the frontend. The steps are basically similar to the deployment steps of the backend, but we will go through every step needed, to make sure we got everything right!
-
-1. In you project click "+Add" → import from git
-2. Input your repo-url and open "Advanced Git Options"
-3. Then enter `/frontend` as Context dir
-4. Select the Source Secret, that you have set up before in [Preperation](#preperation)
-
-5. Select Dockerfile as Import Strategy
-6. Define the Name of the Dockerfile to `Dockerfile`
-7. Use the same Application (Name for everything alltogether) and set a new name for this particular Service (the frontend)
-
-![application (frontend)](<./img/openshift-frontend-deployment-config(2).png>)
-
-8. Set the port to `8080`
-9. If not already set choose "create route"
-
-![ports (frontend)](<./img/openshift-frontend-deployment-config(3).png>)
-
-10. Click "Create" and - again, monitor the deployment progress in "Topology"
-
-You can either wait for the first successful build, or directly open the BuildConfig of the Frontend Deployment, where we have to tell the frontend under which URL it can find it's backend.
-
-11. To do so, we copy the backend URL to our clipboard. This specific URL can be found trough the Topology view.
-
-![Copy Backend URL](./img/openshift-access-backend-url.png)
-
-12. After we copied the URL we open up the BuildConfig of our frontend.
-
-![access buildconfig (frontend)](./img/openshift-access-frontend-bc.png)
-
-13. In the top bar of the BuildConfig, we switch the view from Details to Environment.
-14. There we provide the BC with a new Name-Value pair. The name has to be set to `VITE_API_URL` and the Value is the copied URL from our backend.
-
-![access buildconfig (frontend)](./img/openshift-frontend-buildconfig.png)
-
-15. We click on "Save" → head back to the Topology view → Click on the frontend-node → under Builds click on "Start Build".
-16. After the second build is complete, the frontend knows under which URL the backend can be accessed.
-
-🙌 In the end, the frontend is running without any errors. Now we have to finalize all the environment variables that the backend needs, to be able to fully function.
-
-## Env Config Map
-
-For the backend to fully function it needs these 12 environment variables we have to define within a ConfigMap in OS.
-
-```yaml
-POSTGRES_PASSWORD: <ichangedthis>
-FIRST_SUPERUSER_PASSWORD: <changethis>
-POSTGRES_DB: app
-BACKEND_CORS_ORIGINS: "<the frontend URL of the deployment>"
-POSTGRES_PORT: "5432"
-POSTGRES_SERVER: postgresql
-SECRET_KEY: <changethis>
-PROJECT_NAME: <your_project_name>
-POSTGRES_USER: postgres
-ENVIRONMENT: production
-FIRST_SUPERUSER: <myexampleadmin@email.com>
+```bash
+cp .env.production.example .env.production
 ```
 
-1. We start with opening the ConfigMaps tab → on the top right corner we click on "Create ConfigMap".
-2. We will provide it with an according name, e.g. `backend-envs` and start filling it with the defined 12 env variables.
+### 3. Configure Required Variables
 
-![backend env config map](<./img/openshift-env-config-map(1).png>)
+Edit `.env.production` with your production values:
 
-3. Save your config and go back to Topology and click on your backends "Deployment"
-4. Go to Environment and link your Env Config Map with "Add all from ConfigMap or Secret"
+```bash
+APP_NAME=my-app                              # Lowercase, hyphens only
+PROJECT_NAME=my-openshift-project            # OpenShift namespace
+GIT_SSH_URL=git@github.com:user/repo.git     # Repository SSH URL
+# and so on...
+```
 
-![backend acces deployment](./img/openshift-backend-access-deployment.png)
+> **❗️ Remember to change `changethis` values** ❗️
 
-![link config map](./img/openshift-backend-link-configmap.png)
+### 4. Create GitHub Token (Recommended)
 
-## Adminer
+This enables automatic deploy key and webhook setup:
 
-Deploy the Adminer Service... It's for monitoring and debugging the database.
+**For IBM GitHub Enterprise:**
 
-1. Click "+Add" → "Container Images"
+1. Go to https://github.ibm.com/settings/tokens
 
-Image name from external registry:
+**For Public GitHub:**
 
-`docker.io/library/adminer`
+1. Go to https://github.com/settings/tokens
 
-2. Click "Create"
-3. Click the route of your Adminer Deployment
-4. Login to Adminer
+**Then:** 2. Click "Generate new token (classic)" 3. Name it (e.g., "OpenShift Deployment") 4. Select scopes: `repo` and `admin:repo_hook` 5. Click "Generate token" and copy it 6. Add to `.env.production`: `GITHUB_TOKEN=ghp_your_token_here`
 
-![adminer login](./img/adminer-login.png)
+> **Note:** Without this token, you'll need to manually add deploy keys and webhooks after deployment.
 
-## Setup a Deployment Hook
+### 5. Login to OpenShift
 
-How we can setup the Deployment Hook for some kind of "Continuos Delivery" between the main branch of our GitHub/GitLab Project and OS-Deployment.
+```bash
+oc login --token=<token> --server=<server-url>
+```
 
-1. Go to your Backend's build config
-2. Copy the **"Generic Webhook"** adress (works for GitLab too)
+_Find this in the OpenShift console: top right corner → Copy login command_
 
-![copy generic webhook](<./img/webhook(1).png>)
+### 6. Run Deployment
 
-3. Create a new Webhook in Gitlab / Github and paste your Webhook URL
+```bash
+./scripts/oc-deploy.sh
+```
 
-![paste webhook](<./img/webhook(2).png>)
+The script guides you through the process and handles everything automatically.
+
+> **💡 Good to know:**
+>
+> - The script is **idempotent** — you can rerun it anytime to update environment variables or configuration
+> - Any **custom variables** you add to `.env.production` will be automatically passed to the backend as environment variables
+
+---
+
+## Deployment Flavors
+
+Set `DEPLOYMENT_FLAVOR` in `.env.production`:
+
+| Flavor                    | Components                      | Auth    | Use Case                        |
+| ------------------------- | ------------------------------- | ------- | ------------------------------- |
+| **oauth-proxy**           | Frontend + Backend + DB + OAuth | SSO     | Enterprise apps with SSO        |
+| **oauth-proxy-custom-ui** | Backend + DB + OAuth            | SSO     | Custom frontend with SSO        |
+| **local-auth**            | Frontend + Backend + DB         | Local   | Standard full-stack app         |
+| **local-auth-custom-ui**  | Backend + DB                    | Local   | Custom frontend with local auth |
+| **backend-only**          | Backend + DB                    | API Key | APIs for external frontends     |
+| **backend-only-no-db**    | Backend only                    | API Key | Stateless APIs/microservices    |
+
+---
+
+## Command-Line Options
+
+```bash
+./scripts/oc-deploy.sh [options]
+
+--flavor <name>         Override deployment flavor
+--env-file <path>       Use custom environment file
+--reset-prod-db         Reset database (WARNING: deletes data)
+--regenerate-ssh-key    Regenerate SSH keys
+--show-env-values       Show env values during deployment
+--help                  Display help
+```
+
+---
+
+## Common Issues
+
+| Problem                   | Solution                                   |
+| ------------------------- | ------------------------------------------ |
+| `You must be logged in`   | Run `oc login --server=<url>`              |
+| Deploy key already exists | Run with `--regenerate-ssh-key`            |
+| Build failed              | Check logs: `oc logs -f bc/<app>-frontend` |
+| Route not accessible      | Wait for builds: `oc get builds`           |
+
+---
+
+## More Information
+
+For detailed configuration, architecture, extending the script, and advanced troubleshooting, see the [Script README](../scripts/README.md).
