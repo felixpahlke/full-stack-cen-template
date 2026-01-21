@@ -59,8 +59,9 @@ create_initial_app_env_secret() {
     local secret_key_generated=false
     
     # Generate a secure random secret key if not provided or too short
-    # Skip this for backend-only deployment if SECRET_KEY is not required
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+    # Only needed for flavors that use SECRET_KEY (local-auth, local-auth-custom-ui)
+    local flavor="${DEPLOYMENT_FLAVOR:-local-auth}"
+    if [[ "$flavor" == "local-auth" || "$flavor" == "local-auth-custom-ui" ]]; then
         if [[ -z "${SECRET_KEY:-}" ]] || [[ ${#SECRET_KEY} -lt 8 ]]; then
             SECRET_KEY=$(openssl rand -hex 32)
             export SECRET_KEY
@@ -99,21 +100,21 @@ update_app_env_secret_with_urls() {
     # Get the backend URL
     backend_url=$(oc get route backend -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
     
-    # Get the frontend URL only if not backend-only deployment
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+    # Get the frontend URL only if frontend is deployed
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         frontend_url=$(oc get route frontend -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
     fi
     
     # If OAuth is enabled, these routes might not exist (which is expected).
     # We will defer the URL updates to the OAuth phase in that case.
-    if is_oauth_enabled; then
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" ]]; then
         print_status "OAuth is enabled - skipping standard URL updates (will be handled by OAuth deployment)" "secrets"
         return 0
     fi
     
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" && -z "$frontend_url" ]] || [[ -z "$backend_url" ]]; then
-        if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "true" && -n "$backend_url" ]]; then
-             # Backend only and we have backend url, that's fine
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" && -z "$frontend_url" ]] || [[ -z "$backend_url" ]]; then
+        if [[ "${DEPLOY_FRONTEND:-true}" == "false" && -n "$backend_url" ]]; then
+             # Frontend not deployed and we have backend url, that's fine
              :
         else
             print_error "Could not get URLs (Backend: $backend_url, Frontend: $frontend_url). Make sure the routes are created." "secrets"
@@ -124,7 +125,7 @@ update_app_env_secret_with_urls() {
     print_status "Updating $secret_name secret with URLs..." "secrets"
     
     # Set BACKEND_CORS_ORIGINS if not already set, or append backend URL if it exists
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "false" ]]; then
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         if [[ -z "${BACKEND_CORS_ORIGINS:-}" ]]; then
             export BACKEND_CORS_ORIGINS="https://$frontend_url"
         else
