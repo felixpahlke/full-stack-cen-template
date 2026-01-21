@@ -13,13 +13,10 @@
 # OAuth Detection Functions
 #############################################
 
-# Function to check if OAuth is enabled
+# Function to check if OAuth is enabled (for backward compatibility)
 is_oauth_enabled() {
-    # Check if any OAuth variable is set
-    if [[ -n "${OAUTH2_PROXY_COOKIE_SECRET:-}" ]] || \
-       [[ -n "${OAUTH2_PROXY_CLIENT_ID:-}" ]] || \
-       [[ -n "${OAUTH2_PROXY_CLIENT_SECRET:-}" ]] || \
-       [[ -n "${OAUTH2_PROXY_OIDC_ISSUER_URL:-}" ]]; then
+    # Check the DEPLOY_OAUTH flag set by flavor configuration
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" ]]; then
         return 0
     fi
     return 1
