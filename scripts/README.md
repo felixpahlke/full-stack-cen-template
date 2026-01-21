@@ -2,9 +2,12 @@
 
 Automated deployment script for deploying full-stack applications to OpenShift with PostgreSQL database, OAuth2 authentication, and GitHub webhook integration.
 
+> **Looking to deploy?** See the [Deployment Guide](../.docs/oc-deployment.md) for quickstart instructions.
+
+This document covers detailed configuration, architecture, and how to extend the script.
+
 ## Table of Contents
 
-- [Quick Start](#quick-start)
 - [Deployment Flavors](#deployment-flavors)
 - [Prerequisites](#prerequisites)
 - [Configuration](#configuration)
@@ -14,47 +17,6 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 - [Troubleshooting](#troubleshooting)
 - [Advanced Usage](#advanced-usage)
 - [Architecture](#architecture)
-
-## Quick Start
-
-1. **Copy the environment template:**
-
-   ```bash
-   cp .env.production.example .env.production
-   ```
-
-2. **Configure required production env-variables** in `.env.production`:
-
-   ```bash
-   APP_NAME=my-app
-   PROJECT_NAME=my-openshift-project
-   GIT_SSH_URL=git@github.com:username/repository.git
-   FIRST_SUPERUSER=admin@example.com
-   FIRST_SUPERUSER_PASSWORD=your-secure-password
-   SECRET_KEY=your-secret-key
-   POSTGRES_PASSWORD=your-db-password
-   ```
-
-3. **(Recommended) Create a GitHub Token** for automatic deploy key and webhook setup:
-   - Go to [github.ibm.com/settings/tokens](https://github.ibm.com/settings/tokens) (IBM) or [github.com/settings/tokens](https://github.com/settings/tokens) (public)
-   - Click "Generate new token (classic)"
-   - Select scopes: `repo` and `admin:repo_hook`
-   - Add to `.env.production` as `GITHUB_TOKEN=ghp_your_token_here`
-
-   > **Note:** Without this token, you'll need to manually add deploy keys and webhooks. See [Manual GitHub Setup](#manual-github-setup).
-
-4. **Login to OpenShift:**
-
-   _Note: You can find this in the OpenShift console UI in the top right corner. (Copy login command)_
-
-   ```bash
-   oc login --server=https://your-openshift-cluster:6443
-   ```
-
-5. **Run the deployment:**
-   ```bash
-   ./scripts/oc-deploy.sh
-   ```
 
 ## Deployment Flavors
 
@@ -172,29 +134,9 @@ The following table lists all environment variables that can be configured in `.
 
 #### Creating a GitHub Token
 
-To create a GitHub Personal Access Token for automatic deploy key and webhook management:
+See the [Deployment Guide](../.docs/oc-deployment.md#4-create-github-token-recommended) for step-by-step instructions on creating a GitHub Personal Access Token.
 
-**For IBM GitHub Enterprise:**
-
-1. Go to https://github.ibm.com/settings/tokens
-
-**For Public GitHub:**
-
-1. Go to https://github.com/settings/tokens
-
-**Then:**
-
-2. Click "Generate new token (classic)"
-3. Give it a descriptive name (e.g., "OpenShift Deployment")
-4. Select the following scopes:
-
-- `repo` (Full control of private repositories)
-- `admin:repo_hook` (Full control of repository hooks)
-
-5. Click "Generate token" and copy the token
-6. Paste it into your `.env.production` file as `GITHUB_TOKEN` (starts with `ghp_`)
-
-**Note:** Without this token, you'll need to manually add deploy keys and webhooks to GitHub. See [Manual GitHub Setup](#manual-github-setup) for instructions.
+Required scopes: `repo` and `admin:repo_hook`
 
 #### Custom Application Variables
 
@@ -254,12 +196,7 @@ GITHUB_HOST=github.ibm.com  # or github.com for public GitHub
 GITHUB_TOKEN=ghp_your_token_here
 ```
 
-**Creating a GitHub Token:**
-
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate new token (classic)
-3. Select scopes: `repo`, `admin:repo_hook`
-4. Copy and paste into `.env.production`
+See [Creating a GitHub Token](#creating-a-github-token) for setup instructions.
 
 #### OAuth2 Proxy (Optional)
 
@@ -564,9 +501,17 @@ Use a different environment file:
 
 ### Extending the Script
 
-The script uses a modular library structure in `scripts/lib/`:
+The script uses a modular library structure in `scripts/lib/`. Libraries are automatically sourced by the main script in numerical order:
 
-| Library             | Purpose                | Key Functions                                                          |
+```bash
+for lib_file in "$LIB_DIR"/*.sh; do
+    source "$lib_file"
+done
+```
+
+#### Libraries (Load Order)
+
+| File                | Purpose                | Key Functions                                                          |
 | ------------------- | ---------------------- | ---------------------------------------------------------------------- |
 | `00-common.sh`      | Core utilities         | `print_status()`, `print_success()`, `print_error()`                   |
 | `10-validation.sh`  | Input validation       | `validate_name()`, `validate_email()`, `validate_git_url()`            |
@@ -578,6 +523,8 @@ The script uses a modular library structure in `scripts/lib/`:
 | `70-deployment.sh`  | Application deployment | `deploy_frontend()`, `deploy_backend()`, `configure_frontend()`        |
 | `75-oauth.sh`       | OAuth2 Proxy           | `deploy_oauth_proxy()`, `create_oauth_proxy_route()`                   |
 | `80-webhooks.sh`    | Webhook management     | `setup_webhooks()`, `create_github_webhook()`                          |
+
+**Note**: Total codebase is ~1,922 lines (modular) vs 1,514 lines (monolithic version).
 
 #### Adding Custom Functionality
 
@@ -623,6 +570,20 @@ scripts/
 - **Testable** - Each library can be tested independently
 - **Extensible** - Add new features without modifying core logic
 - **Professional** - Follows shell scripting best practices
+
+### Design Principles
+
+1. **Single Responsibility**: Each library handles one aspect of deployment
+2. **Return Codes**: Functions return 0 (success) or 1 (failure), never call `exit`
+3. **Output Collection**: User-facing info is added to `DEPLOYMENT_OUTPUT` array
+4. **Error Messages**: Use `print_error()`, `print_warning()`, `print_status()`, `print_success()`
+5. **No Side Effects**: Functions are idempotent where possible
+
+### Dependencies
+
+- Libraries are loaded in numerical order (00 → 80)
+- Later libraries can use functions from earlier ones
+- No circular dependencies
 
 ### Output System
 
