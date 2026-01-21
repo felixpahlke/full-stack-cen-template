@@ -49,10 +49,7 @@ RESET_PROD_DB=false
 REGENERATE_SSH_KEY=false
 SHOW_HELP=false
 SHOW_ENV_VALUES=false
-DEPLOY_BACKEND_ONLY=false
-FLAG_BACKEND_ONLY=false
-DEPLOY_DB=true
-FLAG_NO_DB=false
+FLAVOR_OVERRIDE=""
 
 #############################################
 # Argument Parsing
@@ -70,12 +67,18 @@ parse_arguments() {
                 ENV_FILE="$2"
                 shift 2
                 ;;
+            --flavor)
+                FLAVOR_OVERRIDE="$2"
+                shift 2
+                ;;
             --backend-only)
-                FLAG_BACKEND_ONLY=true
+                print_warning "DEPRECATED: --backend-only flag is deprecated. Use DEPLOYMENT_FLAVOR=backend-only in .env file or --flavor backend-only"
+                FLAVOR_OVERRIDE="backend-only"
                 shift
                 ;;
             --no-db)
-                FLAG_NO_DB=true
+                print_warning "DEPRECATED: --no-db flag is deprecated. Use DEPLOYMENT_FLAVOR=backend-only-no-db in .env file or --flavor backend-only-no-db"
+                FLAVOR_OVERRIDE="backend-only-no-db"
                 shift
                 ;;
             --reset-prod-db)
@@ -126,34 +129,13 @@ main() {
     # Load environment variables from file
     load_env_file "$ENV_FILE" "$SHOW_ENV_VALUES" || exit 1
     
-    # Flag overrides environment file for backend-only deployment
-    if [[ "$FLAG_BACKEND_ONLY" == "true" ]]; then
-        DEPLOY_BACKEND_ONLY=true
-        print_status "Backend-only deployment enabled via flag (overrides environment file)"
-    elif [[ "${DEPLOY_BACKEND_ONLY}" == "true" ]]; then
-        print_status "Backend-only deployment enabled via environment file"
+    # Apply flavor override from command line if provided
+    if [[ -n "$FLAVOR_OVERRIDE" ]]; then
+        export DEPLOYMENT_FLAVOR="$FLAVOR_OVERRIDE"
+        print_status "Deployment flavor overridden via command line: $FLAVOR_OVERRIDE"
     fi
     
-    # Handle No-DB flag/env
-    if [[ "$FLAG_NO_DB" == "true" ]]; then
-        DEPLOY_DB=false
-        print_status "Database deployment disabled via flag"
-    elif [[ "${DEPLOY_DB}" == "false" ]]; then
-        print_status "Database deployment disabled via environment variable"
-    fi
-    
-    # Enforce that --no-db requires backend-only mode
-    if [[ "$DEPLOY_DB" == "false" && "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
-        print_error "The --no-db option (or DEPLOY_DB=false) is only supported in Backend-Only mode."
-        print_error "Please also use --backend-only or set DEPLOY_BACKEND_ONLY=true."
-        exit 1
-    fi
-    
-    # Export for libraries to use
-    export DEPLOY_BACKEND_ONLY
-    export DEPLOY_DB
-    
-    # Validate all required variables
+    # Validate all required variables (this also detects flavor and sets deployment flags)
     validate_required_vars || exit 1
     
     # ============================================================
@@ -204,7 +186,7 @@ main() {
     fi
 
     # Pre-configure OAuth to avoid backend restarts
-    if is_oauth_enabled; then
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" ]]; then
         print_status "OAuth2 Proxy is enabled. Pre-configuring secrets to avoid backend restarts..."
         # Order matters: we need the route first to get the URL for the secret
         create_oauth_proxy_service || exit 1
@@ -218,22 +200,21 @@ main() {
     # ============================================================
     print_section_header "PHASE 5: APPLICATION DEPLOYMENT"
     
-    # Deploy frontend and backend
-    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+    # Deploy frontend (if enabled by flavor)
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         deploy_frontend || exit 1
     else
-        print_status "Skipping frontend deployment (backend-only mode)"
+        print_status "Skipping frontend deployment (flavor: ${DEPLOYMENT_FLAVOR})"
     fi
     
+    # Deploy backend (always deployed)
     deploy_backend || exit 1
     
     # Update the app environment secret with frontend/backend URLs
     update_app_env_secret_with_urls || exit 1
     
-    # Deploy OAuth2 Proxy (optional)
-    # Requires all OAuth2 Proxy environment variables to be configured in .env.production
-    # See scripts/.env.production.example for required variables
-    if is_oauth_enabled; then
+    # Deploy OAuth2 Proxy (if enabled by flavor)
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" ]]; then
         print_status "OAuth2 Proxy is enabled, deploying..."
         deploy_oauth_proxy || exit 1
     fi
@@ -243,8 +224,8 @@ main() {
     # ============================================================
     print_section_header "PHASE 6: CONFIGURATION"
     
-    # Configure frontend and backend
-    if [[ "$DEPLOY_BACKEND_ONLY" == "false" ]]; then
+    # Configure frontend (if enabled by flavor)
+    if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         configure_frontend || exit 1
     fi
     

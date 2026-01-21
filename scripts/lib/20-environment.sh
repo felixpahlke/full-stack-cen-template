@@ -4,18 +4,41 @@
 #
 # This library provides:
 # - Environment variable loading from .env files
+# - Flavor-based deployment configuration
 # - Required variable validation
 # - Password validation
 #
-# Required main environment variables
-declare -a REQUIRED_VARS=(
+
+#############################################
+# Deployment Flavor Definitions
+#############################################
+
+# Valid deployment flavors
+declare -a VALID_FLAVORS=(
+    "local-auth"
+    "backend-only"
+    "oauth-proxy"
+    "backend-only-no-db"
+    "local-auth-custom-ui"
+    "oauth-proxy-custom-ui"
+)
+
+# Default flavor
+DEFAULT_FLAVOR="local-auth"
+
+#############################################
+# Flavor-Specific Variable Arrays
+#############################################
+
+# Flavor: local-auth (Full stack with local authentication)
+declare -a FLAVOR_LOCAL_AUTH_VARS=(
     "APP_NAME"
     "PROJECT_NAME"
     "GIT_SSH_URL"
+    "ENVIRONMENT"
     "FIRST_SUPERUSER"
     "FIRST_SUPERUSER_PASSWORD"
     "SIGNUP_ACCESS_PASSWORD"
-    "ENVIRONMENT"
     "SECRET_KEY"
     "POSTGRES_SERVER"
     "POSTGRES_PORT"
@@ -24,13 +47,20 @@ declare -a REQUIRED_VARS=(
     "POSTGRES_PASSWORD"
 )
 
-# Required variables for Backend Only deployment
-declare -a BACKEND_ONLY_REQUIRED_VARS=(
+declare -a FLAVOR_LOCAL_AUTH_PASSWORD_VARS=(
+    "FIRST_SUPERUSER_PASSWORD"
+    "SIGNUP_ACCESS_PASSWORD"
+    "SECRET_KEY"
+    "POSTGRES_PASSWORD"
+)
+
+# Flavor: backend-only (Backend + Database with API key auth)
+declare -a FLAVOR_BACKEND_ONLY_VARS=(
     "APP_NAME"
     "PROJECT_NAME"
     "GIT_SSH_URL"
-    "API_KEY"
     "ENVIRONMENT"
+    "API_KEY"
     "POSTGRES_SERVER"
     "POSTGRES_PORT"
     "POSTGRES_DB"
@@ -38,7 +68,86 @@ declare -a BACKEND_ONLY_REQUIRED_VARS=(
     "POSTGRES_PASSWORD"
 )
 
-# OAuth2 Proxy variables (conditionally required - all or nothing)
+declare -a FLAVOR_BACKEND_ONLY_PASSWORD_VARS=(
+    "POSTGRES_PASSWORD"
+)
+
+# Flavor: oauth-proxy (Full stack with OAuth2 authentication)
+declare -a FLAVOR_OAUTH_PROXY_VARS=(
+    "APP_NAME"
+    "PROJECT_NAME"
+    "GIT_SSH_URL"
+    "ENVIRONMENT"
+    "OAUTH2_PROXY_COOKIE_SECRET"
+    "OAUTH2_PROXY_CLIENT_ID"
+    "OAUTH2_PROXY_CLIENT_SECRET"
+    "OAUTH2_PROXY_OIDC_ISSUER_URL"
+    "POSTGRES_SERVER"
+    "POSTGRES_PORT"
+    "POSTGRES_DB"
+    "POSTGRES_USER"
+    "POSTGRES_PASSWORD"
+)
+
+declare -a FLAVOR_OAUTH_PROXY_PASSWORD_VARS=(
+    "POSTGRES_PASSWORD"
+)
+
+# Flavor: backend-only-no-db (Backend only, no database)
+declare -a FLAVOR_BACKEND_ONLY_NO_DB_VARS=(
+    "APP_NAME"
+    "PROJECT_NAME"
+    "GIT_SSH_URL"
+    "ENVIRONMENT"
+    "API_KEY"
+)
+
+declare -a FLAVOR_BACKEND_ONLY_NO_DB_PASSWORD_VARS=()
+
+# Flavor: local-auth-custom-ui (Backend + Database with local auth, custom frontend)
+declare -a FLAVOR_LOCAL_AUTH_CUSTOM_UI_VARS=(
+    "APP_NAME"
+    "PROJECT_NAME"
+    "GIT_SSH_URL"
+    "ENVIRONMENT"
+    "FIRST_SUPERUSER"
+    "FIRST_SUPERUSER_PASSWORD"
+    "SECRET_KEY"
+    "POSTGRES_SERVER"
+    "POSTGRES_PORT"
+    "POSTGRES_DB"
+    "POSTGRES_USER"
+    "POSTGRES_PASSWORD"
+)
+
+declare -a FLAVOR_LOCAL_AUTH_CUSTOM_UI_PASSWORD_VARS=(
+    "FIRST_SUPERUSER_PASSWORD"
+    "SECRET_KEY"
+    "POSTGRES_PASSWORD"
+)
+
+# Flavor: oauth-proxy-custom-ui (Backend + Database + OAuth, custom frontend)
+declare -a FLAVOR_OAUTH_PROXY_CUSTOM_UI_VARS=(
+    "APP_NAME"
+    "PROJECT_NAME"
+    "GIT_SSH_URL"
+    "ENVIRONMENT"
+    "OAUTH2_PROXY_COOKIE_SECRET"
+    "OAUTH2_PROXY_CLIENT_ID"
+    "OAUTH2_PROXY_CLIENT_SECRET"
+    "OAUTH2_PROXY_OIDC_ISSUER_URL"
+    "POSTGRES_SERVER"
+    "POSTGRES_PORT"
+    "POSTGRES_DB"
+    "POSTGRES_USER"
+    "POSTGRES_PASSWORD"
+)
+
+declare -a FLAVOR_OAUTH_PROXY_CUSTOM_UI_PASSWORD_VARS=(
+    "POSTGRES_PASSWORD"
+)
+
+# OAuth2 Proxy variables (for validation)
 declare -a OAUTH_VARS=(
     "OAUTH2_PROXY_COOKIE_SECRET"
     "OAUTH2_PROXY_CLIENT_ID"
@@ -46,17 +155,113 @@ declare -a OAUTH_VARS=(
     "OAUTH2_PROXY_OIDC_ISSUER_URL"
 )
 
-# Variables that need password length validation (min 8 chars)
-declare -a PASSWORD_VARS=(
-    "FIRST_SUPERUSER_PASSWORD"
-    "POSTGRES_PASSWORD"
-    "SECRET_KEY"
-)
+#############################################
+# Flavor Detection and Configuration
+#############################################
 
-# Password variables for Backend Only deployment
-declare -a BACKEND_ONLY_PASSWORD_VARS=(
-    "POSTGRES_PASSWORD"
-)
+# Function to validate flavor name
+validate_flavor() {
+    local flavor=$1
+    
+    for valid_flavor in "${VALID_FLAVORS[@]}"; do
+        if [[ "$flavor" == "$valid_flavor" ]]; then
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# Function to detect and set deployment flavor
+detect_flavor() {
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    
+    # Validate flavor
+    if ! validate_flavor "$flavor"; then
+        print_error "Invalid deployment flavor: '$flavor'" "environment"
+        print_error "Valid flavors are: ${VALID_FLAVORS[*]}" "environment"
+        return 1
+    fi
+    
+    # Export flavor for use in other scripts
+    export DEPLOYMENT_FLAVOR="$flavor"
+    
+    print_status "Deployment flavor: $flavor" "environment"
+    return 0
+}
+
+# Function to get required variables for current flavor
+get_flavor_vars() {
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local var_array_name="FLAVOR_${flavor//-/_}_VARS[@]"
+    # Convert to uppercase using tr for Bash 3.2 compatibility (macOS)
+    var_array_name=$(echo "$var_array_name" | tr '[:lower:]' '[:upper:]')
+    
+    # Return the array name for indirect reference
+    echo "$var_array_name"
+}
+
+# Function to get password variables for current flavor
+get_flavor_password_vars() {
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local var_array_name="FLAVOR_${flavor//-/_}_PASSWORD_VARS[@]"
+    # Convert to uppercase using tr for Bash 3.2 compatibility (macOS)
+    var_array_name=$(echo "$var_array_name" | tr '[:lower:]' '[:upper:]')
+    
+    # Return the array name for indirect reference
+    echo "$var_array_name"
+}
+
+# Function to set deployment flags based on flavor
+set_deployment_flags_from_flavor() {
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    
+    case "$flavor" in
+        local-auth)
+            export DEPLOY_FRONTEND=true
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=true
+            export DEPLOY_OAUTH=false
+            ;;
+        backend-only)
+            export DEPLOY_FRONTEND=false
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=true
+            export DEPLOY_OAUTH=false
+            ;;
+        oauth-proxy)
+            export DEPLOY_FRONTEND=true
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=true
+            export DEPLOY_OAUTH=true
+            ;;
+        backend-only-no-db)
+            export DEPLOY_FRONTEND=false
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=false
+            export DEPLOY_OAUTH=false
+            ;;
+        local-auth-custom-ui)
+            export DEPLOY_FRONTEND=false
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=true
+            export DEPLOY_OAUTH=false
+            ;;
+        oauth-proxy-custom-ui)
+            export DEPLOY_FRONTEND=false
+            export DEPLOY_BACKEND=true
+            export DEPLOY_DB=true
+            export DEPLOY_OAUTH=true
+            ;;
+        *)
+            print_error "Unknown flavor: $flavor" "environment"
+            return 1
+            ;;
+    esac
+    
+    print_status "Deployment flags set: Frontend=$DEPLOY_FRONTEND, Backend=$DEPLOY_BACKEND, DB=$DEPLOY_DB, OAuth=$DEPLOY_OAUTH" "environment"
+    return 0
+}
 
 #############################################
 # Environment Loading Functions
@@ -105,37 +310,17 @@ load_env_file() {
     return 0
 }
 
-# Function to validate OAuth variables (all-or-nothing)
+# Function to validate OAuth variables for OAuth flavors
 validate_oauth_vars() {
-    local oauth_vars_set=()
-    local oauth_vars_missing=()
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
     
-    # Check which OAuth vars are set
-    for var_name in "${OAUTH_VARS[@]}"; do
-        if [[ -n "${!var_name:-}" ]]; then
-            oauth_vars_set+=("$var_name")
-        else
-            oauth_vars_missing+=("$var_name")
-        fi
-    done
-    
-    # If no OAuth vars set, OAuth is disabled - OK
-    if [[ ${#oauth_vars_set[@]} -eq 0 ]]; then
-        print_status "OAuth2 Proxy is disabled (no OAuth variables configured)" "environment"
+    # Only validate OAuth for OAuth-enabled flavors
+    if [[ "$flavor" != "oauth-proxy" && "$flavor" != "oauth-proxy-custom-ui" ]]; then
         return 0
     fi
     
-    # If some but not all OAuth vars set - ERROR
-    if [[ ${#oauth_vars_missing[@]} -gt 0 ]]; then
-        print_error "OAuth2 Proxy is partially configured. All OAuth variables must be set or all must be empty." "environment"
-        print_error "Missing OAuth variables:" "environment"
-        for var_name in "${oauth_vars_missing[@]}"; do
-            echo "  - $var_name"
-        done
-        return 1
-    fi
-    
-    # All OAuth vars are set - validate COOKIE_SECRET length (min 16 chars)
+    # For OAuth flavors, all OAuth vars must be set (already checked in validate_required_vars)
+    # Just validate COOKIE_SECRET length (min 16 chars)
     if [[ ${#OAUTH2_PROXY_COOKIE_SECRET} -lt 16 ]]; then
         print_error "OAUTH2_PROXY_COOKIE_SECRET must be at least 16 characters (current: ${#OAUTH2_PROXY_COOKIE_SECRET})" "environment"
         return 1
@@ -145,44 +330,31 @@ validate_oauth_vars() {
     return 0
 }
 
-# Function to validate all required variables
+# Function to validate all required variables based on flavor
 validate_required_vars() {
     local missing_vars=()
     local invalid_vars=()
-    local vars_to_check=()
-    local password_vars_to_check=()
     
-    # Select variable sets based on deployment mode
-    if [[ "${DEPLOY_BACKEND_ONLY:-false}" == "true" ]]; then
-        print_status "Using backend-only variable requirements..." "environment"
-        vars_to_check=("${BACKEND_ONLY_REQUIRED_VARS[@]}")
-        password_vars_to_check=("${BACKEND_ONLY_PASSWORD_VARS[@]}")
-    else
-        vars_to_check=("${REQUIRED_VARS[@]}")
-        password_vars_to_check=("${PASSWORD_VARS[@]}")
+    # Detect and validate flavor
+    if ! detect_flavor; then
+        return 1
     fi
     
-    # Filter out DB variables if DEPLOY_DB is false
-    if [[ "${DEPLOY_DB:-true}" == "false" ]]; then
-        print_status "Adjusting requirements for No-DB deployment..." "environment"
-        local db_filtered_vars=()
-        for var in "${vars_to_check[@]}"; do
-            if [[ ! "$var" =~ ^POSTGRES_ ]]; then
-                db_filtered_vars+=("$var")
-            fi
-        done
-        vars_to_check=("${db_filtered_vars[@]}")
-        
-        local db_filtered_pass_vars=()
-        for var in "${password_vars_to_check[@]}"; do
-            if [[ ! "$var" =~ ^POSTGRES_ ]]; then
-                db_filtered_pass_vars+=("$var")
-            fi
-        done
-        password_vars_to_check=("${db_filtered_pass_vars[@]}")
+    # Set deployment flags based on flavor
+    if ! set_deployment_flags_from_flavor; then
+        return 1
     fi
     
-    print_status "Validating required environment variables..." "environment"
+    # Get flavor-specific variable arrays
+    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local vars_array_name=$(get_flavor_vars)
+    local password_vars_array_name=$(get_flavor_password_vars)
+    
+    # Use indirect reference to get array contents
+    local vars_to_check=("${!vars_array_name}")
+    local password_vars_to_check=("${!password_vars_array_name}")
+    
+    print_status "Validating required variables for flavor: $flavor" "environment"
     
     # Check if all required variables are set
     for var_name in "${vars_to_check[@]}"; do
@@ -193,18 +365,19 @@ validate_required_vars() {
     
     # Report missing variables
     if [[ ${#missing_vars[@]} -gt 0 ]]; then
-        print_error "The following required environment variables are missing:" "environment"
+        print_error "The following required environment variables are missing for flavor '$flavor':" "environment"
         for var_name in "${missing_vars[@]}"; do
             echo "  - $var_name"
         done
         print_error "Please add these variables to your environment file: $ENV_FILE" "environment"
+        print_error "See .env.production.example for flavor-specific requirements" "environment"
         return 1
     fi
     
     # Validate specific variables
     local vars_to_validate=("APP_NAME" "PROJECT_NAME" "GIT_SSH_URL" "FIRST_SUPERUSER" "API_KEY")
     for var_name in "${vars_to_validate[@]}"; do
-        # Skip validation if variable is not in our checked list (e.g. FIRST_SUPERUSER in backend-only mode)
+        # Skip validation if variable is not in our checked list
         local is_in_check_list=false
         for v in "${vars_to_check[@]}"; do
             if [[ "$v" == "$var_name" ]]; then
@@ -250,12 +423,12 @@ validate_required_vars() {
         return 1
     fi
     
-    # Validate OAuth variables (conditional)
+    # Validate OAuth variables for OAuth flavors
     if ! validate_oauth_vars; then
         return 1
     fi
     
-    print_success "All required environment variables are valid!" "environment"
+    print_success "All required environment variables are valid for flavor '$flavor'!" "environment"
     return 0
 }
 

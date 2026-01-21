@@ -5,6 +5,7 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Deployment Flavors](#deployment-flavors)
 - [Prerequisites](#prerequisites)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -22,7 +23,7 @@ Automated deployment script for deploying full-stack applications to OpenShift w
    cp .env.production.example .env.production
    ```
 
-2. **Configure required variables** in `.env.production`:
+2. **Configure required production env-variables** in `.env.production`:
 
    ```bash
    APP_NAME=my-app
@@ -34,16 +35,58 @@ Automated deployment script for deploying full-stack applications to OpenShift w
    POSTGRES_PASSWORD=your-db-password
    ```
 
-3. **Login to OpenShift:**
+3. **(Recommended) Create a GitHub Token** for automatic deploy key and webhook setup:
+   - Go to [github.ibm.com/settings/tokens](https://github.ibm.com/settings/tokens) (IBM) or [github.com/settings/tokens](https://github.com/settings/tokens) (public)
+   - Click "Generate new token (classic)"
+   - Select scopes: `repo` and `admin:repo_hook`
+   - Add to `.env.production` as `GITHUB_TOKEN=ghp_your_token_here`
+
+   > **Note:** Without this token, you'll need to manually add deploy keys and webhooks. See [Manual GitHub Setup](#manual-github-setup).
+
+4. **Login to OpenShift:**
+
+   _Note: You can find this in the OpenShift console UI in the top right corner. (Copy login command)_
 
    ```bash
    oc login --server=https://your-openshift-cluster:6443
    ```
 
-4. **Run the deployment:**
+5. **Run the deployment:**
    ```bash
    ./scripts/oc-deploy.sh
    ```
+
+## Deployment Flavors
+
+The script supports 6 deployment flavors, each with specific component combinations and required variables. Set `DEPLOYMENT_FLAVOR` in `.env.production`:
+
+| Flavor                    | Components                      | Auth              | Use Case                                              |
+| ------------------------- | ------------------------------- | ----------------- | ----------------------------------------------------- |
+| **oauth-proxy**           | Frontend + Backend + DB + OAuth | OAuth2/OIDC       | Enterprise apps with SSO integration                  |
+| **local-auth**            | Frontend + Backend + DB         | Local (user/pass) | Standard full-stack app with built-in user management |
+| **backend-only**          | Backend + DB                    | API Key           | Backend API for mobile apps or external frontends     |
+| **backend-only-no-db**    | Backend only                    | API Key           | Stateless APIs, microservices, proxy services         |
+| **local-auth-custom-ui**  | Backend + DB                    | Local (user/pass) | Custom frontend using the backend API                 |
+| **oauth-proxy-custom-ui** | Backend + DB + OAuth            | OAuth2/OIDC       | Custom frontend with enterprise SSO                   |
+
+**Required Variables by Flavor:**
+
+- **local-auth**: `APP_NAME`, `PROJECT_NAME`, `GIT_SSH_URL`, `ENVIRONMENT`, `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SECRET_KEY`, `POSTGRES_*`
+- **backend-only**: `APP_NAME`, `PROJECT_NAME`, `GIT_SSH_URL`, `ENVIRONMENT`, `API_KEY`, `POSTGRES_*`
+- **oauth-proxy**: `APP_NAME`, `PROJECT_NAME`, `GIT_SSH_URL`, `ENVIRONMENT`, `OAUTH2_PROXY_*`, `POSTGRES_*`
+- **backend-only-no-db**: `APP_NAME`, `PROJECT_NAME`, `GIT_SSH_URL`, `ENVIRONMENT`, `API_KEY`
+- **local-auth-custom-ui**: Same as local-auth
+- **oauth-proxy-custom-ui**: Same as oauth-proxy
+
+**Usage:**
+
+```bash
+# Set in .env.production
+DEPLOYMENT_FLAVOR=backend-only
+
+# Or override via command line
+./scripts/oc-deploy.sh --flavor oauth-proxy
+```
 
 ## Prerequisites
 
@@ -77,7 +120,93 @@ Automated deployment script for deploying full-stack applications to OpenShift w
 
 ### Environment File Structure
 
-The deployment script uses `.env.production` for all configuration. See [`.env.production.example`](../.env.production.example) for a complete template with detailed comments.
+The deployment script uses `.env.production` for all configuration. See [`.env.production.example`](../.env.production.example) for a complete template.
+
+### Environment Variables Reference
+
+The following table lists all environment variables that can be configured in `.env.production`:
+
+| Variable                           | Description                                      | Required            | Default          | Validation/Notes                                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------ | ------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Application Identity**           |
+| `APP_NAME`                         | Application name used for OpenShift resources    | Yes                 | -                | Must be lowercase, alphanumeric, and hyphens only                                                                                                                         |
+| `PROJECT_NAME`                     | OpenShift project/namespace name                 | Yes                 | -                | Must be lowercase, alphanumeric, and hyphens only                                                                                                                         |
+| `ENVIRONMENT`                      | Deployment environment identifier                | Yes                 | `production`     | -                                                                                                                                                                         |
+| **Git Repository**                 |
+| `GIT_SSH_URL`                      | Git repository SSH URL for source code           | Yes                 | -                | Must be SSH format: `git@github.com:user/repo.git`                                                                                                                        |
+| **Admin User Configuration**       |
+| `FIRST_SUPERUSER`                  | Admin user email address                         | Yes (Full Stack)    | -                | Must be valid email format                                                                                                                                                |
+| `FIRST_SUPERUSER_PASSWORD`         | Admin user password                              | Yes (Full Stack)    | -                | Must be at least 8 characters                                                                                                                                             |
+| `SIGNUP_ACCESS_PASSWORD`           | Password required for user signup                | No                  | -                | If set, must be at least 8 characters. Leave empty to disable signup                                                                                                      |
+| **API Security**                   |
+| `API_KEY`                          | API security key for backend authentication      | Yes (Backend Only)  | -                | Must be 16, 32, or 64 characters (power of 2)                                                                                                                             |
+| `SECRET_KEY`                       | Backend secret key for JWT tokens and encryption | Yes (Full Stack)    | -                | Must be at least 8 characters. Auto-generated if missing                                                                                                                  |
+| **Database Configuration**         |
+| `POSTGRES_SERVER`                  | PostgreSQL server hostname                       | Yes (if DB enabled) | `postgresql`     | -                                                                                                                                                                         |
+| `POSTGRES_PORT`                    | PostgreSQL server port                           | Yes (if DB enabled) | `5432`           | -                                                                                                                                                                         |
+| `POSTGRES_DB`                      | PostgreSQL database name                         | Yes (if DB enabled) | `app`            | -                                                                                                                                                                         |
+| `POSTGRES_USER`                    | PostgreSQL username                              | Yes (if DB enabled) | `postgres`       | -                                                                                                                                                                         |
+| `POSTGRES_PASSWORD`                | PostgreSQL password                              | Yes (if DB enabled) | -                | Must be at least 8 characters                                                                                                                                             |
+| **GitHub Integration**             |
+| `GITHUB_HOST`                      | GitHub instance hostname                         | No                  | `github.ibm.com` | Use `github.com` for public GitHub, `github.ibm.com` for IBM GitHub Enterprise, or your custom GitHub Enterprise domain                                                   |
+| `GITHUB_TOKEN`                     | GitHub Personal Access Token for automation      | No                  | -                | Format: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. Required permissions: `repo`, `admin:repo_hook`. Used to automatically add SSH deploy keys and webhooks to repository |
+| **Deployment Configuration**       |
+| `DEPLOYMENT_BRANCH_FILTER`         | Git branch that triggers OpenShift deployments   | No                  | -                | Examples: `main`, `master`, `production`, `develop`. Leave empty to trigger on all branches                                                                               |
+| `BACKEND_CORS_ORIGINS`             | Allowed CORS origins for backend API             | No                  | -                | Auto-generated from frontend URL if not provided. Comma-separated list of origins                                                                                         |
+| **Frontend Environment Variables** |
+| `VITE_*`                           | Custom frontend environment variables            | No                  | -                | All variables prefixed with `VITE_` are automatically injected into the frontend build at build time                                                                      |
+| **OAuth2 Proxy Configuration**     |
+| `OAUTH2_PROXY_COOKIE_SECRET`       | Secret for encrypting OAuth2 proxy cookies       | No\*                | -                | Must be at least 16 characters (recommended: 32). Generate with: `openssl rand -base64 32 \| tr -d "=+/" \| cut -c1-32`. \*Required if any OAuth variable is set          |
+| `OAUTH2_PROXY_CLIENT_ID`           | OAuth2 client ID from OIDC provider              | No\*                | -                | Obtained from your OIDC provider. \*Required if any OAuth variable is set                                                                                                 |
+| `OAUTH2_PROXY_CLIENT_SECRET`       | OAuth2 client secret from OIDC provider          | No\*                | -                | Obtained from your OIDC provider. \*Required if any OAuth variable is set                                                                                                 |
+| `OAUTH2_PROXY_OIDC_ISSUER_URL`     | OIDC issuer URL (oAuthServerUrl in AppId)        | No\*                | -                | Base URL of your OIDC provider. \*Required if any OAuth variable is set                                                                                                   |
+| `OAUTH2_PROXY_WELL_KNOWN_URL`      | OIDC well-known configuration URL                | No                  | -                | Auto-discovered from `OIDC_ISSUER_URL` if not provided                                                                                                                    |
+
+**Notes:**
+
+- Variables marked as "Yes (Full Stack)" are only required when deploying the full stack (default mode)
+- Variables marked as "Yes (Backend Only)" are only required when using `--backend-only` flag
+- Variables marked as "Yes (if DB enabled)" are only required when database deployment is enabled (not using `--no-db`)
+- OAuth2 variables: If ANY OAuth variable is set, ALL OAuth variables must be configured
+- Custom application variables can be added to `.env.production` and will be automatically included in the OpenShift secret
+
+#### Creating a GitHub Token
+
+To create a GitHub Personal Access Token for automatic deploy key and webhook management:
+
+**For IBM GitHub Enterprise:**
+
+1. Go to https://github.ibm.com/settings/tokens
+
+**For Public GitHub:**
+
+1. Go to https://github.com/settings/tokens
+
+**Then:**
+
+2. Click "Generate new token (classic)"
+3. Give it a descriptive name (e.g., "OpenShift Deployment")
+4. Select the following scopes:
+
+- `repo` (Full control of private repositories)
+- `admin:repo_hook` (Full control of repository hooks)
+
+5. Click "Generate token" and copy the token
+6. Paste it into your `.env.production` file as `GITHUB_TOKEN` (starts with `ghp_`)
+
+**Note:** Without this token, you'll need to manually add deploy keys and webhooks to GitHub. See [Manual GitHub Setup](#manual-github-setup) for instructions.
+
+#### Custom Application Variables
+
+You can add any custom variables your application needs to `.env.production`. They will be automatically added to the OpenShift secret and made available to your application.
+
+**Examples:**
+
+```bash
+CUSTOM_SERVICE_URL=https://api.example.com
+CUSTOM_API_KEY=your-api-key
+VITE_CUSTOM_VARIABLE=myvalue
+```
 
 ### Deployment Modes & Required Variables
 
@@ -401,7 +530,6 @@ oc logs -f <pod-name>
 If you don't have a GitHub token, manually configure:
 
 1. **Add Deploy Key:**
-
    - Get public key: `oc get secret git-ssh-key -o jsonpath='{.data.ssh-publickey}' | base64 -d`
    - Go to GitHub repository → Settings → Deploy keys
    - Add new deploy key with read access
