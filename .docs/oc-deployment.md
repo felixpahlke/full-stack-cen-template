@@ -20,9 +20,9 @@ cp .env.production.example .env.production
 Edit `.env.production` with your production values:
 
 ```bash
-APP_NAME=my-app                              # Lowercase, hyphens only
+_APP_NAME=my-app                              # Lowercase, hyphens only
 PROJECT_NAME=my-openshift-project            # OpenShift namespace
-GIT_SSH_URL=git@github.com:user/repo.git     # Repository SSH URL
+_GIT_SSH_URL=git@github.com:user/repo.git    # Repository SSH URL
 # and so on...
 ```
 
@@ -40,7 +40,7 @@ This enables automatic deploy key and webhook setup:
 
 1. Go to https://github.com/settings/tokens
 
-**Then:** 2. Click "Generate new token (classic)" 3. Name it (e.g., "OpenShift Deployment") 4. Select scopes: `repo` and `admin:repo_hook` 5. Click "Generate token" and copy it 6. Add to `.env.production`: `GITHUB_TOKEN=ghp_your_token_here`
+**Then:** 2. Click "Generate new token (classic)" 3. Name it (e.g., "OpenShift Deployment") 4. Select scopes: `repo` and `admin:repo_hook` 5. Click "Generate token" and copy it 6. Add to `.env.production`: `_GITHUB_TOKEN=ghp_your_token_here`
 
 > **Note:** Without this token, you'll need to manually add deploy keys and webhooks after deployment.
 
@@ -69,7 +69,7 @@ The script guides you through the process and handles everything automatically.
 
 ## Deployment Flavors
 
-Set `DEPLOYMENT_FLAVOR` in `.env.production`:
+Set `_CEN_FLAVOR` in `.env.production`:
 
 | Flavor                    | Components                      | Auth    | Use Case                        |
 | ------------------------- | ------------------------------- | ------- | ------------------------------- |
