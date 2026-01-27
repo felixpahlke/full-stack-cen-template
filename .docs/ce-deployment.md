@@ -174,8 +174,9 @@ OAUTH2_PROXY_CLIENT_ID=your-client-id
 OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
 OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
 
-# Optional: Well-Known URL
-OAUTH2_PROXY_WELL_KNOWN_URL=https://your-oidc-provider.com/.well-known/openid-configuration
+# Optional: Well-Known URL (Auto-generated if missing)
+# Defaults to: ${OAUTH2_PROXY_OIDC_ISSUER_URL}/.well-known/openid-configuration
+# OAUTH2_PROXY_WELL_KNOWN_URL=https://your-oidc-provider.com/.well-known/openid-configuration
 ```
 
 **Behavior:**

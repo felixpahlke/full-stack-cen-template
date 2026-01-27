@@ -369,8 +369,19 @@ update_env_file() {
     if [ "$BACKEND_CORS_UPDATED" = false ]; then
         echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\"" >> "$TEMP_FILE"
     fi
-    if [ "$OAUTH_ENABLED" = true ] && [ "$OAUTH_REDIRECT_UPDATED" = false ]; then
-        echo "OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\"" >> "$TEMP_FILE"
+    if [ "$OAUTH_ENABLED" = true ]; then
+        if [ "$OAUTH_REDIRECT_UPDATED" = false ]; then
+            echo "OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\"" >> "$TEMP_FILE"
+        fi
+        
+        # Infer OAUTH2_PROXY_WELL_KNOWN_URL if not present
+        if ! grep -q "OAUTH2_PROXY_WELL_KNOWN_URL=" "$ENV_FILE"; then
+             # Remove trailing slash from issuer url if present
+            clean_issuer_url="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}"
+            well_known_url="${clean_issuer_url}/.well-known/openid-configuration"
+            echo "OAUTH2_PROXY_WELL_KNOWN_URL=\"${well_known_url}\"" >> "$TEMP_FILE"
+            print_status "  OAUTH2_PROXY_WELL_KNOWN_URL=\"${well_known_url}\" (inferred)"
+        fi
     fi
     
     # Replace original file with updated one
