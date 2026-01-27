@@ -1,5 +1,5 @@
 # Stage 0, "build-stage", based on Node.js, to build and compile the frontend
-FROM registry.access.redhat.com/ubi8/nodejs-20 AS base
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/nodejs-20 AS base
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm install
 COPY ./ /app/
 
 
-FROM base as build-stage
+FROM base AS build-stage
 
 ARG VITE_API_URL=${VITE_API_URL}
 

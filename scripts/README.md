@@ -20,7 +20,7 @@ This document covers detailed configuration, architecture, and how to extend the
 
 ## Deployment Flavors
 
-The script supports 6 deployment flavors, each with specific component combinations and required variables. Set `DEPLOYMENT_FLAVOR` in `.env.production`:
+The script supports 6 deployment flavors, each with specific component combinations and required variables. Set `CEN_FLAVOR` in `.env.production`:
 
 | Flavor                    | Components                      | Auth              | Use Case                                              |
 | ------------------------- | ------------------------------- | ----------------- | ----------------------------------------------------- |
@@ -44,7 +44,7 @@ The script supports 6 deployment flavors, each with specific component combinati
 
 ```bash
 # Set in .env.production
-DEPLOYMENT_FLAVOR=backend-only
+CEN_FLAVOR=backend-only
 
 # Or override via command line
 ./scripts/oc-deploy.sh --flavor oauth-proxy

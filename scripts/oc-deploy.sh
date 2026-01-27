@@ -72,12 +72,12 @@ parse_arguments() {
                 shift 2
                 ;;
             --backend-only)
-                print_warning "DEPRECATED: --backend-only flag is deprecated. Use DEPLOYMENT_FLAVOR=backend-only in .env file or --flavor backend-only"
+                print_warning "DEPRECATED: --backend-only flag is deprecated. Use CEN_FLAVOR=backend-only in .env file or --flavor backend-only"
                 FLAVOR_OVERRIDE="backend-only"
                 shift
                 ;;
             --no-db)
-                print_warning "DEPRECATED: --no-db flag is deprecated. Use DEPLOYMENT_FLAVOR=backend-only-no-db in .env file or --flavor backend-only-no-db"
+                print_warning "DEPRECATED: --no-db flag is deprecated. Use CEN_FLAVOR=backend-only-no-db in .env file or --flavor backend-only-no-db"
                 FLAVOR_OVERRIDE="backend-only-no-db"
                 shift
                 ;;
@@ -131,7 +131,7 @@ main() {
     
     # Apply flavor override from command line if provided
     if [[ -n "$FLAVOR_OVERRIDE" ]]; then
-        export DEPLOYMENT_FLAVOR="$FLAVOR_OVERRIDE"
+        export CEN_FLAVOR="$FLAVOR_OVERRIDE"
         print_status "Deployment flavor overridden via command line: $FLAVOR_OVERRIDE"
     fi
     
@@ -204,7 +204,7 @@ main() {
     if [[ "${DEPLOY_FRONTEND:-true}" == "true" ]]; then
         deploy_frontend || exit 1
     else
-        print_status "Skipping frontend deployment (flavor: ${DEPLOYMENT_FLAVOR})"
+        print_status "Skipping frontend deployment (flavor: ${CEN_FLAVOR})"
     fi
     
     # Deploy backend (always deployed)
