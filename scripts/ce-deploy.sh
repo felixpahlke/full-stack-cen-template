@@ -392,8 +392,9 @@ deploy_applications() {
     print_status "Building frontend image..."
     VITE_BUILD_ARGS=()
     while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines early to avoid xargs quote parsing issues
+        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
         line=$(echo "$line" | tr -d '\r' | xargs)
-        [[ -z "$line" || "$line" == \#* ]] && continue
         if [[ $line == VITE_API_URL=* ]]; then
             VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=${BACKEND_URL}")
         elif [[ $line == VITE_* ]]; then
@@ -456,8 +457,10 @@ deploy_applications() {
     SECRET_NAME="${_CE_BACKEND_ENV_SECRET_NAME}"
     FROM_LITERALS=()
     while IFS= read -r line; do
+        # Skip comments and empty lines early to avoid xargs quote parsing issues
+        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
         line=$(echo "$line" | xargs)
-        [[ -z "$line" || "$line" == \#* || $line == _* ]] && continue
+        [[ $line == _* ]] && continue
         FROM_LITERALS+=(--from-literal "$line")
     done < "$ENV_FILE"
     
