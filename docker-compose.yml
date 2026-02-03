@@ -109,6 +109,9 @@ services:
       - "--insecure-oidc-allow-unverified-email"
       - "--http-address=:4180"
       - "--skip-provider-button"
+      # Attention! Only for local development!
+      - "--cookie-samesite=lax"
+      - "--cookie-secure=false"
 
   lokal-token-printer:
     image: ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
