@@ -174,7 +174,7 @@ validate_flavor() {
 
 # Function to detect and set deployment flavor
 detect_flavor() {
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     
     # Validate flavor
     if ! validate_flavor "$flavor"; then
@@ -184,7 +184,7 @@ detect_flavor() {
     fi
     
     # Export flavor for use in other scripts
-    export DEPLOYMENT_FLAVOR="$flavor"
+    export CEN_FLAVOR="$flavor"
     
     print_status "Deployment flavor: $flavor" "environment"
     return 0
@@ -192,7 +192,7 @@ detect_flavor() {
 
 # Function to get required variables for current flavor
 get_flavor_vars() {
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     local var_array_name="FLAVOR_${flavor//-/_}_VARS[@]"
     # Convert to uppercase using tr for Bash 3.2 compatibility (macOS)
     var_array_name=$(echo "$var_array_name" | tr '[:lower:]' '[:upper:]')
@@ -203,7 +203,7 @@ get_flavor_vars() {
 
 # Function to get password variables for current flavor
 get_flavor_password_vars() {
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     local var_array_name="FLAVOR_${flavor//-/_}_PASSWORD_VARS[@]"
     # Convert to uppercase using tr for Bash 3.2 compatibility (macOS)
     var_array_name=$(echo "$var_array_name" | tr '[:lower:]' '[:upper:]')
@@ -214,7 +214,7 @@ get_flavor_password_vars() {
 
 # Function to set deployment flags based on flavor
 set_deployment_flags_from_flavor() {
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     
     case "$flavor" in
         local-auth)
@@ -299,6 +299,18 @@ load_env_file() {
             
             # Export the variable
             export "$var_name"="$var_value"
+
+            # If variable starts with _, also export it without the _ prefix
+            # This allows usage like _GITHUB_TOKEN in .env but script sees GITHUB_TOKEN
+            if [[ "$var_name" == _* ]]; then
+                clean_name="${var_name#_}"
+                if [[ -n "$clean_name" ]]; then
+                    export "$clean_name"="$var_value"
+                    if [[ "$show_values" == "true" ]]; then
+                        print_status "Aliased $var_name -> $clean_name" "environment"
+                    fi
+                fi
+            fi
             
             # Display variable only if show_values flag is true
             if [[ "$show_values" == "true" ]]; then
@@ -312,7 +324,7 @@ load_env_file() {
 
 # Function to validate OAuth variables for OAuth flavors
 validate_oauth_vars() {
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     
     # Only validate OAuth for OAuth-enabled flavors
     if [[ "$flavor" != "oauth-proxy" && "$flavor" != "oauth-proxy-custom-ui" ]]; then
@@ -346,7 +358,7 @@ validate_required_vars() {
     fi
     
     # Get flavor-specific variable arrays
-    local flavor="${DEPLOYMENT_FLAVOR:-$DEFAULT_FLAVOR}"
+    local flavor="${CEN_FLAVOR:-$DEFAULT_FLAVOR}"
     local vars_array_name=$(get_flavor_vars)
     local password_vars_array_name=$(get_flavor_password_vars)
     

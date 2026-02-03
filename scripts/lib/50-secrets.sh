@@ -26,11 +26,13 @@ build_secret_literals() {
             local var_name="${BASH_REMATCH[1]}"
             local var_value="${!var_name:-}"
             
-            # Skip GitHub credentials
-            if [[ "$var_name" == "GITHUB_HOST" || "$var_name" == "GITHUB_TOKEN" ]]; then
+            # Skip GitHub credentials and any variable starting with _
+            # Variables starting with _ are considered sensitive/local-only or are aliased
+            # and should not be effectively duplicated in the secret
+            if [[ "$var_name" == "GITHUB_HOST" || "$var_name" == "GITHUB_TOKEN" || "$var_name" == _* ]]; then
                 continue
             fi
-
+            
             # Add to secret literals
             secret_literals+=" --from-literal=$var_name=\"$var_value\""
         fi
@@ -60,7 +62,7 @@ create_initial_app_env_secret() {
     
     # Generate a secure random secret key if not provided or too short
     # Only needed for flavors that use SECRET_KEY (local-auth, local-auth-custom-ui)
-    local flavor="${DEPLOYMENT_FLAVOR:-local-auth}"
+    local flavor="${CEN_FLAVOR:-local-auth}"
     if [[ "$flavor" == "local-auth" || "$flavor" == "local-auth-custom-ui" ]]; then
         if [[ -z "${SECRET_KEY:-}" ]] || [[ ${#SECRET_KEY} -lt 8 ]]; then
             SECRET_KEY=$(openssl rand -hex 32)
