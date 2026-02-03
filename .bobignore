@@ -1,6 +1,10 @@
 # Environment files
 *.env
 
+# re-include any .env file that ultimately ends with .example or .tpl
+!*.env*.example
+!*.env*.tpl
+
 # Terraform state files
 *.tfstate
 *.tfstate.backup
