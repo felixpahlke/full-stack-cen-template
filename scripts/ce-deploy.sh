@@ -62,6 +62,14 @@ fi
 
 print_status "Deployment Identity: ${_CEN_FLAVOR}"
 
+# Determine if frontend should be deployed
+if [[ "${_CEN_FLAVOR}" == "backend-only" || "${_CEN_FLAVOR}" == "backend-only-no-db" ]]; then
+    DEPLOY_FRONTEND=false
+    print_status "Backend-only deployment - frontend will be skipped"
+else
+    DEPLOY_FRONTEND=true
+fi
+
 # Initialize required variables with common ones
 REQUIRED_VARS=(
     "_IBM_CLOUD_RESOURCE_GROUP" "_IBM_CLOUD_REGION" "_IBM_CLOUD_ACCOUNT_NAME"
@@ -99,6 +107,12 @@ fi
 print_success "All required environment variables are set"
 
 check_nginx_config() {
+    # Skip nginx check for backend-only deployments
+    if [ "$DEPLOY_FRONTEND" = false ]; then
+        print_status "Skipping nginx configuration check (backend-only deployment)"
+        return
+    fi
+    
     print_status "Checking nginx configuration..."
     NGINX_CONF="$SCRIPT_DIR/../frontend/nginx.conf"
     
@@ -321,7 +335,11 @@ deploy_oauth_proxy() {
     else
         # Construct direct application URLs (no OAuth)
         BACKEND_URL="https://${_CE_BACKEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-        FRONTEND_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
+        if [ "$DEPLOY_FRONTEND" = true ]; then
+            FRONTEND_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
+        else
+            FRONTEND_URL="No frontend deployed"
+        fi
     fi
     
     print_success "Constructed URLs:"
@@ -348,11 +366,15 @@ update_env_file() {
     
     while IFS= read -r line || [ -n "$line" ]; do
         line=$(echo "$line" | tr -d '\r')
-        if [[ $line == VITE_API_URL=* ]]; then
+        if [[ $line == VITE_API_URL=* ]] && [ "$DEPLOY_FRONTEND" = true ]; then
             echo "VITE_API_URL=\"${BACKEND_URL}\""
             VITE_API_URL_UPDATED=true
         elif [[ $line == BACKEND_CORS_ORIGINS=* ]]; then
-            echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
+            if [ "$DEPLOY_FRONTEND" = true ]; then
+                echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
+            else
+                echo "BACKEND_CORS_ORIGINS=\"*\""
+            fi
             BACKEND_CORS_UPDATED=true
         elif [[ $line == OAUTH2_PROXY_REDIRECT_URL=* ]] && [ "$OAUTH_ENABLED" = true ]; then
             echo "OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\""
@@ -363,11 +385,17 @@ update_env_file() {
     done < "$ENV_FILE" > "$TEMP_FILE"
     
     # Add variables if they weren't found in the file
-    if [ "$VITE_API_URL_UPDATED" = false ]; then
-        echo "VITE_API_URL=\"${BACKEND_URL}\"" >> "$TEMP_FILE"
+    if [ "$DEPLOY_FRONTEND" = true ]; then
+        if [ "$VITE_API_URL_UPDATED" = false ]; then
+            echo "VITE_API_URL=\"${BACKEND_URL}\"" >> "$TEMP_FILE"
+        fi
     fi
     if [ "$BACKEND_CORS_UPDATED" = false ]; then
-        echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\"" >> "$TEMP_FILE"
+        if [ "$DEPLOY_FRONTEND" = true ]; then
+            echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\"" >> "$TEMP_FILE"
+        else
+            echo "BACKEND_CORS_ORIGINS=\"*\"" >> "$TEMP_FILE"
+        fi
     fi
     if [ "$OAUTH_ENABLED" = true ]; then
         if [ "$OAUTH_REDIRECT_UPDATED" = false ]; then
@@ -388,8 +416,12 @@ update_env_file() {
     mv "$TEMP_FILE" "$ENV_FILE"
     
     print_success "Updated .env.production with deployment URLs"
-    print_status "  VITE_API_URL=\"${BACKEND_URL}\""
-    print_status "  BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
+    if [ "$DEPLOY_FRONTEND" = true ]; then
+        print_status "  VITE_API_URL=\"${BACKEND_URL}\""
+        print_status "  BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
+    else
+        print_status "  BACKEND_CORS_ORIGINS=\"*\" (backend-only mode)"
+    fi
     if [ "$OAUTH_ENABLED" = true ]; then
         print_status "  OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\""
     fi
@@ -400,59 +432,63 @@ deploy_applications() {
     print_section "DEPLOYING APPLICATIONS"
     
     ### FRONTEND ###
-    print_status "Building frontend image..."
-    VITE_BUILD_ARGS=()
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines early to avoid xargs quote parsing issues
-        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
-        line=$(echo "$line" | tr -d '\r' | xargs)
-        if [[ $line == VITE_API_URL=* ]]; then
-            VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=${BACKEND_URL}")
-        elif [[ $line == VITE_* ]]; then
-            VITE_BUILD_ARGS+=("--build-arg=$line")
-        fi
-    done < "$ENV_FILE"
-    
-    print_status "Found ${#VITE_BUILD_ARGS[@]} VITE build arguments"
-    print_status "Building image: ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest"
-    
-    docker image build --platform linux/amd64 \
-        -t ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-        "${VITE_BUILD_ARGS[@]}" \
-        --build-arg NODE_ENV=${NODE_ENV:-production} \
-        --load \
-        ./frontend || { print_error "Failed to build frontend image"; exit 1; }
-    
-    print_status "Pushing frontend image..."
-    docker image push ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest || { print_error "Failed to push frontend image"; exit 1; }
-    
-    if ibmcloud ce application get --name ${_CE_FRONTEND_APPLICATION_NAME} &>/dev/null; then
-        print_status "Updating frontend application..."
-        ibmcloud ce application update \
-            --name ${_CE_FRONTEND_APPLICATION_NAME} \
-            --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-            --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to update frontend"; exit 1; }
-    else
-        print_status "Creating frontend application..."
-        # Frontend is cluster-local when OAuth is enabled, public otherwise
-        if [ "$OAUTH_ENABLED" = true ]; then
-            CLUSTER_LOCAL_FLAG="--cluster-local"
-        else
-            CLUSTER_LOCAL_FLAG=""
-        fi
+    if [ "$DEPLOY_FRONTEND" = true ]; then
+        print_status "Building frontend image..."
+        VITE_BUILD_ARGS=()
+        while IFS= read -r line || [ -n "$line" ]; do
+            # Skip comments and empty lines early to avoid xargs quote parsing issues
+            if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
+            line=$(echo "$line" | tr -d '\r' | xargs)
+            if [[ $line == VITE_API_URL=* ]]; then
+                VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=${BACKEND_URL}")
+            elif [[ $line == VITE_* ]]; then
+                VITE_BUILD_ARGS+=("--build-arg=$line")
+            fi
+        done < "$ENV_FILE"
         
-        ibmcloud ce application create \
-            --name ${_CE_FRONTEND_APPLICATION_NAME} \
-            --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-            --registry-secret ${_CR_REGISTRY_SECRET_NAME} \
-            --port http1:8080 \
-            $CLUSTER_LOCAL_FLAG \
-            --probe-live initial-delay=10 --probe-live type=http --probe-live path=/healthz --probe-live port=8080 \
-            --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/healthz --probe-ready port=8080 \
-            --cpu 0.5 --memory 1G \
-            --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to create frontend"; exit 1; }
+        print_status "Found ${#VITE_BUILD_ARGS[@]} VITE build arguments"
+        print_status "Building image: ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest"
+        
+        docker image build --platform linux/amd64 \
+            -t ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
+            "${VITE_BUILD_ARGS[@]}" \
+            --build-arg NODE_ENV=${NODE_ENV:-production} \
+            --load \
+            ./frontend || { print_error "Failed to build frontend image"; exit 1; }
+        
+        print_status "Pushing frontend image..."
+        docker image push ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest || { print_error "Failed to push frontend image"; exit 1; }
+        
+        if ibmcloud ce application get --name ${_CE_FRONTEND_APPLICATION_NAME} &>/dev/null; then
+            print_status "Updating frontend application..."
+            ibmcloud ce application update \
+                --name ${_CE_FRONTEND_APPLICATION_NAME} \
+                --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
+                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to update frontend"; exit 1; }
+        else
+            print_status "Creating frontend application..."
+            # Frontend is cluster-local when OAuth is enabled, public otherwise
+            if [ "$OAUTH_ENABLED" = true ]; then
+                CLUSTER_LOCAL_FLAG="--cluster-local"
+            else
+                CLUSTER_LOCAL_FLAG=""
+            fi
+            
+            ibmcloud ce application create \
+                --name ${_CE_FRONTEND_APPLICATION_NAME} \
+                --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
+                --registry-secret ${_CR_REGISTRY_SECRET_NAME} \
+                --port http1:8080 \
+                $CLUSTER_LOCAL_FLAG \
+                --probe-live initial-delay=10 --probe-live type=http --probe-live path=/healthz --probe-live port=8080 \
+                --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/healthz --probe-ready port=8080 \
+                --cpu 0.5 --memory 1G \
+                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to create frontend"; exit 1; }
+        fi
+        print_success "Frontend deployed successfully!"
+    else
+        print_status "Skipping frontend deployment (backend-only mode)"
     fi
-    print_success "Frontend deployed successfully!"
     
     ### BACKEND ###
     print_status "Building backend image..."
@@ -542,7 +578,11 @@ echo ""
 print_section "APPLICATION URLS"
 echo ""
 
-if [ "$OAUTH_ENABLED" = true ]; then
+if [ "$DEPLOY_FRONTEND" = false ]; then
+    print_success "Backend API URL (Backend-Only Mode):"
+    print_status "  ${BACKEND_URL}"
+    echo ""
+elif [ "$OAUTH_ENABLED" = true ]; then
     print_success "Main Application (OAuth Protected):"
     print_status "  ${OAUTH_PROXY_URL}"
     echo ""
@@ -576,6 +616,7 @@ print_status "  Code Engine Project:  ${_CE_PROJECT_NAME}"
 print_status "  Project Subdomain:    ${CE_SUBDOMAIN}"
 print_status "  Cluster ID:           ${CLUSTER_ID}"
 print_status "  Container Registry:   ${_CR_REGISTRY}/${_CR_NAMESPACE}"
+print_status "  Deployment Mode:      ${_CEN_FLAVOR}"
 if [ "$OAUTH_ENABLED" = true ]; then
     print_status "  OAuth2 Proxy:         Enabled"
 else
@@ -583,7 +624,9 @@ else
 fi
 echo ""
 
-if [ "$OAUTH_ENABLED" = true ]; then
+if [ "$DEPLOY_FRONTEND" = false ]; then
+    print_success "✅ You can now access your backend API at: ${BACKEND_URL}"
+elif [ "$OAUTH_ENABLED" = true ]; then
     print_success "✅ You can now access your application at: ${OAUTH_PROXY_URL}"
 else
     print_success "✅ You can now access your application at: ${FRONTEND_URL}"

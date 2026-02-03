@@ -26,7 +26,8 @@ This guide covers deploying the application to **IBM Code Engine**, a serverless
 1. **IBM Cloud CLI**:
 
    ```bash
-   curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+   Linux: curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+   MacOS: curl -fsSL https://clis.cloud.ibm.com/install/osx | sh
    ```
 
 2. **Required Plugins**:
@@ -56,13 +57,13 @@ Edit `.env.production` and set the required variables.
 
 ```bash
 # Application Identity
-_APP_NAME=my-app
-PROJECT_NAME=my-openshift-project
+PROJECT_NAME=my-new-project
 ENVIRONMENT=production
 
 # Admin User
 FIRST_SUPERUSER=admin@example.com
 FIRST_SUPERUSER_PASSWORD=your-secure-password
+SIGNUP_ACCESS_PASSWORD=your-secure-password
 
 # Backend Security
 SECRET_KEY=your-secret-key-min-8-chars
@@ -73,33 +74,38 @@ POSTGRES_PORT=5432
 POSTGRES_DB=app
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your-db-password
+
+# Endpoints that can communicate with backend
+# This is automatically set to frontend url by deployment script
+BACKEND_CORS_ORIGINS=your-frontend-url
 ```
 
 #### 2. IBM Cloud Configuration
 
 ```bash
-# IBM Cloud Authentication
-_IBM_API_KEY=<your-api-key>
-_IBM_CLOUD_URL=https://cloud.ibm.com
+# VITE_API_URL can stay empty
+# This is automatically set to backend url by deployment script
+VITE_API_URL=your-backend-url
 
 # IBM Cloud Resources
+# For the cloud account make sure to only use the name after the dash
+# 2292046 - ClientEngineeringDACH = ClientEngineeringDACH
+_IAM_API_KEY=<your-api-key>
 _IBM_CLOUD_RESOURCE_GROUP=Default
 _IBM_CLOUD_REGION=eu-de
-_IBM_CLOUD_ACCOUNT_NAME=Your Account Name
+_IBM_CLOUD_ACCOUNT_NAME=your-cloud-account-name-after-the-dash
 
 # Code Engine Project
-_CE_PROJECT_NAME=my-project
-_CR_REGISTRY=private.de.icr.io
+_CE_PROJECT_NAME=my-project-max-20-chars
+_CR_REGISTRY=de.icr.io
 ```
 
-### Understanding Variable Prefixes
-
-You will notice some variables in `.env.production` are prefixed with an underscore (e.g., `_CE_PROJECT_NAME`).
-
-- **Variables starting with `_`**: These are used **only by the deployment script** (e.g., to configure infrastructure) and are **NOT** passed to the application container.
-- **Variables without `_`**: These are passed as environment variables to the running application.
-
-> [!NOTE]
+> [!IMPORTANT]
+> You will notice some variables in `.env.production` are prefixed with an underscore (e.g., `_CE_PROJECT_NAME`).
+>
+> - **Variables starting with `_`**: These are used **only by the deployment script** (e.g., to configure infrastructure) and are **NOT** passed to the application container.
+> - **Variables without `_`**: These are passed as environment variables to the running application.
+>
 > This separation ensures that sensitive infrastructure credentials or script-specific configurations do not pollute the application's runtime environment.
 
 ---
@@ -136,29 +142,18 @@ The frontend use an Nginx server to serve the static files. For Code Engine depl
 
 ### 1. Configure Secrets
 
-Ensure all sensitive values in `.env.production` (like `SECRET_KEY`, `POSTGRES_PASSWORD`, `_IBM_API_KEY`) are set to your actual secret values.
+Ensure all sensitive values in `.env.production` (like `SECRET_KEY`, `POSTGRES_PASSWORD`, `_IAM_API_KEY`) are set to your actual secret values.
 
 > [!WARNING]
 > Never commit `.env.production` to version control as it contains sensitive credentials.
 
 ### 2. Run Deployment Script
 
-#### Standard Deployment
-
-Deploys frontend and backend with public access (unless OAuth is configured).
+Deploys frontend and backend containers as applications in CodeEngine. In case OAuth2 variables are configured, an oauth-proxy application is added.
 
 ```bash
 ./scripts/ce-deploy.sh
 ```
-
-#### Deployment with OAuth2 Proxy
-
-Deploys with OAuth2 Proxy sidecar for authentication/authorization.
-
-```bash
-./scripts/ce-deploy-oauth.sh
-```
-
 ---
 
 ## OAuth2 Proxy Configuration
@@ -179,10 +174,10 @@ OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
 # OAUTH2_PROXY_WELL_KNOWN_URL=https://your-oidc-provider.com/.well-known/openid-configuration
 ```
 
-**Behavior:**
-
-- **All variables set:** OAuth2 Proxy is deployed and protects the application. Nginx and Backend are set to internal (cluster-local) access only.
-- **Any variable missing:** OAuth2 Proxy is skipped. Application is publicly accessible.
+> [!NOTE]
+> **Behavior:**
+> - **All variables set:** OAuth2 Proxy is deployed and protects the application. Nginx and Backend are set to internal (cluster-local) access only.
+> - **Any variable missing:** OAuth2 Proxy is skipped. Application is publicly accessible.
 
 ---
 
@@ -198,13 +193,15 @@ After a successful deployment, the script will output:
 Check application status via CLI:
 
 ```bash
-ibmcloud ce application list
+ibmcloud ce project list
+ibmcloud ce project select -n <your-project-name>
 ```
 
 View logs:
 
 ```bash
-ibmcloud ce application logs --name <your-app-name>
+ibmcloud ce application list
+ibmcloud ce application logs -n <your-app-name> -f
 ```
 
 ---
@@ -238,6 +235,13 @@ ibmcloud ce application logs --name <your-app-name>
   - Ensure Docker is running locally with `docker info`.
   - Check disk space.
   - If on Apple Silicon (M1/M2/M3), ensure you can build `linux/amd64` images (Deployment script forces this platform).
+
+#### 5. Frontend Build fails
+- **Symptoms:** `npm run build` fails during deployment.
+- **Fix:**
+  - ``cd frontend`` to get into your frontend folder
+  - ``npm run build`` to trigger frontend build
+  - Now you will see detailed errors in terminal, often it is about unused imports 
 
 ### Debugging
 
