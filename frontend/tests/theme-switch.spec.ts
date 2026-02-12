@@ -10,7 +10,7 @@ test("User can switch from light mode to dark mode", async ({ page }) => {
   await page.getByLabel("Theme Switcher").click();
   await page.getByText("Dark Mode", { exact: true }).click();
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g90"),
+    document.documentElement.classList.contains("cds--g100"),
   );
   expect(isDarkMode).toBe(true);
 });
@@ -37,7 +37,7 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
   await logInUser(page, playwrightTestUserEmail, playwrightTestUserPassword);
 
   const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g90"),
+    document.documentElement.classList.contains("cds--g100"),
   );
   expect(isDarkMode).toBe(true);
 });
