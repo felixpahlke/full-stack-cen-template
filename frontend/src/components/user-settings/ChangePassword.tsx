@@ -31,7 +31,7 @@ const ChangePassword = () => {
       new_password: "",
       confirm_password: "",
     },
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const { mutate: updatePassword, isPending } = useMutation({
