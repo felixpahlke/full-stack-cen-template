@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import type { AxiosError } from "axios";
 
-import { type UserCreate, UsersService } from "../../client";
+import { type UserCreate, Users } from "../../client";
 import {
   handleError,
   emailPattern,
@@ -50,14 +51,13 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   });
 
   const { mutate: createUser, isPending } = useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
+    mutationFn: (data: UserCreate) => Users.createUser({ body: data }),
     onSuccess: () => {
       toast.success("User created successfully.");
       form.reset();
       onClose();
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       handleError(err);
     },
     onSettled: () => {

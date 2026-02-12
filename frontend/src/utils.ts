@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import type { ApiError } from "./client";
+import type { AxiosError } from "axios";
 
 export const namePattern = {
   value: /^[A-Za-z\s\u00C0-\u017F]{1,30}$/,
@@ -44,8 +44,8 @@ export const confirmPasswordRules = (
   return rules;
 };
 
-export const handleError = (err: ApiError) => {
-  const errDetail = (err.body as any)?.detail;
+export const handleError = (err: AxiosError) => {
+  const errDetail = (err.response?.data as any)?.detail;
   let errorMessage = errDetail || "Something went wrong.";
   if (Array.isArray(errDetail) && errDetail.length > 0) {
     errorMessage = errDetail[0].msg;
