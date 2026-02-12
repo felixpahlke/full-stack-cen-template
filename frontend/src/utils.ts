@@ -1,5 +1,5 @@
 import { toast } from "@/components/common/Toaster";
-import type { ApiError } from "./client";
+import type { AxiosError } from "axios";
 
 export const emailPattern = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -44,8 +44,8 @@ export const confirmPasswordRules = (
   return rules;
 };
 
-export const handleError = (err: ApiError) => {
-  const errDetail = (err.body as any)?.detail;
+export const handleError = (err: AxiosError) => {
+  const errDetail = (err.response?.data as any)?.detail;
   let errorMessage = errDetail || "Something went wrong.";
   if (Array.isArray(errDetail) && errDetail.length > 0) {
     errorMessage = errDetail[0].msg;
