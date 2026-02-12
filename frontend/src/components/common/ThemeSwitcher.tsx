@@ -11,7 +11,20 @@ interface ThemeSwitcherProps {
 export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleButtonClick = () => {
+    // Calculate position before opening
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        x: rect.left + 20,
+        y: rect.bottom,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
 
   if (displayAs === "sidenav") {
     return (
@@ -53,26 +66,15 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
     return themeItems[index];
   };
 
-  // Calculate position for the menu when button is clicked
-  const getMenuPosition = () => {
-    if (!buttonRef.current) return { x: 0, y: 0 };
-
-    const rect = buttonRef.current.getBoundingClientRect();
-
-    return {
-      x: rect.left + 20,
-      y: rect.bottom,
-    };
-  };
-
   return (
     <>
       <div className="h-full">
         <Button
           ref={buttonRef}
           kind="ghost"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleButtonClick}
           className="flex h-12 items-center"
+          aria-label="Theme Switcher"
         >
           {theme === "light" ? (
             <Light className="h-5 w-5" />
@@ -82,12 +84,13 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
             <BrightnessContrast className="h-5 w-5" />
           )}
         </Button>
-        {isOpen && buttonRef.current && (
+        {isOpen && (
           <Menu
             label="Theme"
             open={isOpen}
             onClose={() => setIsOpen(false)}
-            {...getMenuPosition()}
+            x={menuPosition.x}
+            y={menuPosition.y}
           >
             <MenuItemRadioGroup
               label="Theme"

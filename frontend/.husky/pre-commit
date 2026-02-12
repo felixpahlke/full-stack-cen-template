@@ -9,9 +9,17 @@ npx lint-staged --allow-empty
 npm run typecheck
 
 cd ../backend
-if [ ! -f ".venv/bin/activate" ]; then
-    echo "Missing virtualenv. Run 'uv venv; source .venv/bin/activate; uv sync' before committing."
+
+# Check for venv on Windows or Unix
+if [ ! -f ".venv/Scripts/activate" ] && [ ! -f ".venv/bin/activate" ]; then
+    echo "Missing virtualenv. Run 'uv venv' and activate it, then run 'uv sync' before committing."
     exit 1
 fi
-. .venv/bin/activate
+
+if [ -f ".venv/Scripts/activate" ]; then
+    . .venv/Scripts/activate
+else
+    . .venv/bin/activate
+fi
+
 pre-commit run --hook-stage=pre-commit

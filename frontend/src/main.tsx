@@ -4,20 +4,20 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
-import { OpenAPI } from "./client";
+import { client } from "./client/client.gen";
 
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 
-// this is set at build time
-OpenAPI.BASE = import.meta.env.VITE_API_URL;
-// --------------------------------
-OpenAPI.BASE = OpenAPI.BASE || "";
-OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || "";
-};
+client.setConfig({
+  baseURL: import.meta.env.VITE_API_URL || "",
+  throwOnError: true,
+  auth: async () => {
+    return localStorage.getItem("access_token") || undefined;
+  },
+});
 
 const queryClient = new QueryClient();
 
