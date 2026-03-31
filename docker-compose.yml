@@ -93,8 +93,6 @@ services:
       watch:
         - path: ./frontend/package.json
           action: rebuild
-        - path: ./frontend/package-lock.json
-          action: rebuild
 
 volumes:
   app-db-data:
