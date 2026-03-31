@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { type UserPublic, UsersService } from "../../client";
+import { type UserPublic, Users } from "../../client";
 import ActionsMenu from "../common/ActionsMenu";
 
 import {
@@ -19,8 +19,12 @@ const PER_PAGE = 10;
 
 function getUsersQueryOptions({ page }: { page: number }) {
   return {
-    queryFn: () =>
-      UsersService.readUsers({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
+    queryFn: async () => {
+      const response = await Users.readUsers({
+        query: { skip: (page - 1) * PER_PAGE, limit: PER_PAGE },
+      });
+      return response.data;
+    },
     queryKey: ["users", { page }],
   };
 }
@@ -44,7 +48,7 @@ export default function UsersTable() {
 
   const hasNextPage = !isPlaceholderData && users?.data.length === PER_PAGE;
   const hasPreviousPage = page > 1;
-  const totalPages = Math.ceil((users?.count ?? 0) / PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil((users?.count ?? 0) / PER_PAGE));
 
   useEffect(() => {
     if (hasNextPage) {

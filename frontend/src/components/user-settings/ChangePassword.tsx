@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import type { AxiosError } from "axios";
 
-import { type ApiError, type UpdatePassword, UsersService } from "../../client";
+import { type UpdatePassword, Users } from "../../client";
 import { handleError, passwordRules, confirmPasswordRules } from "../../utils";
 
 import { Button } from "@/components/ui/button";
@@ -35,19 +36,21 @@ const ChangePassword = () => {
 
   const { mutate: updatePassword, isPending } = useMutation({
     mutationFn: (data: UpdatePassword) =>
-      UsersService.updatePasswordMe({ requestBody: data }),
+      Users.updatePasswordMe({ body: data }),
     onSuccess: () => {
       toast.success("Password updated successfully.");
       form.reset();
     },
-    onError: (err: ApiError) => {
+    onError: (err: AxiosError) => {
       handleError(err);
     },
   });
 
   const onSubmit = (data: FormValues) => {
-    // Remove confirm_password as it's not needed in the API
-    const { confirm_password, ...updateData } = data;
+    const updateData: UpdatePassword = {
+      current_password: data.current_password,
+      new_password: data.new_password,
+    };
     updatePassword(updateData);
   };
 

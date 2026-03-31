@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import type { AxiosError } from "axios";
 
-import { type ApiError, type ItemCreate, ItemsService } from "../../client";
+import { type ItemCreate, Items } from "../../client";
 import { handleError } from "../../utils";
 
 import { Button } from "@/components/ui/button";
@@ -44,14 +45,13 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
   });
 
   const { mutate: createItem, isPending } = useMutation({
-    mutationFn: (data: ItemCreate) =>
-      ItemsService.createItem({ requestBody: data }),
+    mutationFn: (data: ItemCreate) => Items.createItem({ body: data }),
     onSuccess: () => {
       toast.success("Item created successfully.");
       form.reset();
       onClose();
     },
-    onError: (err: ApiError) => {
+    onError: (err: AxiosError) => {
       handleError(err);
     },
     onSettled: () => {

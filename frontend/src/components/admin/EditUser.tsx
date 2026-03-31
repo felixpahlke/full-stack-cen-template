@@ -1,12 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import type { AxiosError } from "axios";
 
-import {
-  type ApiError,
-  type UserPublic,
-  type UserUpdate,
-  UsersService,
-} from "../../client";
+import { type UserPublic, type UserUpdate, Users } from "../../client";
 import {
   handleError,
   emailPattern,
@@ -41,10 +37,19 @@ interface EditUserProps {
   onClose: () => void;
 }
 
+type EditUserFormValues = UserUpdate & {
+  email: string;
+  full_name: string;
+  password: string;
+  confirm_password: string;
+  is_superuser: boolean;
+  is_active: boolean;
+};
+
 const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   const queryClient = useQueryClient();
 
-  const form = useForm({
+  const form = useForm<EditUserFormValues>({
     defaultValues: {
       email: user.email,
       full_name: user.full_name || "",
@@ -58,13 +63,13 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
 
   const { mutate: updateUser, isPending } = useMutation({
     mutationFn: (data: UserUpdate) =>
-      UsersService.updateUser({ userId: user.id, requestBody: data }),
+      Users.updateUser({ path: { user_id: user.id }, body: data }),
     onSuccess: () => {
       toast.success("User updated successfully.");
       form.reset();
       onClose();
     },
-    onError: (err: ApiError) => {
+    onError: (err: AxiosError) => {
       handleError(err);
     },
     onSettled: () => {
@@ -72,14 +77,14 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
     },
   });
 
-  const onSubmit = (data: any) => {
-    // Remove empty password
-    if (data.password === "") {
-      data.password = undefined;
-    }
-
-    // Remove confirm_password as it's not needed in the API
-    const { confirm_password, ...updateData } = data;
+  const onSubmit = (data: EditUserFormValues) => {
+    const updateData: UserUpdate = {
+      email: data.email,
+      full_name: data.full_name,
+      is_superuser: data.is_superuser,
+      is_active: data.is_active,
+      password: data.password || undefined,
+    };
 
     updateUser(updateData);
   };
@@ -136,7 +141,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="password"
-              rules={passwordRules()}
+              rules={passwordRules(false)}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Set Password</FormLabel>
@@ -151,7 +156,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
             <FormField
               control={form.control}
               name="confirm_password"
-              rules={confirmPasswordRules(form.getValues)}
+              rules={confirmPasswordRules(form.getValues, false)}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>

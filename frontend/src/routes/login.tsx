@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/common/Logo";
-import type { Body_login_login_access_token as AccessToken } from "../client";
+import type { BodyLoginLoginAccessToken as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
 import { Link } from "@/components/ui/link";
@@ -88,7 +88,7 @@ function Login() {
                   <Input placeholder="Password" type="password" {...field} />
                 </FormControl>
                 {error && (
-                  <p className="text-destructive text-sm font-medium">
+                  <p className="text-sm font-medium text-destructive">
                     {error}
                   </p>
                 )}

@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import type { AxiosError } from "axios";
 
-import { type UserCreate, UsersService } from "../../client";
+import { type UserCreate, Users } from "../../client";
 import {
   handleError,
   emailPattern,
@@ -35,9 +36,18 @@ interface AddUserProps {
   onClose: () => void;
 }
 
+type AddUserFormValues = UserCreate & {
+  email: string;
+  full_name: string;
+  password: string;
+  confirm_password: string;
+  is_superuser: boolean;
+  is_active: boolean;
+};
+
 const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   const queryClient = useQueryClient();
-  const form = useForm({
+  const form = useForm<AddUserFormValues>({
     defaultValues: {
       email: "",
       full_name: "",
@@ -50,14 +60,13 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
   });
 
   const { mutate: createUser, isPending } = useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
+    mutationFn: (data: UserCreate) => Users.createUser({ body: data }),
     onSuccess: () => {
       toast.success("User created successfully.");
       form.reset();
       onClose();
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError) => {
       handleError(err);
     },
     onSettled: () => {
@@ -65,8 +74,14 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
     },
   });
 
-  const onSubmit = (data: any) => {
-    const { confirm_password, ...userData } = data;
+  const onSubmit = (data: AddUserFormValues) => {
+    const userData: UserCreate = {
+      email: data.email,
+      full_name: data.full_name,
+      password: data.password,
+      is_superuser: data.is_superuser,
+      is_active: data.is_active,
+    };
     createUser(userData);
   };
 
