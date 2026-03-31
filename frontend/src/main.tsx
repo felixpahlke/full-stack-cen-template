@@ -10,6 +10,7 @@ import "./styles/globals.scss";
 import "./styles/tailwind.scss";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { trackFlavor } from "./lib/trackFlavor";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",
@@ -27,6 +28,8 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
+
+trackFlavor();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>

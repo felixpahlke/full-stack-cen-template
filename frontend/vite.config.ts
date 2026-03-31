@@ -25,4 +25,10 @@ export default defineConfig({
       "~@ibm": path.resolve(__dirname, "node_modules/@ibm"),
     },
   },
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
+  },
 });
