@@ -4,19 +4,20 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import { StrictMode } from "react";
-import { OpenAPI } from "./client";
+import { client } from "./client/client.gen";
 
 import "./styles/tailwind.scss";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { Toaster } from "./components/ui/sonner";
+import { trackFlavor } from "./lib/trackFlavor";
 
-// this is set at build time
-OpenAPI.BASE = import.meta.env.VITE_API_URL;
-// --------------------------------
-OpenAPI.BASE = OpenAPI.BASE || "";
-OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || "";
-};
+client.setConfig({
+  baseURL: import.meta.env.VITE_API_URL || "",
+  throwOnError: true,
+  auth: async () => {
+    return localStorage.getItem("access_token") || undefined;
+  },
+});
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
+
+trackFlavor();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>

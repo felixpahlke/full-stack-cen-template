@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "generate-client": "openapi-ts --input ./openapi.json --output ./src/client --client axios --exportSchemas true",
+    "generate-client": "openapi-ts",
     "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
@@ -26,7 +26,7 @@
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-query-devtools": "^5.81.5",
     "@tanstack/react-router": "1.125.6",
-    "@tanstack/react-router-devtools": "^1.125.6",
+    "@tanstack/react-router-devtools": "1.125.6",
     "axios": "1.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -43,9 +43,9 @@
     "zod": "^3.25.75"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.34.1",
+    "@hey-api/openapi-ts": "^0.92.3",
     "@playwright/test": "^1.53.2",
-    "@tanstack/router-plugin": "^1.125.6",
+    "@tanstack/router-plugin": "1.125.6",
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

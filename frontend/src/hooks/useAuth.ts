@@ -1,20 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
-import { UsersService } from "@/client";
+import type { User } from "@/client";
+import { Users } from "@/client";
 
 const useAuth = () => {
   const {
     data: user,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<User | null, Error>({
     queryKey: ["currentUser"],
-    queryFn: UsersService.readUserMe,
+    queryFn: async () => {
+      const response = await Users.readUserMe();
+      return response.data ?? null;
+    },
     retry: false,
   });
 
   const logout = () => {
-    window.location.href =
-      "/oauth2/sign_out?rd=" + encodeURIComponent("/oauth2/sign_in");
+    window.location.assign(
+      "/oauth2/sign_out?rd=" + encodeURIComponent("/oauth2/sign_in"),
+    );
   };
 
   if (error) {

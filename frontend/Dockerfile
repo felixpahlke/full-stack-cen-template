@@ -15,6 +15,7 @@ COPY ./ /app/
 FROM base AS build-stage
 
 ARG VITE_API_URL=${VITE_API_URL}
+ARG VITE_TELEMETRY_ENABLED=${VITE_TELEMETRY_ENABLED}
 
 RUN npm run build
 
