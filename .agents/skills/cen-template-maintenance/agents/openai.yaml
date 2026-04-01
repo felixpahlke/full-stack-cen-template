@@ -1,0 +1,4 @@
+interface:
+  display_name: "CEN Maintenance"
+  short_description: "Maintain flavor branches in this CEN template repo"
+  default_prompt: "Use $cen-template-maintenance to propagate a template change across this repository flavor set and preserve each branch behavior."
