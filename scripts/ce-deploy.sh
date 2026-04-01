@@ -131,6 +131,81 @@ check_nginx_config() {
 
 check_nginx_config
 
+# Global array to store VITE build arguments (populated during pre-check, reused during deployment)
+VITE_BUILD_ARGS=()
+
+check_vite_vars_in_dockerfile() {
+    # Skip check for backend-only deployments
+    if [ "$DEPLOY_FRONTEND" = false ]; then
+        print_status "Skipping VITE variables check (backend-only deployment)"
+        return
+    fi
+    
+    print_status "Checking VITE variables in frontend/Dockerfile..."
+    DOCKERFILE="$SCRIPT_DIR/../frontend/Dockerfile"
+    
+    if [ ! -f "$DOCKERFILE" ]; then
+        print_error "frontend/Dockerfile not found at $DOCKERFILE"
+        exit 1
+    fi
+    
+    # Extract all VITE_* variables from .env.production and build VITE_BUILD_ARGS
+    VITE_VARS=()
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
+        line=$(echo "$line" | tr -d '\r' | xargs)
+        if [[ $line == VITE_* ]]; then
+            # Extract variable name (before =)
+            var_name=$(echo "$line" | cut -d'=' -f1)
+            VITE_VARS+=("$var_name")
+            # Build the build args array for later use (will be updated with BACKEND_URL later)
+            if [[ $line == VITE_API_URL=* ]]; then
+                # Placeholder - will be replaced with actual BACKEND_URL during deployment
+                VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=PLACEHOLDER")
+            else
+                VITE_BUILD_ARGS+=("--build-arg=$line")
+            fi
+        fi
+    done < "$ENV_FILE"
+    
+    if [ ${#VITE_VARS[@]} -eq 0 ]; then
+        print_success "No VITE variables found in .env.production - check passed"
+        return
+    fi
+    
+    print_status "Found ${#VITE_VARS[@]} VITE variable(s) in .env.production"
+    
+    # Check each VITE variable exists as ARG in Dockerfile
+    MISSING_ARGS=()
+    for var in "${VITE_VARS[@]}"; do
+        # Check if ARG exists in Dockerfile (case-insensitive search for ARG)
+        if ! grep -qE "^[[:space:]]*ARG[[:space:]]+${var}" "$DOCKERFILE"; then
+            MISSING_ARGS+=("$var")
+        fi
+    done
+    
+    if [ ${#MISSING_ARGS[@]} -gt 0 ]; then
+        print_error "The following VITE variables are in .env.production but missing as ARG in frontend/Dockerfile:"
+        for var in "${MISSING_ARGS[@]}"; do
+            print_error "  - $var"
+        done
+        echo ""
+        print_error "The application won't work as expected without these variables."
+        print_error "Please add the missing ARG declarations to frontend/Dockerfile, for example:"
+        echo ""
+        for var in "${MISSING_ARGS[@]}"; do
+            print_status "  ARG ${var}=\${${var}}"
+        done
+        echo ""
+        exit 1
+    fi
+    
+    print_success "All VITE variables are properly defined in frontend/Dockerfile"
+}
+
+check_vite_vars_in_dockerfile
+
 ### ------------------------ IBM CLOUD SETUP ------------------------ ###
 print_section "IBM CLOUD SETUP"
 
@@ -434,19 +509,16 @@ deploy_applications() {
     ### FRONTEND ###
     if [ "$DEPLOY_FRONTEND" = true ]; then
         print_status "Building frontend image..."
-        VITE_BUILD_ARGS=()
-        while IFS= read -r line || [ -n "$line" ]; do
-            # Skip comments and empty lines early to avoid xargs quote parsing issues
-            if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
-            line=$(echo "$line" | tr -d '\r' | xargs)
-            if [[ $line == VITE_API_URL=* ]]; then
-                VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=${BACKEND_URL}")
-            elif [[ $line == VITE_* ]]; then
-                VITE_BUILD_ARGS+=("--build-arg=$line")
-            fi
-        done < "$ENV_FILE"
         
-        print_status "Found ${#VITE_BUILD_ARGS[@]} VITE build arguments"
+        # Update VITE_API_URL in the pre-built VITE_BUILD_ARGS array with actual BACKEND_URL
+        for i in "${!VITE_BUILD_ARGS[@]}"; do
+            if [[ "${VITE_BUILD_ARGS[$i]}" == "--build-arg=VITE_API_URL="* ]]; then
+                VITE_BUILD_ARGS[$i]="--build-arg=VITE_API_URL=${BACKEND_URL}"
+                break
+            fi
+        done
+        
+        print_status "Using ${#VITE_BUILD_ARGS[@]} VITE build arguments"
         print_status "Building image: ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest"
         
         docker image build --platform linux/amd64 \
