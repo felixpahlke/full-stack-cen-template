@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     API_KEY: str
+    TELEMETRY_ENABLED: bool = False
 
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
