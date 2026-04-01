@@ -26,7 +26,6 @@ export function trackFlavor() {
   const key = "flavor-hash";
   const existingHash = sessionStorage.getItem(key);
   const newHash = simpleHash();
-
   if (existingHash === newHash) return;
 
   sessionStorage.setItem("flavor-hash", newHash);
