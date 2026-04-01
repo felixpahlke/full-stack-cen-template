@@ -98,6 +98,9 @@ _IBM_CLOUD_ACCOUNT_NAME=your-cloud-account-name-after-the-dash
 # Code Engine Project
 _CE_PROJECT_NAME=my-project-max-20-chars
 _CR_REGISTRY=de.icr.io
+
+# Optionally specify this variable in case techzone doesnt allow creation of a new namespace or you simply want to reuse an existing one
+_CR_NAMESPACE=
 ```
 
 > [!IMPORTANT]
@@ -242,6 +245,10 @@ ibmcloud ce application logs -n <your-app-name> -f
   - ``cd frontend`` to get into your frontend folder
   - ``npm run build`` to trigger frontend build
   - Now you will see detailed errors in terminal, often it is about unused imports 
+
+#### 6. Script wrongly states deployment failed
+- **Symptoms:** Script outputs that the deployed container could not start
+- **Fix:** Check CodeEngine, sometimes the container takes a little longer to start up than the script actually waits for
 
 ### Debugging
 
