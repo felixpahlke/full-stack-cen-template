@@ -13,6 +13,8 @@ resolution in this repository.
 - Start on `local-auth` for the canonical template change.
 - Commit on `local-auth` before propagating the change.
 - Merge into each target flavor with `git merge local-auth --no-commit`.
+- Use flavor-branch commit messages that keep the actual change summary visible.
+  - Prefer `fix: deploy custom-ui frontend on openshift flavors (backend-only)` over `merge local-auth into backend-only`.
 - Resolve conflicts by preserving the target flavor, not by taking `local-auth` wholesale.
 - Validate the target branch before committing.
 
