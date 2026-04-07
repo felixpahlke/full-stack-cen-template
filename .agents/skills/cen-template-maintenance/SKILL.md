@@ -25,7 +25,7 @@ resolution in this repository.
 ## Flavor Guardrails
 
 - Deployment scripts are shared template assets across flavor branches.
-  - Keep the script bodies identical across flavors unless a branch truly needs a different implementation.
+  - Keep the script bodies identical across flavors.
   - Prefer expressing flavor differences through `CEN_FLAVOR` / `.env.production.example` presets rather than branch-specific script edits.
 
 - `local-auth-custom-ui` and `oauth-proxy-custom-ui`
