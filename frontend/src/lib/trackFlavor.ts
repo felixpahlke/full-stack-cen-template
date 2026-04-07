@@ -17,7 +17,6 @@ function simpleHash() {
 }
 
 export function trackFlavor() {
-  console.log("a");
   const telemetry_enabled = import.meta.env.VITE_TELEMETRY_ENABLED as
     | string
     | undefined;
@@ -27,10 +26,8 @@ export function trackFlavor() {
   const key = "flavor-hash";
   const existingHash = sessionStorage.getItem(key);
   const newHash = simpleHash();
-  console.log("b");
 
   if (existingHash === newHash) return;
-  console.log("ca");
 
   sessionStorage.setItem("flavor-hash", newHash);
   const buildMode = import.meta.env.DEV ? "dev" : "prod";
