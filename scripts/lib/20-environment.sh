@@ -242,13 +242,13 @@ set_deployment_flags_from_flavor() {
             export DEPLOY_OAUTH=false
             ;;
         local-auth-custom-ui)
-            export DEPLOY_FRONTEND=false
+            export DEPLOY_FRONTEND=true
             export DEPLOY_BACKEND=true
             export DEPLOY_DB=true
             export DEPLOY_OAUTH=false
             ;;
         oauth-proxy-custom-ui)
-            export DEPLOY_FRONTEND=false
+            export DEPLOY_FRONTEND=true
             export DEPLOY_BACKEND=true
             export DEPLOY_DB=true
             export DEPLOY_OAUTH=true
