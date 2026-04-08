@@ -5,7 +5,10 @@ Project uses [create-cen-app](https://github.com/felixpahlke/create-cen-app):
 - **Main Infrastructure:** Docker Compose, OAuth2 Proxy, OpenShift deployment
 
 ## Additional Skill Docs
-- **`.agents/skills/cen-template-maintenance/SKILL.md`** - Maintain this repository across flavor branches, propagate canonical changes from `local-auth`, and preserve flavor-specific behavior during merges.
+
+Feel free to update these or create new SKILLs as you learned something new, or worked through a hard problem, to make life for the next agent easier.
+
+- **`.agents/skills/cen-template-maintenance/SKILL.md`** - How to maintain this repository across flavor branches, propagate canonical changes from `local-auth`, and preserve flavor-specific behavior during merges.
 
 ## Development with Docker
 
