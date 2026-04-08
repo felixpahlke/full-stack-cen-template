@@ -5,6 +5,9 @@ Project uses [create-cen-app](https://github.com/felixpahlke/create-cen-app):
 - **Backend:** FastAPI, UV package manager
 - **Main Infrastructure:** Docker Compose, OAuth2 Proxy, OpenShift deployment
 
+## Additional Skill Docs
+- **`.agents/skills/cen-template-maintenance/SKILL.md`** - Maintain this repository across flavor branches, propagate canonical changes from `local-auth`, and preserve flavor-specific behavior during merges.
+
 ## Development with Docker
 
 ### Preparing the environment
