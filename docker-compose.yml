@@ -1,98 +1,108 @@
 services:
-  db:
-    image: postgres:12
-    restart: "no"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 10s
-    volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env
-    environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
+    db:
+        image: postgres:12
+        restart: "no"
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+                ]
+            interval: 10s
+            retries: 5
+            start_period: 30s
+            timeout: 10s
+        volumes:
+            - app-db-data:/var/lib/postgresql/data/pgdata
+        env_file:
+            - .env
+        environment:
+            - PGDATA=/var/lib/postgresql/data/pgdata
+        ports:
+            - "5432:5432"
 
-  adminer:
-    image: adminer
-    restart: "no"
-    depends_on:
-      - db
-    environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    ports:
-      - "8080:8080"
+    adminer:
+        image: adminer
+        restart: "no"
+        depends_on:
+            - db
+        environment:
+            - ADMINER_DESIGN=pepa-linha-dark
+        ports:
+            - "8080:8080"
 
-  backend:
-    restart: "no"
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_SERVER=db
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "-f",
-          "http://localhost:8000/api/v1/utils/health-check/",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    build:
-      context: ./backend
-      args:
-        - DOCKER_BUILDKIT=0
-    ports:
-      - "8000:8000"
-    command:
-      - fastapi
-      - run
-      - --reload
-      - "app/main.py"
-    develop:
-      watch:
-        - path: ./backend
-          action: sync
-          target: /app
-          ignore:
-            - ./backend/.venv
-            - .venv
-        - path: ./backend/pyproject.toml
-          action: rebuild
+    backend:
+        restart: "no"
+        depends_on:
+            db:
+                condition: service_healthy
+                restart: true
+        env_file:
+            - .env
+        environment:
+            - POSTGRES_SERVER=db
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "curl",
+                    "-f",
+                    "http://localhost:8000/api/v1/utils/health-check/",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        build:
+            context: ./backend
+            args:
+                - DOCKER_BUILDKIT=0
+        ports:
+            - "8000:8000"
+        command:
+            - fastapi
+            - run
+            - --reload
+            - "app/main.py"
+        develop:
+            watch:
+                - path: ./backend
+                  action: sync
+                  target: /app
+                  ignore:
+                      - ./backend/.venv
+                      - .venv
+                - path: ./backend/pyproject.toml
+                  action: rebuild
 
-  frontend:
-    restart: "no"
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_URL=http://localhost:8000
-        - NODE_ENV=development
-      target: base
-    ports:
-      - "5173:5173"
-    command: >
-      npm run dev
-      --
-      --host 0.0.0.0
-    environment:
-      - VITE_API_URL=http://localhost:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    develop:
-      watch:
-        - path: ./frontend/package.json
-          action: rebuild
+    frontend:
+        restart: "no"
+        build:
+            context: ./frontend
+            args:
+                - VITE_API_URL=http://localhost:8000
+                - NODE_ENV=development
+                # Pass backend variables to frontend (will be mapped to VITE_ prefix in Dockerfile)
+                - ENVIRONMENT=${ENVIRONMENT:-local}
+                - LOG_LEVEL=${LOG_LEVEL}
+            target: base
+        ports:
+            - "5173:5173"
+        command: >
+            npm run dev
+            --
+            --host 0.0.0.0
+        environment:
+            - VITE_API_URL=http://localhost:8000
+            # Map backend variables to VITE_ prefix for dev mode
+            - VITE_ENVIRONMENT=${ENVIRONMENT:-local}
+            - VITE_LOG_LEVEL=${LOG_LEVEL}
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        develop:
+            watch:
+                - path: ./frontend/package.json
+                  action: rebuild
 
 volumes:
-  app-db-data:
+    app-db-data:

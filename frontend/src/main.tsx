@@ -8,9 +8,11 @@ import { client } from "./client/client.gen";
 
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { trackFlavor } from "./lib/trackFlavor";
+import { logger } from "./lib/logger";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",
@@ -31,13 +33,21 @@ declare module "@tanstack/react-router" {
 
 trackFlavor();
 
+// Log application startup
+logger.info("Application starting", "main");
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider>
-      <Toaster />
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Toaster />
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
+
+// Log when application is mounted
+logger.info("Application mounted successfully", "main");

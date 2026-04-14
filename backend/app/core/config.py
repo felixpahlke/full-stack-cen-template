@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+    LOG_LEVEL: str | None = None  # Optional override for log level
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl | Literal["*"]] | str, BeforeValidator(parse_cors)

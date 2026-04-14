@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 const DOMAIN = "team-flavors";
 const FLAVOR = "local-auth";
 const ENDPOINT =
@@ -46,7 +48,8 @@ export function trackFlavor() {
       body,
       keepalive: true,
     });
+    logger.info("Flavor tracking sent", "trackFlavor");
   } catch (e) {
-    console.error("Failed to send tracking fetch", e);
+    logger.error("Failed to send tracking fetch", "trackFlavor", e);
   }
 }

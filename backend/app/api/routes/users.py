@@ -11,6 +11,7 @@ from app.api.deps import (
     get_current_active_superuser,
 )
 from app.core.config import settings
+from app.core.logger import get_logger, log_exception
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Message,
@@ -28,6 +29,7 @@ from app.tables import (
 )
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.get(
@@ -39,16 +41,22 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve users.
     """
+    try:
+        logger.info(f"Admin retrieving users list (skip={skip}, limit={limit})")
 
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
+        count_statement = select(func.count()).select_from(User)
+        count = session.exec(count_statement).one()
 
-    statement = select(User).offset(skip).limit(limit)
-    users = session.exec(statement).all()
+        statement = select(User).offset(skip).limit(limit)
+        users = session.exec(statement).all()
 
-    return UsersPublic(
-        data=[UserPublic.model_validate(user) for user in users], count=count
-    )
+        logger.info(f"Successfully retrieved {count} users")
+        return UsersPublic(
+            data=[UserPublic.model_validate(user) for user in users], count=count
+        )
+    except Exception as e:
+        log_exception(logger, e, context="Failed to retrieve users list")
+        raise
 
 
 @router.post(
@@ -58,16 +66,29 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
     """
-    user = crud.get_user_by_email(session=session, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system.",
+    try:
+        logger.info(f"Admin creating new user with email: {user_in.email}")
+        user = crud.get_user_by_email(session=session, email=user_in.email)
+        if user:
+            logger.warning(
+                f"User creation failed: Email {user_in.email} already exists"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="The user with this email already exists in the system.",
+            )
+
+        user = crud.create_user(session=session, user_create=user_in)
+        logger.info(f"Successfully created user {user.id} with email: {user_in.email}")
+
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_exception(
+            logger, e, context=f"Failed to create user with email: {user_in.email}"
         )
-
-    user = crud.create_user(session=session, user_create=user_in)
-
-    return user
+        raise
 
 
 @router.patch("/me", response_model=UserPublic)
@@ -99,17 +120,34 @@ def update_password_me(
     """
     Update own password.
     """
-    if not verify_password(body.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect password")
-    if body.current_password == body.new_password:
-        raise HTTPException(
-            status_code=400, detail="New password cannot be the same as the current one"
+    try:
+        logger.info(f"User {current_user.id} updating password")
+        if not verify_password(body.current_password, current_user.hashed_password):
+            logger.warning(
+                f"Password update failed for user {current_user.id}: Incorrect current password"
+            )
+            raise HTTPException(status_code=400, detail="Incorrect password")
+        if body.current_password == body.new_password:
+            logger.warning(
+                f"Password update failed for user {current_user.id}: New password same as current"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="New password cannot be the same as the current one",
+            )
+        hashed_password = get_password_hash(body.new_password)
+        current_user.hashed_password = hashed_password
+        session.add(current_user)
+        session.commit()
+        logger.info(f"Successfully updated password for user {current_user.id}")
+        return Message(message="Password updated successfully")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_exception(
+            logger, e, context=f"Failed to update password for user {current_user.id}"
         )
-    hashed_password = get_password_hash(body.new_password)
-    current_user.hashed_password = hashed_password
-    session.add(current_user)
-    session.commit()
-    return Message(message="Password updated successfully")
+        raise
 
 
 @router.get("/me", response_model=UserPublic)
@@ -125,15 +163,29 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Delete own user.
     """
-    if current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
+    try:
+        logger.info(f"User {current_user.id} deleting own account")
+        if current_user.is_superuser:
+            logger.warning(
+                f"Superuser {current_user.id} attempted to delete own account"
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="Super users are not allowed to delete themselves",
+            )
+        statement = delete(Item).where(col(Item.owner_id) == current_user.id)
+        session.exec(statement)  # type: ignore
+        session.delete(current_user)
+        session.commit()
+        logger.info(f"Successfully deleted user account {current_user.id}")
+        return Message(message="User deleted successfully")
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_exception(
+            logger, e, context=f"Failed to delete user account {current_user.id}"
         )
-    statement = delete(Item).where(col(Item.owner_id) == current_user.id)
-    session.exec(statement)  # type: ignore
-    session.delete(current_user)
-    session.commit()
-    return Message(message="User deleted successfully")
+        raise
 
 
 @router.post("/signup", response_model=UserPublic)
@@ -141,20 +193,39 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
     Create new user without the need to be logged in.
     """
-    if not settings.SIGNUP_ACCESS_PASSWORD.strip():
-        raise HTTPException(status_code=400, detail="Signup is not allowed")
-    if user_in.access_password != settings.SIGNUP_ACCESS_PASSWORD:
-        raise HTTPException(status_code=403, detail="Invalid access password")
+    try:
+        logger.info(f"New user signup attempt with email: {user_in.email}")
+        if not settings.SIGNUP_ACCESS_PASSWORD.strip():
+            logger.warning("Signup attempt rejected: Signup is disabled")
+            raise HTTPException(status_code=400, detail="Signup is not allowed")
+        if user_in.access_password != settings.SIGNUP_ACCESS_PASSWORD:
+            logger.warning(
+                f"Signup attempt rejected for {user_in.email}: Invalid access password"
+            )
+            raise HTTPException(status_code=403, detail="Invalid access password")
 
-    user = crud.get_user_by_email(session=session, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system",
+        user = crud.get_user_by_email(session=session, email=user_in.email)
+        if user:
+            logger.warning(
+                f"Signup attempt rejected: Email {user_in.email} already exists"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="The user with this email already exists in the system",
+            )
+        user_create = UserCreate.model_validate(user_in)
+        user = crud.create_user(session=session, user_create=user_create)
+        logger.info(
+            f"Successfully registered new user {user.id} with email: {user_in.email}"
         )
-    user_create = UserCreate.model_validate(user_in)
-    user = crud.create_user(session=session, user_create=user_create)
-    return user
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_exception(
+            logger, e, context=f"Failed to register user with email: {user_in.email}"
+        )
+        raise
 
 
 @router.get("/{user_id}", response_model=UserPublic)
