@@ -19,7 +19,7 @@ wait_seconds = 1
 )
 def init(db_engine: Engine) -> None:
     try:
-        logger.info("Attempting to connect to database...")
+        logger.debug("Attempting to connect to database...")
         with Session(db_engine) as session:
             # Try to create session to check if DB is awake
             session.exec(select(1))
@@ -30,7 +30,7 @@ def init(db_engine: Engine) -> None:
 
 
 def main() -> None:
-    logger.info("Initializing service")
+    logger.debug("Initializing service")
     init(engine)
     logger.info("Service finished initializing")
 

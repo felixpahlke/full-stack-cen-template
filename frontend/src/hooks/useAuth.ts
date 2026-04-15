@@ -25,9 +25,9 @@ const useAuth = () => {
     queryKey: ["currentUser"],
     queryFn: async () => {
       try {
-        logger.info("Fetching current user", "useAuth");
+        logger.debug("Fetching current user", "useAuth");
         const response = await Users.readUserMe();
-        logger.info("Successfully fetched current user", "useAuth");
+        logger.debug("Successfully fetched current user", "useAuth");
         return response.data ?? null;
       } catch (err) {
         if (err instanceof AxiosError) {
@@ -48,12 +48,12 @@ const useAuth = () => {
 
   const signUpMutation = useMutation({
     mutationFn: async (data: UserRegister) => {
-      logger.info("Attempting user registration", "useAuth", { email: data.email });
+      logger.debug("Attempting user registration", "useAuth", { email: data.email });
       const response = await Users.registerUser({ body: data });
       return response.data;
     },
     onSuccess: () => {
-      logger.info("User registration successful", "useAuth");
+      logger.debug("User registration successful", "useAuth");
       navigate({ to: "/login" });
       toast.success("Your account has been created successfully.");
     },
@@ -82,7 +82,7 @@ const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AccessToken) => {
-      logger.info("Attempting user login", "useAuth", { username: data.username });
+      logger.debug("Attempting user login", "useAuth", { username: data.username });
       const response = await Login.loginAccessToken({ body: data });
       if (response.data?.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
@@ -90,7 +90,7 @@ const useAuth = () => {
       return response.data;
     },
     onSuccess: () => {
-      logger.info("User login successful", "useAuth");
+      logger.debug("User login successful", "useAuth");
       navigate({ to: "/" });
     },
     onError: (err: AxiosError) => {
@@ -108,7 +108,7 @@ const useAuth = () => {
   });
 
   const logout = () => {
-    logger.info("User logging out", "useAuth");
+    logger.debug("User logging out", "useAuth");
     localStorage.removeItem("access_token");
     navigate({ to: "/login" });
   };

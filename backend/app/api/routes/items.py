@@ -22,7 +22,7 @@ def read_items(
     Retrieve items.
     """
     try:
-        logger.info(
+        logger.debug(
             f"User {current_user.id} retrieving items (skip={skip}, limit={limit})"
         )
 
@@ -46,7 +46,7 @@ def read_items(
             )
             items = session.exec(statement).all()
 
-        logger.info(f"Successfully retrieved {count} items for user {current_user.id}")
+        logger.debug(f"Successfully retrieved {count} items for user {current_user.id}")
         return ItemsPublic(data=items, count=count)
     except Exception as e:
         log_exception(
@@ -61,7 +61,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
     Get item by ID.
     """
     try:
-        logger.info(f"User {current_user.id} retrieving item {id}")
+        logger.debug(f"User {current_user.id} retrieving item {id}")
         item = session.get(Item, id)
         if not item:
             logger.warning(f"Item {id} not found for user {current_user.id}")
@@ -71,7 +71,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
                 f"User {current_user.id} attempted to access item {id} without permission"
             )
             raise HTTPException(status_code=400, detail="Not enough permissions")
-        logger.info(f"Successfully retrieved item {id} for user {current_user.id}")
+        logger.debug(f"Successfully retrieved item {id} for user {current_user.id}")
         return item
     except HTTPException:
         raise
@@ -92,12 +92,12 @@ def create_item(
     Create new item.
     """
     try:
-        logger.info(f"User {current_user.id} creating new item: {item_in.title}")
+        logger.debug(f"User {current_user.id} creating new item: {item_in.title}")
         item = Item.model_validate(item_in, update={"owner_id": current_user.id})
         session.add(item)
         session.commit()
         session.refresh(item)
-        logger.info(f"Successfully created item {item.id} for user {current_user.id}")
+        logger.debug(f"Successfully created item {item.id} for user {current_user.id}")
         return item
     except Exception as e:
         log_exception(
@@ -118,7 +118,7 @@ def update_item(
     Update an item.
     """
     try:
-        logger.info(f"User {current_user.id} updating item {id}")
+        logger.debug(f"User {current_user.id} updating item {id}")
         item = session.get(Item, id)
         if not item:
             logger.warning(f"Item {id} not found for update by user {current_user.id}")
@@ -133,7 +133,7 @@ def update_item(
         session.add(item)
         session.commit()
         session.refresh(item)
-        logger.info(f"Successfully updated item {id} for user {current_user.id}")
+        logger.debug(f"Successfully updated item {id} for user {current_user.id}")
         return item
     except HTTPException:
         raise
@@ -152,7 +152,7 @@ def delete_item(
     Delete an item.
     """
     try:
-        logger.info(f"User {current_user.id} deleting item {id}")
+        logger.debug(f"User {current_user.id} deleting item {id}")
         item = session.get(Item, id)
         if not item:
             logger.warning(
@@ -166,7 +166,7 @@ def delete_item(
             raise HTTPException(status_code=400, detail="Not enough permissions")
         session.delete(item)
         session.commit()
-        logger.info(f"Successfully deleted item {id} for user {current_user.id}")
+        logger.debug(f"Successfully deleted item {id} for user {current_user.id}")
         return Message(message="Item deleted successfully")
     except HTTPException:
         raise

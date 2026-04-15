@@ -42,7 +42,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     Retrieve users.
     """
     try:
-        logger.info(f"Admin retrieving users list (skip={skip}, limit={limit})")
+        logger.debug(f"Admin retrieving users list (skip={skip}, limit={limit})")
 
         count_statement = select(func.count()).select_from(User)
         count = session.exec(count_statement).one()
@@ -50,7 +50,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
         statement = select(User).offset(skip).limit(limit)
         users = session.exec(statement).all()
 
-        logger.info(f"Successfully retrieved {count} users")
+        logger.debug(f"Successfully retrieved {count} users")
         return UsersPublic(
             data=[UserPublic.model_validate(user) for user in users], count=count
         )
@@ -67,7 +67,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     Create new user.
     """
     try:
-        logger.info(f"Admin creating new user with email: {user_in.email}")
+        logger.debug(f"Admin creating new user with email: {user_in.email}")
         user = crud.get_user_by_email(session=session, email=user_in.email)
         if user:
             logger.warning(
@@ -79,7 +79,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
             )
 
         user = crud.create_user(session=session, user_create=user_in)
-        logger.info(f"Successfully created user {user.id} with email: {user_in.email}")
+        logger.debug(f"Successfully created user {user.id} with email: {user_in.email}")
 
         return user
     except HTTPException:
@@ -121,7 +121,7 @@ def update_password_me(
     Update own password.
     """
     try:
-        logger.info(f"User {current_user.id} updating password")
+        logger.debug(f"User {current_user.id} updating password")
         if not verify_password(body.current_password, current_user.hashed_password):
             logger.warning(
                 f"Password update failed for user {current_user.id}: Incorrect current password"
@@ -139,7 +139,7 @@ def update_password_me(
         current_user.hashed_password = hashed_password
         session.add(current_user)
         session.commit()
-        logger.info(f"Successfully updated password for user {current_user.id}")
+        logger.debug(f"Successfully updated password for user {current_user.id}")
         return Message(message="Password updated successfully")
     except HTTPException:
         raise
@@ -164,7 +164,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     Delete own user.
     """
     try:
-        logger.info(f"User {current_user.id} deleting own account")
+        logger.debug(f"User {current_user.id} deleting own account")
         if current_user.is_superuser:
             logger.warning(
                 f"Superuser {current_user.id} attempted to delete own account"
@@ -177,7 +177,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         session.exec(statement)  # type: ignore
         session.delete(current_user)
         session.commit()
-        logger.info(f"Successfully deleted user account {current_user.id}")
+        logger.debug(f"Successfully deleted user account {current_user.id}")
         return Message(message="User deleted successfully")
     except HTTPException:
         raise
@@ -194,7 +194,7 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     Create new user without the need to be logged in.
     """
     try:
-        logger.info(f"New user signup attempt with email: {user_in.email}")
+        logger.debug(f"New user signup attempt with email: {user_in.email}")
         if not settings.SIGNUP_ACCESS_PASSWORD.strip():
             logger.warning("Signup attempt rejected: Signup is disabled")
             raise HTTPException(status_code=400, detail="Signup is not allowed")
@@ -215,7 +215,7 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
             )
         user_create = UserCreate.model_validate(user_in)
         user = crud.create_user(session=session, user_create=user_create)
-        logger.info(
+        logger.debug(
             f"Successfully registered new user {user.id} with email: {user_in.email}"
         )
         return user

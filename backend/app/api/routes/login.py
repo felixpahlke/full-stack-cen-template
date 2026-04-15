@@ -23,7 +23,7 @@ def login_access_token(
     OAuth2 compatible token login, get an access token for future requests
     """
     try:
-        logger.info(f"Login attempt for email: {form_data.username}")
+        logger.debug(f"Login attempt for email: {form_data.username}")
         user = crud.authenticate(
             session=session, email=form_data.username, password=form_data.password
         )
@@ -38,7 +38,7 @@ def login_access_token(
             )
             raise HTTPException(status_code=400, detail="Inactive user")
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        logger.info(f"Successfully logged in user: {form_data.username}")
+        logger.debug(f"Successfully logged in user: {form_data.username}")
         return Token(
             access_token=security.create_access_token(
                 user.id, expires_delta=access_token_expires
@@ -58,5 +58,5 @@ def test_token(current_user: CurrentUser) -> Any:
     """
     Test access token
     """
-    logger.info(f"Token test for user: {current_user.id}")
+    logger.debug(f"Token test for user: {current_user.id}")
     return current_user

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     try:
-        logger.info(f"Creating new user with email: {user_create.email}")
+        logger.debug(f"Creating new user with email: {user_create.email}")
         db_obj = User.model_validate(
             user_create,
             update={"hashed_password": get_password_hash(user_create.password)},
@@ -21,7 +21,7 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
         session.add(db_obj)
         session.commit()
         session.refresh(db_obj)
-        logger.info(f"Successfully created user with ID: {db_obj.id}")
+        logger.debug(f"Successfully created user with ID: {db_obj.id}")
         return db_obj
     except Exception as e:
         log_exception(
@@ -32,7 +32,7 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
 
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     try:
-        logger.info(f"Updating user with ID: {db_user.id}")
+        logger.debug(f"Updating user with ID: {db_user.id}")
         user_data = user_in.model_dump(exclude_unset=True)
         extra_data = {}
         if "password" in user_data:
@@ -43,7 +43,7 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
-        logger.info(f"Successfully updated user with ID: {db_user.id}")
+        logger.debug(f"Successfully updated user with ID: {db_user.id}")
         return db_user
     except Exception as e:
         log_exception(logger, e, context=f"Failed to update user with ID: {db_user.id}")
@@ -52,13 +52,13 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     try:
-        logger.info(f"Fetching user by email: {email}")
+        logger.debug(f"Fetching user by email: {email}")
         statement = select(User).where(User.email == email)
         session_user = session.exec(statement).first()
         if session_user:
-            logger.info(f"Found user with email: {email}")
+            logger.debug(f"Found user with email: {email}")
         else:
-            logger.info(f"No user found with email: {email}")
+            logger.debug(f"No user found with email: {email}")
         return session_user
     except Exception as e:
         log_exception(logger, e, context=f"Failed to fetch user by email: {email}")
@@ -67,7 +67,7 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
 
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
     try:
-        logger.info(f"Authenticating user with email: {email}")
+        logger.debug(f"Authenticating user with email: {email}")
         db_user = get_user_by_email(session=session, email=email)
         if not db_user:
             logger.warning(f"Authentication failed: User not found with email: {email}")
@@ -77,7 +77,7 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
                 f"Authentication failed: Invalid password for email: {email}"
             )
             return None
-        logger.info(f"Successfully authenticated user with email: {email}")
+        logger.debug(f"Successfully authenticated user with email: {email}")
         return db_user
     except Exception as e:
         log_exception(
@@ -88,12 +88,12 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
 
 def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -> Item:
     try:
-        logger.info(f"Creating new item for owner_id: {owner_id}")
+        logger.debug(f"Creating new item for owner_id: {owner_id}")
         db_item = Item.model_validate(item_in, update={"owner_id": owner_id})
         session.add(db_item)
         session.commit()
         session.refresh(db_item)
-        logger.info(f"Successfully created item with ID: {db_item.id}")
+        logger.debug(f"Successfully created item with ID: {db_item.id}")
         return db_item
     except Exception as e:
         log_exception(

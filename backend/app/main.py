@@ -65,16 +65,16 @@ async def validation_exception_handler(
 @app.on_event("startup")
 async def startup_event() -> None:
     """Log application startup."""
-    logger.info(f"Starting {settings.PROJECT_NAME} application")
-    logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"API version: {settings.API_V1_STR}")
+    logger.debug(f"Starting {settings.PROJECT_NAME} application")
+    logger.debug(f"Environment: {settings.ENVIRONMENT}")
+    logger.debug(f"API version: {settings.API_V1_STR}")
 
 
 # Log application shutdown
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """Log application shutdown."""
-    logger.info(f"Shutting down {settings.PROJECT_NAME} application")
+    logger.debug(f"Shutting down {settings.PROJECT_NAME} application")
 
 
 # Set all CORS enabled origins

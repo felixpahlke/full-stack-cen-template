@@ -48,7 +48,7 @@ export function trackFlavor() {
       body,
       keepalive: true,
     });
-    logger.info("Flavor tracking sent", "trackFlavor");
+    logger.debug("Flavor tracking sent", "trackFlavor");
   } catch (e) {
     logger.error("Failed to send tracking fetch", "trackFlavor", e);
   }

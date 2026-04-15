@@ -34,7 +34,7 @@ declare module "@tanstack/react-router" {
 trackFlavor();
 
 // Log application startup
-logger.info("Application starting", "main");
+logger.debug("Application starting", "main");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -50,4 +50,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 // Log when application is mounted
-logger.info("Application mounted successfully", "main");
+logger.debug("Application mounted successfully", "main");

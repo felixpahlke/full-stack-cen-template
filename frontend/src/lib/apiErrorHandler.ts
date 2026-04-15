@@ -88,7 +88,7 @@ export function logApiSuccess(
   status: number,
   context?: string
 ): void {
-  logger.info(
+  logger.debug(
     `API Success: ${method.toUpperCase()} ${url} - ${status}`,
     context || "API"
   );
