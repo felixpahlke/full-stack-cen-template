@@ -155,4 +155,3 @@ def log_exception(logger: logging.Logger, exc: Exception, context: str = "") -> 
 # Don't initialize logging on module import - let main.py do it
 # This ensures environment variables are loaded first
 
-# Made with Bob

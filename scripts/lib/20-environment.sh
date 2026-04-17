@@ -444,4 +444,4 @@ validate_required_vars() {
     return 0
 }
 
-# Made with Bob
+

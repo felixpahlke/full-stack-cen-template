@@ -210,4 +210,3 @@ class Logger {
 // Export singleton instance
 export const logger = new Logger();
 
-// Made with Bob

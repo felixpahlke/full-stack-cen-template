@@ -31,4 +31,3 @@ echo "Starting FastAPI with log level: $FASTAPI_LOG_LEVEL"
 # Start FastAPI with the appropriate log level
 exec fastapi run --workers 4 --log-level "$FASTAPI_LOG_LEVEL" app/main.py
 
-# Made with Bob
