@@ -1,5 +1,6 @@
 import secrets
 import warnings
+from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -11,6 +12,24 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+
+
+class Environment(str, Enum):
+    """Valid environment types."""
+
+    LOCAL = "local"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
+
+class LogLevel(str, Enum):
+    """Valid log levels."""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -33,8 +52,35 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
-    LOG_LEVEL: str | None = None  # Optional override for log level
+    ENVIRONMENT: Environment = Environment.LOCAL
+    LOG_LEVEL: LogLevel | None = None  # Optional override for log level
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def EFFECTIVE_LOG_LEVEL(self) -> LogLevel:
+        """
+        Determine effective log level based on LOG_LEVEL or ENVIRONMENT.
+
+        Priority:
+        1. LOG_LEVEL environment variable (if set, overrides everything)
+        2. ENVIRONMENT-based defaults (local=DEBUG, staging=INFO, production=WARNING)
+
+        Returns:
+            LogLevel enum value
+        """
+        # Check for explicit LOG_LEVEL override first
+        if self.LOG_LEVEL is not None:
+            return self.LOG_LEVEL
+
+        # Fall back to environment-based defaults
+        if self.ENVIRONMENT == Environment.LOCAL:
+            return LogLevel.DEBUG  # Verbose logging for development
+        elif self.ENVIRONMENT == Environment.STAGING:
+            return LogLevel.INFO  # Standard logging for staging
+        elif self.ENVIRONMENT == Environment.PRODUCTION:
+            return LogLevel.WARNING  # Only warnings and errors for production
+        else:
+            return LogLevel.INFO  # Default to INFO
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl | Literal["*"]] | str, BeforeValidator(parse_cors)

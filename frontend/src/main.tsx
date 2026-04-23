@@ -13,6 +13,7 @@ import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { trackFlavor } from "./lib/trackFlavor";
 import { logger } from "./lib/logger";
+import { setupApiLogging } from "./lib/apiLogger"; 
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",
@@ -21,6 +22,12 @@ client.setConfig({
     return localStorage.getItem("access_token") || undefined;
   },
 });
+
+// Setup API logging interceptors
+const axiosInstance = client.instance;
+if (axiosInstance) {
+  setupApiLogging(axiosInstance);
+}
 
 const queryClient = new QueryClient();
 

@@ -10,16 +10,20 @@ This module provides a structured logging setup with:
 
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
+
+from app.core.config import LogLevel, settings
 
 
-class UTCFormatter(logging.Formatter):
-    """Custom formatter that uses UTC time in ISO 8601 format."""
+class LocalTimeFormatter(logging.Formatter):
+    """Custom formatter that uses server's local time in ISO 8601 format."""
 
     def formatTime(self, record: logging.LogRecord, datefmt: str | None = None) -> str:
-        """Format time as ISO 8601 UTC timestamp."""
-        dt = datetime.fromtimestamp(record.created, tz=timezone.utc)
-        return dt.isoformat()
+        """Format time as ISO 8601 local timestamp with timezone offset."""
+        dt = datetime.fromtimestamp(record.created)
+        # Get local timezone-aware datetime
+        local_dt = dt.astimezone()
+        return local_dt.isoformat()
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record with custom timestamp."""
@@ -33,56 +37,33 @@ class UTCFormatter(logging.Formatter):
         return super().format(record)
 
 
-def get_log_level_from_environment() -> str:
-    """
-    Determine log level based on LOG_LEVEL or ENVIRONMENT variable.
-
-    Priority:
-    1. LOG_LEVEL environment variable (if set, overrides everything)
-    2. ENVIRONMENT-based defaults (local=DEBUG, staging=INFO, production=WARNING)
-
-    Returns:
-        Log level string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    """
-    import os
-
-    # Check for explicit LOG_LEVEL override first
-    explicit_log_level = os.getenv("LOG_LEVEL")
-    if explicit_log_level:
-        return explicit_log_level.upper()
-
-    # Fall back to environment-based defaults
-    environment = os.getenv("ENVIRONMENT", "local").lower()
-
-    if environment == "local":
-        return "DEBUG"  # Verbose logging for development
-    elif environment == "staging":
-        return "INFO"  # Standard logging for staging
-    elif environment == "production":
-        return "WARNING"  # Only warnings and errors for production
-    else:
-        return "INFO"  # Default to INFO
-
-
-def setup_logging(log_level: str | None = None) -> None:
+# Don't initialize logging on module import - let main.py do it
+# This ensures environment variables are loaded first
+def setup_logging(log_level: LogLevel | str | None = None) -> None:
     """
     Configure application-wide logging.
 
     Args:
-        log_level: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-                   If None, will be determined from LOG_LEVEL or ENVIRONMENT variable.
+        log_level: The logging level (LogLevel enum, or string like DEBUG, INFO, WARNING, ERROR, CRITICAL).
+                   If None, will be determined from settings.EFFECTIVE_LOG_LEVEL.
     """
-    # Determine log level from environment if not provided
+    # Determine log level from settings if not provided
     if log_level is None:
-        log_level = get_log_level_from_environment()
+        log_level = settings.EFFECTIVE_LOG_LEVEL
+
+    # Convert to string if LogLevel enum
+    if isinstance(log_level, LogLevel):
+        log_level_str = log_level.value
+    else:
+        log_level_str = log_level
 
     # Convert to logging constant
-    numeric_level = getattr(logging, log_level.upper())
+    numeric_level = getattr(logging, log_level_str.upper())
 
     # Create formatter with ISO 8601 timestamp
-    formatter = UTCFormatter(
+    formatter = LocalTimeFormatter(
         fmt="[%(asctime)s] [%(levelname)s] [%(name)s:%(funcName)s:%(lineno)d] %(message)s",
-        datefmt=None,  # Will use formatTime method
+        datefmt=None,
     )
 
     # Configure root logger - be aggressive about it
@@ -121,7 +102,7 @@ def setup_logging(log_level: str | None = None) -> None:
 
     # Log the configured level (only if at INFO or lower)
     if numeric_level <= logging.INFO:
-        root_logger.info(f"Logging configured with level: {log_level}")
+        root_logger.info(f"Logging configured with level: {log_level_str}")
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -150,8 +131,3 @@ def log_exception(logger: logging.Logger, exc: Exception, context: str = "") -> 
         logger.error(f"{context}: {str(exc)}", exc_info=True, stack_info=True)
     else:
         logger.error(f"Exception occurred: {str(exc)}", exc_info=True, stack_info=True)
-
-
-# Don't initialize logging on module import - let main.py do it
-# This ensures environment variables are loaded first
-

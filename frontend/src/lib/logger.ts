@@ -19,66 +19,21 @@ interface LogEntry {
   stack?: string;
 }
 
+// Custom log level
+const LOG_LEVEL : LogLevel = "warn";
+
 class Logger {
   private minLogLevel: LogLevel;
 
   constructor() {
-    this.minLogLevel = this.getMinLogLevelFromEnvironment();
+    this.minLogLevel = LOG_LEVEL;
     // Log the configured level to console (bypassing our own filtering)
     // This helps debug logging configuration issues
     // @ts-ignore - Vite provides this
-    const viteLogLevel = import.meta.env.VITE_LOG_LEVEL || 'not set';
-    // @ts-ignore - Vite provides this
     const viteEnvironment = import.meta.env.VITE_ENVIRONMENT || 'not set';
-    console.info(
-      `[Logger] Configured with log level: ${this.minLogLevel.toUpperCase()}`,
-      `(VITE_LOG_LEVEL=${viteLogLevel}, VITE_ENVIRONMENT=${viteEnvironment})`
+    console.debug(
+      `[Logger] Configured with log level: ${this.minLogLevel.toUpperCase()}`
     );
-  }
-
-  /**
-   * Determine minimum log level based on VITE_LOG_LEVEL or VITE_ENVIRONMENT variable
-   *
-   * Priority:
-   * 1. VITE_LOG_LEVEL environment variable (if set, overrides everything)
-   * 2. VITE_ENVIRONMENT-based defaults (local=debug, staging=info, production=warn)
-   */
-  private getMinLogLevelFromEnvironment(): LogLevel {
-    // @ts-ignore - Vite provides this
-    const explicitLogLevel = import.meta.env.VITE_LOG_LEVEL;
-    
-    // Check for explicit VITE_LOG_LEVEL override first
-    if (explicitLogLevel) {
-      let levelStr = explicitLogLevel.toLowerCase();
-      
-      // Map backend log levels to frontend equivalents
-      // Backend uses: DEBUG, INFO, WARNING, ERROR, CRITICAL
-      // Frontend uses: debug, info, warn, error
-      if (levelStr === 'warning') {
-        levelStr = 'warn';
-      } else if (levelStr === 'critical') {
-        levelStr = 'error';
-      }
-      
-      // Validate it's a valid log level
-      if (["debug", "info", "warn", "error"].includes(levelStr)) {
-        return levelStr as LogLevel;
-      }
-    }
-    
-    // Fall back to environment-based defaults
-    // @ts-ignore - Vite provides this
-    const environment = (import.meta.env.VITE_ENVIRONMENT || "local").toLowerCase();
-    
-    if (environment === "local") {
-      return "debug"; // Verbose logging for development
-    } else if (environment === "staging") {
-      return "info"; // Standard logging for staging
-    } else if (environment === "production") {
-      return "warn"; // Only warnings and errors for production
-    } else {
-      return "info"; // Default to info
-    }
   }
 
   /**
@@ -95,7 +50,7 @@ class Logger {
    * Format timestamp in ISO 8601 UTC format
    */
   private getTimestamp(): string {
-    return new Date().toISOString();
+    return new Date().toLocaleString();
   }
 
   /**

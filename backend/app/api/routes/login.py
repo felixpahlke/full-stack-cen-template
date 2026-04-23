@@ -22,35 +22,26 @@ def login_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    try:
-        logger.debug(f"Login attempt for email: {form_data.username}")
-        user = crud.authenticate(
-            session=session, email=form_data.username, password=form_data.password
+    user = crud.authenticate(
+        session=session, email=form_data.username, password=form_data.password
+    )
+    if not user:
+        logger.warning(
+            f"Login failed for email: {form_data.username} - Invalid credentials"
         )
-        if not user:
-            logger.warning(
-                f"Login failed for email: {form_data.username} - Invalid credentials"
-            )
-            raise HTTPException(status_code=400, detail="Incorrect email or password")
-        elif not user.is_active:
-            logger.warning(
-                f"Login failed for email: {form_data.username} - Inactive user"
-            )
-            raise HTTPException(status_code=400, detail="Inactive user")
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        logger.debug(f"Successfully logged in user: {form_data.username}")
-        return Token(
-            access_token=security.create_access_token(
-                user.id, expires_delta=access_token_expires
-            )
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    elif not user.is_active:
+        logger.warning(
+            f"Login failed for email: {form_data.username} - Inactive user"
         )
-    except HTTPException:
-        raise
-    except Exception as e:
-        log_exception(
-            logger, e, context=f"Login failed for email: {form_data.username}"
+        raise HTTPException(status_code=400, detail="Inactive user")
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    logger.debug(f"Successfully logged in user: {form_data.username}")
+    return Token(
+        access_token=security.create_access_token(
+            user.id, expires_delta=access_token_expires
         )
-        raise
+    )
 
 
 @router.post("/login/test-token", response_model=UserPublic)

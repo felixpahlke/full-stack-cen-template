@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { AxiosError } from "axios";
 import { toast } from "@/components/common/Toaster";
-import { logger } from "@/lib/logger";
 import {
   type BodyLoginLoginAccessToken as AccessToken,
   type UserPublic,
@@ -25,21 +24,17 @@ const useAuth = () => {
     queryKey: ["currentUser"],
     queryFn: async () => {
       try {
-        logger.debug("Fetching current user", "useAuth");
         const response = await Users.readUserMe();
-        logger.debug("Successfully fetched current user", "useAuth");
         return response.data ?? null;
       } catch (err) {
         if (err instanceof AxiosError) {
           const status = err.response?.status;
           if (status === 404 || status === 403) {
-            logger.warn("User session invalid, redirecting to login", "useAuth");
             localStorage.removeItem("access_token");
             navigate({ to: "/login" });
             return null;
           }
         }
-        logger.error("Failed to fetch current user", "useAuth", err);
         throw err; // Re-throw other error
       }
     },
@@ -48,12 +43,10 @@ const useAuth = () => {
 
   const signUpMutation = useMutation({
     mutationFn: async (data: UserRegister) => {
-      logger.debug("Attempting user registration", "useAuth", { email: data.email });
       const response = await Users.registerUser({ body: data });
       return response.data;
     },
     onSuccess: () => {
-      logger.debug("User registration successful", "useAuth");
       navigate({ to: "/login" });
       toast.success("Your account has been created successfully.");
     },
@@ -70,7 +63,6 @@ const useAuth = () => {
         errDetail = err.message;
       }
 
-      logger.error("User registration failed", "useAuth", err);
       toast.error("Registration failed", {
         caption: errDetail,
       });
@@ -82,7 +74,6 @@ const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AccessToken) => {
-      logger.debug("Attempting user login", "useAuth", { username: data.username });
       const response = await Login.loginAccessToken({ body: data });
       if (response.data?.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
@@ -90,7 +81,6 @@ const useAuth = () => {
       return response.data;
     },
     onSuccess: () => {
-      logger.debug("User login successful", "useAuth");
       navigate({ to: "/" });
     },
     onError: (err: AxiosError) => {
@@ -102,13 +92,11 @@ const useAuth = () => {
         errDetail = err.message;
       }
 
-      logger.error("User login failed", "useAuth", err);
       setError(errDetail);
     },
   });
 
   const logout = () => {
-    logger.debug("User logging out", "useAuth");
     localStorage.removeItem("access_token");
     navigate({ to: "/login" });
   };

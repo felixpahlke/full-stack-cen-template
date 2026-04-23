@@ -24,7 +24,6 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True},
 )
 
-
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -43,7 +42,6 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         },
     )
 
-
 # Validation error handler with logging
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
@@ -60,6 +58,22 @@ async def validation_exception_handler(
         content={"detail": exc.errors()},
     )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming requests and responses."""
+    logger.debug(f"Request: {request.method} {request.url.path}")
+
+    try:
+        response = await call_next(request)
+        logger.debug(
+            f"Response: {request.method} {request.url.path} - Status: {response.status_code}"
+        )
+        return response
+    except Exception:
+        logger.error(
+            f"Request failed: {request.method} {request.url.path}", exc_info=True
+        )
+        raise
 
 # Log application startup
 @app.on_event("startup")
@@ -69,13 +83,11 @@ async def startup_event() -> None:
     logger.debug(f"Environment: {settings.ENVIRONMENT}")
     logger.debug(f"API version: {settings.API_V1_STR}")
 
-
 # Log application shutdown
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """Log application shutdown."""
     logger.debug(f"Shutting down {settings.PROJECT_NAME} application")
-
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:
@@ -86,6 +98,5 @@ if settings.all_cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
