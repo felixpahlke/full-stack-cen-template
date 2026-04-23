@@ -15,6 +15,7 @@ import { Renew, WarningAlt } from "@carbon/icons-react";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  initHasError?: boolean;
 }
 
 interface State {
@@ -30,7 +31,7 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: props?.initHasError, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
