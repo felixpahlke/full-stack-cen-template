@@ -6,14 +6,14 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { client } from "./client/client.gen";
 
-import "./styles/globals.scss";
-import "./styles/tailwind.scss";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import { trackFlavor } from "./lib/trackFlavor";
+import { setupApiLogging } from "./lib/apiLogger";
 import { logger } from "./lib/logger";
-import { setupApiLogging } from "./lib/apiLogger"; 
+import { trackFlavor } from "./lib/trackFlavor";
+import "./styles/globals.scss";
+import "./styles/tailwind.scss";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",

@@ -38,7 +38,6 @@ COPY ./app /app/app
 RUN --mount=type=cache,target=/root/.cache/uv uv sync
 
 RUN if [ -f /app/scripts/prestart.sh ]; then chmod +x /app/scripts/prestart.sh; fi
-RUN if [ -f /app/scripts/start.sh ]; then chmod +x /app/scripts/start.sh; fi
 
 USER root
 

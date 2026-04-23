@@ -15,16 +15,12 @@ from typing_extensions import Self
 
 
 class Environment(str, Enum):
-    """Valid environment types."""
-
     LOCAL = "local"
     STAGING = "staging"
     PRODUCTION = "production"
 
 
 class LogLevel(str, Enum):
-    """Valid log levels."""
-
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -58,21 +54,9 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def EFFECTIVE_LOG_LEVEL(self) -> LogLevel:
-        """
-        Determine effective log level based on LOG_LEVEL or ENVIRONMENT.
-
-        Priority:
-        1. LOG_LEVEL environment variable (if set, overrides everything)
-        2. ENVIRONMENT-based defaults (local=DEBUG, staging=INFO, production=WARNING)
-
-        Returns:
-            LogLevel enum value
-        """
-        # Check for explicit LOG_LEVEL override first
         if self.LOG_LEVEL is not None:
             return self.LOG_LEVEL
 
-        # Fall back to environment-based defaults
         if self.ENVIRONMENT == Environment.LOCAL:
             return LogLevel.DEBUG  # Verbose logging for development
         elif self.ENVIRONMENT == Environment.STAGING:
