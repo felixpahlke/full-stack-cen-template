@@ -170,6 +170,9 @@ main() {
         exit 0
     fi
     
+    # Add Openshift registry if missing
+    setup_image_registry || exit 1
+
     # ============================================================
     # PHASE 4: DATABASE DEPLOYMENT
     # ============================================================
