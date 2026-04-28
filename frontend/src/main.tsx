@@ -9,7 +9,6 @@ import { client } from "./client/client.gen";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import { logger } from "./lib/logger";
 import { trackFlavor } from "./lib/trackFlavor";
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
@@ -33,9 +32,6 @@ declare module "@tanstack/react-router" {
 
 trackFlavor();
 
-// Log application startup
-logger.debug("Application starting", "main");
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
@@ -48,6 +44,3 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
-
-// Log when application is mounted
-logger.debug("Application mounted successfully", "main");

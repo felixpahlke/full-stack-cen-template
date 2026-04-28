@@ -1,4 +1,3 @@
-
 const DOMAIN = "team-flavors";
 const FLAVOR = "local-auth";
 const ENDPOINT =
