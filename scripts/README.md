@@ -113,7 +113,7 @@ The following table lists all environment variables that can be configured in `.
 | `GITHUB_HOST`                      | GitHub instance hostname                         | No                  | `github.ibm.com` | Use `github.com` for public GitHub, `github.ibm.com` for IBM GitHub Enterprise, or your custom GitHub Enterprise domain                                                   |
 | `GITHUB_TOKEN`                     | GitHub Personal Access Token for automation      | No                  | -                | Format: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. Required permissions: `repo`, `admin:repo_hook`. Used to automatically add SSH deploy keys and webhooks to repository |
 | **Deployment Configuration**       |
-| `DEPLOYMENT_BRANCH_FILTER`         | Git branch that triggers OpenShift deployments   | No                  | -                | Examples: `main`, `master`, `production`, `develop`. Leave empty to trigger on all branches                                                                               |
+| `DEPLOYMENT_BRANCH_FILTER`         | Git branch that triggers OpenShift deployments   | No                  | -                | Examples: `local-auth`, `production`, `develop`. Leave empty to trigger on all branches                                                                                   |
 | `BACKEND_CORS_ORIGINS`             | Allowed CORS origins for backend API             | No                  | -                | Auto-generated from frontend URL if not provided. Comma-separated list of origins                                                                                         |
 | **Frontend Environment Variables** |
 | `VITE_*`                           | Custom frontend environment variables            | No                  | -                | All variables prefixed with `VITE_` are automatically injected into the frontend build at build time                                                                      |
@@ -226,7 +226,7 @@ VITE_APP_VERSION=1.0.0
 Trigger builds only for specific branches:
 
 ```bash
-WEBHOOK_BRANCH_FILTER=main  # Only build on main branch updates
+WEBHOOK_BRANCH_FILTER=local-auth  # Only build on local-auth branch updates
 ```
 
 ## Usage

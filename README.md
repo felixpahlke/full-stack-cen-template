@@ -36,8 +36,6 @@ This template is available in different flavours, which are represented by diffe
 
 > Prefer the `oauth-proxy` flavours, unless you have a specific reason to not use it.
 
-> **NOTE:** The `main` branch has been renamed to `local-auth` and `oauth-proxy` is the new default branch.
-
 ## Sample Applications & Tutorials
 
 Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
@@ -110,16 +108,16 @@ git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
 git remote add upstream git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git
 ```
 
-- Rename branch to main:
+- Rename the branch if your new repository should use a different branch name:
 
 ```bash
-git branch -m main
+git branch -m my-template-branch
 ```
 
 - Push the code to your new repository:
 
 ```bash
-git push -u origin main
+git push -u origin my-template-branch
 ```
 
 ### Update From the Original Template
