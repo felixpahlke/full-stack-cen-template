@@ -1,4 +1,5 @@
 import warnings
+from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -10,6 +11,20 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+
+
+class Environment(str, Enum):
+    LOCAL = "local"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
+
+class LogLevel(str, Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -31,7 +46,23 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:4180"
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+    ENVIRONMENT: Environment = Environment.LOCAL
+    LOG_LEVEL: LogLevel | None = None  # Optional override for log level
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def EFFECTIVE_LOG_LEVEL(self) -> LogLevel:
+        if self.LOG_LEVEL is not None:
+            return self.LOG_LEVEL
+
+        if self.ENVIRONMENT == Environment.LOCAL:
+            return LogLevel.INFO  # Standard logging for local development
+        elif self.ENVIRONMENT == Environment.STAGING:
+            return LogLevel.INFO  # Standard logging for staging
+        elif self.ENVIRONMENT == Environment.PRODUCTION:
+            return LogLevel.WARNING  # Only warnings and errors for production
+        else:
+            return LogLevel.INFO  # Default to INFO
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl | Literal["*"]] | str, BeforeValidator(parse_cors)
