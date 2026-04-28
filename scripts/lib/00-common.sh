@@ -301,5 +301,3 @@ ${GREEN}DOCUMENTATION:${NC}
     For detailed documentation, see scripts/README.md
 "
 }
-
-# Made with Bob

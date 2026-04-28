@@ -6,10 +6,10 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { client } from "./client/client.gen";
 
-import "./styles/tailwind.scss";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { Toaster } from "./components/ui/sonner";
 import { trackFlavor } from "./lib/trackFlavor";
+import "./styles/tailwind.scss";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",

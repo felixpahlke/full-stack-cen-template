@@ -27,7 +27,7 @@ print_section "PRE-CHECKS"
 
 # Load environment variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE=$SCRIPT_DIR/../.env.production
+ENV_FILE="$SCRIPT_DIR/../.env.production"
 
 if [ ! -f "$ENV_FILE" ]; then
     print_error ".env.production file not found at $ENV_FILE"
@@ -35,7 +35,7 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-source $ENV_FILE
+source "$ENV_FILE"
 
 # Validate _CE_PROJECT_NAME length
 if [ ${#_CE_PROJECT_NAME} -gt 20 ]; then
@@ -635,7 +635,7 @@ deploy_oauth_proxy
 update_env_file
 
 # Step 3: Reload environment variables with updated URLs
-source $ENV_FILE
+source "$ENV_FILE"
 
 # Step 4: Deploy backend and frontend with correct API URL
 deploy_applications
