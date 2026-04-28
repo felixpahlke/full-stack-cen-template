@@ -20,7 +20,8 @@ resolution in this repository.
 
 ## First Reference To Read
 
-- Read `.docs/maintenance.md` at the start of every flavor-maintenance task.
+- Read `CONTRIBUTING.md` for the branch model and PR target rules.
+- Read `.docs/maintenance.md` for detailed flavor-maintenance rules.
 
 ## Flavor Guardrails
 
