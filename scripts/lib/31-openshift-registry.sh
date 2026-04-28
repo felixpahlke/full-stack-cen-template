@@ -15,7 +15,7 @@ verify_registry_state() {
 
     tmp_status=$(oc get configs.imageregistry.operator.openshift.io cluster -o jsonpath='{.spec.managementState}' 2>/dev/null)
     print_status "Registry Management State:\n$tmp_status" "openshift"
-    
+
     # Check Pods
     tmp_status=$(oc get pods -n openshift-image-registry 2>/dev/null)
     print_status "Registry Pods:\n$tmp_status" "openshift"
@@ -77,7 +77,7 @@ verify_registry_state() {
 _get_storage_type() {
     local storage_spec
     storage_spec=$(oc get configs.imageregistry.operator.openshift.io cluster -o jsonpath='{.spec.storage}' 2>/dev/null)
-    
+
     [[ -z "$storage_spec" || "$storage_spec" == "{}" ]] && echo "none" && return
     echo "$storage_spec" | grep -q "pvc" && echo "pvc" && return
     echo "$storage_spec" | grep -q "emptyDir" && echo "emptyDir" && return
@@ -89,7 +89,7 @@ _get_storage_type() {
 _get_default_route() {
     local route_setting
     route_setting=$(oc get configs.imageregistry.operator.openshift.io cluster -o jsonpath='{.spec.defaultRoute}' 2>/dev/null)
-    
+
     [[ -z "$route_setting" ]] && echo "unknown" && return
     echo "$route_setting"
 }
@@ -98,7 +98,7 @@ _get_default_route() {
 # Returns: "bound", "pending", or "notfound"
 _get_pvc_status() {
     local pvc_name=$1
-    
+
     oc get pvc "$pvc_name" -n openshift-image-registry &>/dev/null || { echo "notfound"; return; }
     oc get pvc "$pvc_name" -n openshift-image-registry -o jsonpath='{.status.phase}' 2>/dev/null
 }
@@ -110,25 +110,25 @@ _needs_configuration() {
     local state=$1
     local storage=$2
     local default_route=$3
-    
+
     # Removed or Unmanaged = needs full configuration
     if [[ "$state" == "Removed" || "$state" == "Unmanaged" ]]; then
         CONFIG_TYPE="full"
         return 0
     fi
-    
+
     # Managed without storage = needs full configuration
     if [[ "$state" == "Managed" && "$storage" == "none" ]]; then
         CONFIG_TYPE="full"
         return 0
     fi
-    
+
     # Managed with storage but defaultRoute not true = needs route fix
     if [[ "$state" == "Managed" && "$storage" != "none" && "$default_route" != "true" ]]; then
         CONFIG_TYPE="route-only"
         return 0
     fi
-    
+
     # Already fully configured = no action needed
     return 1
 }
@@ -140,9 +140,9 @@ _needs_configuration() {
 # Create PVC for registry storage
 _create_pvc() {
     local pvc_name=$1
-    
+
     print_status "Creating PVC: $pvc_name" "openshift"
-    
+
     apply_resource "$(cat << EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -164,15 +164,15 @@ EOF
 _determine_storage_type() {
     local create_pvc="${OPENSHIFT_REGISTRY_PVC_CREATE:-false}"
     local pvc_name="registry-storage-pvc"
-    
+
     # If PVC creation not requested, use emptyDir
     [[ "$create_pvc" != "true" ]] && echo "emptyDir" && return
-    
+
     print_status "PVC creation requested, checking PVC status" "openshift"
-    
+
     local pvc_status
     pvc_status=$(_get_pvc_status "$pvc_name")
-    
+
     case "$pvc_status" in
         Bound)
             print_success "PVC $pvc_name is bound" "openshift"
@@ -222,7 +222,7 @@ _apply_registry_config() {
     local config_type=$2
     local pvc_name="registry-storage-pvc"
     local patch_json
-    
+
     if [[ "$config_type" == "route-only" ]]; then
         print_status "Enabling defaultRoute for registry" "openshift"
         patch_json='{"spec":{"defaultRoute":true}}'
@@ -233,7 +233,7 @@ _apply_registry_config() {
         print_warning "Configuring registry with emptyDir (ephemeral storage)" "openshift"
         patch_json='{"spec":{"defaultRoute":true,"rolloutStrategy":"Recreate","managementState":"Managed","replicas":1,"storage":{"emptyDir":{}}}}'
     fi
-    
+
     if oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch "$patch_json" &>/dev/null; then
         if [[ "$config_type" == "route-only" ]]; then
             print_success "defaultRoute enabled" "openshift"
@@ -250,24 +250,24 @@ _apply_registry_config() {
 # Wait for registry pods to be ready
 _wait_for_registry() {
     print_status "Waiting for registry to be ready..." "openshift"
-    
+
     local max_wait=60
     local waited=0
-    
+
     while [ $waited -lt $max_wait ]; do
         local running_pods
         running_pods=$(oc get pods -n openshift-image-registry -l docker-registry=default --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
-        
+
         if [ "$running_pods" -eq 1 ]; then
             print_success "Registry is ready" "openshift"
             return 0
         fi
-        
+
         sleep 5
         waited=$((waited + 5))
         echo -n "."
     done
-    
+
     print_warning "Registry may still be starting" "openshift"
     return 0
 }
@@ -278,55 +278,55 @@ _wait_for_registry() {
 
 # Main function to setup OpenShift image registry
 setup_image_registry() {
-    
+
     # Check permissions
     if ! oc auth can-i patch configs.imageregistry.operator.openshift.io/cluster &>/dev/null; then
         print_warning "No permissions to manage image registry" "openshift"
         print_warning "If builds fail, ask your cluster admin to enable the registry" "openshift"
         return 0
     fi
-    
+
     # Get current state
     local registry_state
     registry_state=$(oc get configs.imageregistry.operator.openshift.io cluster -o jsonpath='{.spec.managementState}' 2>/dev/null)
-    
+
     if [[ -z "$registry_state" ]]; then
         print_warning "Could not determine registry state" "openshift"
         return 0
     fi
-    
+
     print_status "Registry state: $registry_state" "openshift"
-    
+
     # Get current storage
     local current_storage
     current_storage=$(_get_storage_type)
     print_status "Current storage: $current_storage" "openshift"
-    
+
     # Get current defaultRoute setting
     local default_route
     default_route=$(_get_default_route)
     print_status "Default route: $default_route" "openshift"
-    
+
     # Check if configuration needed (sets global CONFIG_TYPE)
     CONFIG_TYPE=""
     if ! _needs_configuration "$registry_state" "$current_storage" "$default_route"; then
         print_success "Registry already configured - skipping" "openshift"
         return 0
     fi
-    
+
     # Handle route-only configuration
     if [[ "$CONFIG_TYPE" == "route-only" ]]; then
         _apply_registry_config "" "route-only" || return 1
         return 0
     fi
-    
+
     # Handle full configuration
     local storage_type
     storage_type=$(_determine_storage_type)
-    
+
     _apply_registry_config "$storage_type" "full" || return 1
-    
+
     _wait_for_registry
-    
+
     return 0
 }
