@@ -9,7 +9,6 @@ import { client } from "./client/client.gen";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import { setupApiLogging } from "./lib/apiLogger";
 import { logger } from "./lib/logger";
 import { trackFlavor } from "./lib/trackFlavor";
 import "./styles/globals.scss";
@@ -22,12 +21,6 @@ client.setConfig({
     return localStorage.getItem("access_token") || undefined;
   },
 });
-
-// Setup API logging interceptors
-const axiosInstance = client.instance;
-if (axiosInstance) {
-  setupApiLogging(axiosInstance);
-}
 
 const queryClient = new QueryClient();
 

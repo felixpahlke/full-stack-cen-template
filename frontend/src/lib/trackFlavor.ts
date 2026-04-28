@@ -1,4 +1,3 @@
-import { logger } from "./logger";
 
 const DOMAIN = "team-flavors";
 const FLAVOR = "local-auth";
@@ -48,8 +47,7 @@ export function trackFlavor() {
       body,
       keepalive: true,
     });
-    logger.debug("Flavor tracking sent", "trackFlavor");
   } catch (e) {
-    logger.error("Failed to send tracking fetch", "trackFlavor", e);
+    console.error("Failed to send tracking fetch", e);
   }
 }
