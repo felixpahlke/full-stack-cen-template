@@ -1,8 +1,10 @@
 ## Maintenance and Updates to the Template
 
 This repository uses branches as product flavors, not as short-lived feature branches.
-When you maintain the template, preserve each branch's flavor identity while pulling in
-the shared changes from `local-auth`.
+For contributor-facing branch guidance, start with `CONTRIBUTING.md`.
+
+When you maintain the template, preserve each branch's flavor identity while pulling
+in the shared changes from `local-auth`.
 
 ### Canonical Workflow
 
