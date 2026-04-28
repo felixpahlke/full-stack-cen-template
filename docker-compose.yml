@@ -41,7 +41,6 @@ services:
       - .env
     environment:
       - POSTGRES_SERVER=db
-      - TZ=Europe/Berlin
     healthcheck:
       test:
         [
