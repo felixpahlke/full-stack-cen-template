@@ -111,5 +111,3 @@ setup_project() {
     
     return 0
 }
-
-

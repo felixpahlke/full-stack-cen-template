@@ -58,7 +58,7 @@ class Settings(BaseSettings):
             return self.LOG_LEVEL
 
         if self.ENVIRONMENT == Environment.LOCAL:
-            return LogLevel.INFO  # Verbose logging for development
+            return LogLevel.INFO  # Standard logging for local development
         elif self.ENVIRONMENT == Environment.STAGING:
             return LogLevel.INFO  # Standard logging for staging
         elif self.ENVIRONMENT == Environment.PRODUCTION:

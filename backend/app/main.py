@@ -1,3 +1,5 @@
+from time import perf_counter
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from app.core.logger import get_logger, log_exception, setup_logging
+from app.core.logger import get_logger, setup_logging
 
 # Initialize logging
 setup_logging()
@@ -24,16 +26,17 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True},
 )
 
-# Global exception handler
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Global exception handler that logs all unhandled exceptions with stack traces.
     """
-    log_exception(
-        logger,
-        exc,
-        context=f"Unhandled exception in {request.method} {request.url.path}",
+    logger.error(
+        "Unhandled exception in %s %s",
+        request.method,
+        request.url.path,
+        exc_info=(type(exc), exc, exc.__traceback__),
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -42,7 +45,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         },
     )
 
-# Validation error handler with logging
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
@@ -50,44 +53,42 @@ async def validation_exception_handler(
     """
     Handler for request validation errors with logging.
     """
-    logger.warning(
-        f"Validation error in {request.method} {request.url.path}: {exc.errors()}"
-    )
+    logger.warning("Validation error in %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.errors()},
     )
 
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    """Log all incoming requests and responses."""
-    logger.debug(f"Request: {request.method} {request.url.path}")
+    """Log one summary line for each completed request."""
+    start_time = perf_counter()
+    response = await call_next(request)
+    duration_ms = (perf_counter() - start_time) * 1000
+    logger.info(
+        "%s %s %s %.2fms",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    return response
 
-    try:
-        response = await call_next(request)
-        logger.debug(
-            f"Response: {request.method} {request.url.path} - Status: {response.status_code}"
-        )
-        return response
-    except Exception:
-        logger.error(
-            f"Request failed: {request.method} {request.url.path}", exc_info=True
-        )
-        raise
 
-# Log application startup
 @app.on_event("startup")
 async def startup_event() -> None:
     """Log application startup."""
-    logger.debug(f"Starting {settings.PROJECT_NAME} application")
-    logger.debug(f"Environment: {settings.ENVIRONMENT}")
-    logger.debug(f"API version: {settings.API_V1_STR}")
+    logger.info("Starting %s application", settings.PROJECT_NAME)
+    logger.info("Environment: %s", settings.ENVIRONMENT)
+    logger.info("API version: %s", settings.API_V1_STR)
 
-# Log application shutdown
+
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """Log application shutdown."""
-    logger.debug(f"Shutting down {settings.PROJECT_NAME} application")
+    logger.info("Shutting down %s application", settings.PROJECT_NAME)
+
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:

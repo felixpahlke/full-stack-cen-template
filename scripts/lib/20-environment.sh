@@ -443,5 +443,3 @@ validate_required_vars() {
     print_success "All required environment variables are valid for flavor '$flavor'!" "environment"
     return 0
 }
-
-

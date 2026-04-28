@@ -33,11 +33,11 @@ trackFlavor();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-      <ThemeProvider>
-        <Toaster />
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </ThemeProvider>
+    <ThemeProvider>
+      <Toaster />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

@@ -241,5 +241,3 @@ group_resources() {
     
     return 0
 }
-
-
