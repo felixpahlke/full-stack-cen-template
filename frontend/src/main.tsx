@@ -6,7 +6,6 @@ import { routeTree } from "./routeTree.gen";
 import { StrictMode } from "react";
 import { client } from "./client/client.gen";
 
-import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Toaster } from "@/components/common/Toaster";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { trackFlavor } from "./lib/trackFlavor";
@@ -34,13 +33,11 @@ trackFlavor();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ErrorBoundary>
       <ThemeProvider>
         <Toaster />
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
         </QueryClientProvider>
       </ThemeProvider>
-    </ErrorBoundary>
   </StrictMode>,
 );
