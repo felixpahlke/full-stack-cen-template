@@ -236,5 +236,3 @@ EOF
     print_success "PostgreSQL deployment completed successfully!" "database"
     return 0
 }
-
-# Made with Bob

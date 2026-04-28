@@ -111,5 +111,3 @@ setup_project() {
     
     return 0
 }
-
-# Made with Bob

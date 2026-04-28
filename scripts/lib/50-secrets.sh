@@ -167,5 +167,3 @@ update_app_env_secret_with_urls() {
     fi
     return 0
 }
-
-# Made with Bob
