@@ -98,5 +98,3 @@ get_validation_function() {
             ;;
     esac
 }
-
-# Made with Bob
