@@ -24,7 +24,7 @@ const useAuth = () => {
     queryKey: ["currentUser"],
     queryFn: async () => {
       try {
-        const response = await Users.readUserMe();
+        const response = await Users.usersReadUserMe();
         return response.data ?? null;
       } catch (err) {
         if (err instanceof AxiosError) {
@@ -43,7 +43,7 @@ const useAuth = () => {
 
   const signUpMutation = useMutation({
     mutationFn: async (data: UserRegister) => {
-      const response = await Users.registerUser({ body: data });
+      const response = await Users.usersRegisterUser({ body: data });
       return response.data;
     },
     onSuccess: () => {
@@ -74,7 +74,7 @@ const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AccessToken) => {
-      const response = await Login.loginAccessToken({ body: data });
+      const response = await Login.loginLoginAccessToken({ body: data });
       if (response.data?.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
       }

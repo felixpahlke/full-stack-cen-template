@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tool_usage>
+  <overview>
+    <description>
+      The BobKit-Engineer has access to all standard development tools for implementing,
+      testing, and validating code. This includes file operations, command execution,
+      and specialized tools for code analysis and modification.
+    </description>
+  </overview>
+
+  <tool_categories>
+    <category name="File Operations">
+      <tool name="read_file">
+        <purpose>Read source files, configurations, and documentation</purpose>
+        <usage>
+          <scenario>Review existing code before modification</scenario>
+          <scenario>Understand current implementation patterns</scenario>
+          <scenario>Read configuration files and dependencies</scenario>
+          <scenario>Review test files and validation scripts</scenario>
+        </usage>
+        <best_practices>
+          <practice>Read related files together (up to 5) for context</practice>
+          <practice>Use line ranges for large files to focus on relevant sections</practice>
+          <practice>Always read before modifying to understand current state</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="write_to_file">
+        <purpose>Create new files with complete content</purpose>
+        <usage>
+          <scenario>Create new source code files</scenario>
+          <scenario>Create new test files</scenario>
+          <scenario>Create configuration files</scenario>
+          <scenario>Create build scripts</scenario>
+        </usage>
+        <best_practices>
+          <practice>Provide complete file content, not partial updates</practice>
+          <practice>Include all required imports and dependencies</practice>
+          <practice>Follow project coding standards and conventions</practice>
+          <practice>Include appropriate comments and documentation</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="apply_diff">
+        <purpose>Make targeted changes to existing files</purpose>
+        <usage>
+          <scenario>Modify existing functions or methods</scenario>
+          <scenario>Update configuration values</scenario>
+          <scenario>Fix bugs in existing code</scenario>
+          <scenario>Refactor code sections</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use for targeted changes rather than complete rewrites</practice>
+          <practice>Make multiple changes in a single request when related</practice>
+          <practice>Match existing content exactly in SEARCH blocks</practice>
+          <practice>Read file first if unsure of exact content</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="insert_content">
+        <purpose>Add new lines to existing files</purpose>
+        <usage>
+          <scenario>Add new imports or dependencies</scenario>
+          <scenario>Add new functions or methods</scenario>
+          <scenario>Append to configuration files</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use line 0 to append at end of file</practice>
+          <practice>Ensure proper indentation and formatting</practice>
+          <practice>Maintain consistency with existing code style</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="search_and_replace">
+        <purpose>Find and replace text patterns across files</purpose>
+        <usage>
+          <scenario>Update variable or function names</scenario>
+          <scenario>Replace deprecated API calls</scenario>
+          <scenario>Update configuration values across multiple locations</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use regex for pattern matching when appropriate</practice>
+          <practice>Review diff preview before applying changes</practice>
+          <practice>Use line ranges to limit scope when needed</practice>
+        </best_practices>
+      </tool>
+    </category>
+
+    <category name="Code Analysis">
+      <tool name="search_files">
+        <purpose>Search for code patterns or specific content</purpose>
+        <usage>
+          <scenario>Find usage of specific functions or classes</scenario>
+          <scenario>Locate configuration settings</scenario>
+          <scenario>Find TODO comments or technical debt</scenario>
+          <scenario>Identify dependencies or imports</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use regex patterns for flexible searching</practice>
+          <practice>Use file_pattern to limit search scope</practice>
+          <practice>Review context around matches</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="list_files">
+        <purpose>List directory contents and structure</purpose>
+        <usage>
+          <scenario>Understand project structure</scenario>
+          <scenario>Verify file creation</scenario>
+          <scenario>Find related files</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use recursive option for deep directory trees</practice>
+          <practice>Start with project root to understand overall structure</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="list_code_definition_names">
+        <purpose>List top-level code definitions in a directory</purpose>
+        <usage>
+          <scenario>Understand module structure</scenario>
+          <scenario>Find available classes and functions</scenario>
+          <scenario>Identify API surface</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use to get overview before detailed reading</practice>
+          <practice>Helps identify what needs to be implemented</practice>
+        </best_practices>
+      </tool>
+    </category>
+
+    <category name="Command Execution">
+      <tool name="execute_command">
+        <purpose>Run CLI commands for building, testing, and validation</purpose>
+        <usage>
+          <scenario>Run build commands (make, npm build, etc.)</scenario>
+          <scenario>Execute test suites</scenario>
+          <scenario>Install dependencies</scenario>
+          <scenario>Run linters and formatters</scenario>
+          <scenario>Execute validation scripts</scenario>
+        </usage>
+        <best_practices>
+          <practice>Explain what the command does before running</practice>
+          <practice>Use cd path && command for different directories</practice>
+          <practice>Prefer complex commands over creating scripts</practice>
+          <practice>Verify command success before proceeding</practice>
+        </best_practices>
+        <examples>
+          <example>
+            <description>Run Python tests</description>
+            <command>python -m pytest tests/ -v</command>
+          </example>
+          <example>
+            <description>Install Python dependencies</description>
+            <command>pip install -r requirements.txt</command>
+          </example>
+          <example>
+            <description>Run linter</description>
+            <command>pylint src/</command>
+          </example>
+          <example>
+            <description>Build and test in subdirectory</description>
+            <command>cd project/ && npm install && npm test</command>
+          </example>
+        </examples>
+      </tool>
+    </category>
+
+    <category name="Communication">
+      <tool name="ask_followup_question">
+        <purpose>Request clarification or additional information</purpose>
+        <usage>
+          <scenario>Unclear implementation requirements</scenario>
+          <scenario>Ambiguous specifications</scenario>
+          <scenario>Need to choose between multiple approaches</scenario>
+          <scenario>Missing information for implementation</scenario>
+        </usage>
+        <best_practices>
+          <practice>Ask specific, focused questions</practice>
+          <practice>Provide context for why information is needed</practice>
+          <practice>Suggest options when appropriate</practice>
+          <practice>Don't ask unnecessary questions - use tools to get information</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="attempt_completion">
+        <purpose>Present implementation results to user</purpose>
+        <usage>
+          <scenario>All checklist items completed</scenario>
+          <scenario>Implementation validated and tested</scenario>
+          <scenario>Ready for review or deployment</scenario>
+        </usage>
+        <best_practices>
+          <practice>Only use after confirming all previous tool uses succeeded</practice>
+          <practice>Keep result text concise</practice>
+          <practice>Focus on outcomes, not steps taken</practice>
+          <practice>Highlight any deviations from plan</practice>
+          <practice>Include validation results</practice>
+        </best_practices>
+      </tool>
+
+      <tool name="switch_mode">
+        <purpose>Request mode switch when different expertise needed</purpose>
+        <usage>
+          <scenario>Architectural changes required</scenario>
+          <scenario>Specification gaps discovered</scenario>
+          <scenario>Strategic decisions needed</scenario>
+        </usage>
+        <best_practices>
+          <practice>Provide clear reason for mode switch</practice>
+          <practice>Document what was discovered during implementation</practice>
+          <practice>Switch to bobkit-architect for architectural issues</practice>
+          <practice>Switch to bobkit-strategist for specification issues</practice>
+        </best_practices>
+      </tool>
+    </category>
+
+    <category name="Task Management">
+      <tool name="update_todo_list">
+        <purpose>Track implementation progress</purpose>
+        <usage>
+          <scenario>Break down implementation into steps</scenario>
+          <scenario>Track checklist item completion</scenario>
+          <scenario>Manage complex multi-step implementations</scenario>
+        </usage>
+        <best_practices>
+          <practice>Use [ ] for pending tasks</practice>
+          <practice>Use [x] for completed tasks</practice>
+          <practice>Use [-] for in-progress tasks</practice>
+          <practice>Update as implementation progresses</practice>
+          <practice>Add new tasks as they are discovered</practice>
+        </best_practices>
+      </tool>
+    </category>
+  </tool_categories>
+
+  <implementation_workflow>
+    <step order="1">
+      <name>Analyze</name>
+      <tools>
+        <tool>read_file</tool>
+        <tool>list_files</tool>
+        <tool>list_code_definition_names</tool>
+        <tool>search_files</tool>
+      </tools>
+      <description>
+        Understand the current codebase, dependencies, and implementation context
+        before making changes.
+      </description>
+    </step>
+
+    <step order="2">
+      <name>Plan Implementation</name>
+      <tools>
+        <tool>update_todo_list</tool>
+      </tools>
+      <description>
+        Break down the implementation into manageable steps based on the checklist
+        and technical analysis.
+      </description>
+    </step>
+
+    <step order="3">
+      <name>Implement</name>
+      <tools>
+        <tool>write_to_file</tool>
+        <tool>apply_diff</tool>
+        <tool>insert_content</tool>
+        <tool>search_and_replace</tool>
+      </tools>
+      <description>
+        Create and modify files to implement the planned functionality.
+        Follow coding standards and best practices.
+      </description>
+    </step>
+
+    <step order="4">
+      <name>Validate</name>
+      <tools>
+        <tool>execute_command</tool>
+        <tool>read_file</tool>
+      </tools>
+      <description>
+        Run tests, linters, and validation scripts to ensure implementation
+        meets requirements and quality standards.
+      </description>
+    </step>
+
+    <step order="5">
+      <name>Complete or Escalate</name>
+      <tools>
+        <tool>attempt_completion</tool>
+        <tool>switch_mode</tool>
+      </tools>
+      <description>
+        Either complete the implementation and present results, or escalate
+        to another mode if architectural or specification issues are discovered.
+      </description>
+    </step>
+  </implementation_workflow>
+
+  <escalation_guidelines>
+    <guideline>
+      <condition>Architectural changes needed</condition>
+      <action>Switch to bobkit-architect mode</action>
+      <reason>
+        When implementation reveals that the current architecture is insufficient,
+        incompatible, or needs significant changes.
+      </reason>
+    </guideline>
+
+    <guideline>
+      <condition>Specification gaps or conflicts</condition>
+      <action>Switch to bobkit-strategist mode</action>
+      <reason>
+        When implementation reveals missing requirements, conflicting specifications,
+        or strategic decisions that need to be made.
+      </reason>
+    </guideline>
+
+    <guideline>
+      <condition>Technical blockers</condition>
+      <action>Ask followup question or document in todo list</action>
+      <reason>
+        When encountering technical issues that can be resolved with clarification
+        or additional information without changing architecture or specifications.
+      </reason>
+    </guideline>
+  </escalation_guidelines>
+</tool_usage>
+
+<!-- Made with Bob -->

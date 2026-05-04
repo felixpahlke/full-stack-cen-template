@@ -16,6 +16,9 @@ dependencies = [
     "pydantic-settings<3.0.0,>=2.10.1",
     "pyjwt<3.0.0,>=2.8.0",
     "pydantic>=2.10.5",
+    "pillow>=10.0.0",
+    "reportlab>=4.0.0",
+    "qrcode>=7.4.0",
 ]
 
 [tool.uv]

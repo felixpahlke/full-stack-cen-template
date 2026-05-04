@@ -1,0 +1,209 @@
+<stakeholder_examples>
+  <overview>
+    Complete workflow examples demonstrating the BobKit-Stakeholder mode in action,
+    from initial validation through remediation and PR creation.
+  </overview>
+
+  <example name="complete_validation_workflow">
+    <scenario>
+      User has completed implementation and wants comprehensive validation before
+      creating a pull request.
+    </scenario>
+    
+    <user_request>
+      Run /bobkit.check to validate the implementation
+    </user_request>
+    
+    <workflow>
+      <step number="1">
+        <action>Initialize context</action>
+        <tool_use><![CDATA[
+<execute_command>
+<command>scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks</command>
+</execute_command>
+
+# Parse JSON output:
+# FEATURE_DIR: specs/user-authentication/
+# AVAILABLE_DOCS: [spec.md, plan.md, tasks.md, data-model.md, contracts/]
+        ]]></tool_use>
+      </step>
+      
+      <step number="2">
+        <action>Analyze git changes</action>
+        <tool_use><![CDATA[
+<execute_command>
+<command>git status --porcelain</command>
+</execute_command>
+
+# Output shows:
+# M  src/auth/middleware.py
+# M  src/api/users.py
+# A  src/models/user.py
+# M  tests/test_auth.py
+        ]]></tool_use>
+      </step>
+      
+      <step number="3">
+        <action>Load required artifacts</action>
+        <tool_use><![CDATA[
+<read_file>
+<args>
+  <file>
+    <path>specs/user-authentication/tasks.md</path>
+  </file>
+  <file>
+    <path>specs/user-authentication/plan.md</path>
+  </file>
+  <file>
+    <path>memory/bobkit/constitution.md</path>
+  </file>
+  <file>
+    <path>specs/user-authentication/spec.md</path>
+  </file>
+</args>
+</read_file>
+        ]]></tool_use>
+      </step>
+      
+      <step number="4">
+        <action>Perform validation checks</action>
+        <findings>
+          <critical>
+            - Hardcoded API key in src/auth/middleware.py:45
+            - Missing authentication on /api/users endpoint (constitution violation)
+          </critical>
+          <high>
+            - No error handling in src/api/users.py:120-135
+            - Test coverage only 65% (constitution requires 80%)
+          </high>
+          <medium>
+            - Inconsistent naming: getUserData vs get_user_profile
+            - Missing docstrings in src/models/user.py
+          </medium>
+          <positive>
+            - Well-structured authentication middleware
+            - Comprehensive input validation
+          </positive>
+        </findings>
+      </step>
+      
+      <step number="5">
+        <action>Present findings and get user decision</action>
+        <tool_use><![CDATA[
+<ask_followup_question>
+<question>Critical/high-priority issues detected that should be resolved before proceeding. Would you like me to:</question>
+<follow_up>
+<suggest mode="bobkit-engineer">Update tasks.md and switch to Engineer mode to fix them</suggest>
+<suggest>Document them in findings.md and proceed anyway (not recommended)</suggest>
+</follow_up>
+</ask_followup_question>
+        ]]></tool_use>
+      </step>
+      
+      <step number="6">
+        <action>User chooses option A - fix issues</action>
+        <tool_use><![CDATA[
+<write_to_file>
+<path>specs/user-authentication/tasks.md</path>
+<content>
+[Existing tasks...]
+
+## Remediation Tasks
+
+- [ ] [REMED-001] [CRITICAL] Remove hardcoded API key from src/auth/middleware.py:45 and use environment variable
+- [ ] [REMED-002] [CRITICAL] Add authentication middleware to /api/users endpoint in src/api/users.py
+- [ ] [REMED-003] [HIGH] Add try-catch error handling to src/api/users.py:120-135
+- [ ] [REMED-004] [HIGH] Increase test coverage to 80% by adding tests for edge cases
+- [ ] [REMED-005] [MEDIUM] Standardize naming convention (use snake_case throughout)
+- [ ] [REMED-006] [MEDIUM] Add docstrings to all functions in src/models/user.py
+
+<!-- Made with Bob -->
+
+      User requests validation with --create-findings-file flag to document issues
+      for later review rather than immediate fixes.
+    </scenario>
+    
+    <user_request>
+      Run /bobkit.check --create-findings-file
+    </user_request>
+    
+    <workflow>
+      <step number="1-4">
+        <action>Same initialization and validation as previous example</action>
+      </step>
+      
+      <step number="5">
+        <action>Present findings and get user decision</action>
+        <tool_use><![CDATA[
+<ask_followup_question>
+<question>Medium/low-priority issues detected. Would you like me to:</question>
+<follow_up>
+<suggest mode="bobkit-engineer">Update tasks.md and switch to Engineer mode to fix them</suggest>
+<suggest>Document them in findings.md for later review</suggest>
+<suggest>Proceed as is (issues noted but not blocking)</suggest>
+</follow_up>
+</ask_followup_question>
+        ]]></tool_use>
+      </step>
+      
+      <step number="6">
+        <action>User chooses option B - document in findings.md</action>
+        <tool_use><![CDATA[
+<write_to_file>
+<path>findings.md</path>
+<content>
+# Code Review Findings
+
+## Summary
+Comprehensive validation completed for user-authentication feature.
+- Total issues: 6
+- Critical: 0
+- High: 0
+- Medium: 4
+- Low: 2
+
+## Medium Priority Issues
+
+### Inconsistent Naming Convention
+- **Location**: src/api/users.py:45, src/models/user.py:23
+- **Description**: Mixed use of camelCase and snake_case for function names
+- **Impact**: Reduces code readability and maintainability
+- **Mitigation**: Standardize on snake_case throughout Python codebase
+
+### Missing Docstrings
+- **Location**: src/models/user.py (multiple functions)
+- **Description**: Public functions lack docstrings
+- **Impact**: Harder for other developers to understand API
+- **Mitigation**: Add docstrings following Google style guide
+
+### Code Duplication
+- **Location**: src/api/users.py:120-135, src/api/admin.py:89-104
+- **Description**: Similar validation logic duplicated
+- **Impact**: Maintenance burden, potential for inconsistency
+- **Mitigation**: Extract to shared validation utility function
+
+### Missing Type Hints
+- **Location**: src/models/user.py (multiple functions)
+- **Description**: Function parameters lack type hints
+- **Impact**: Reduced IDE support and type safety
+- **Mitigation**: Add type hints to all function signatures
+
+## Low Priority Issues
+
+### TODO Comments
+- **Location**: src/auth/middleware.py:78
+- **Description**: TODO comment about optimization
+- **Impact**: Minor - optimization is not critical
+- **Mitigation**: Either implement optimization or remove comment
+
+### Unused Import
+- **Location**: src/api/users.py:5
+- **Description**: Import of 'datetime' module not used
+- **Impact**: Minimal - slightly larger module size
+- **Mitigation**: Remove unused import
+
+## Positive Findings
+- Well-structured authentication middleware with clear separation of concerns
+- Comprehensive input validation prevents common security issues
+- Good test coverage for happy path scenarios
+- Clear error messages for user-facing errors

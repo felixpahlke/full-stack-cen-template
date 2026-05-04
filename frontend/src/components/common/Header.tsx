@@ -30,10 +30,17 @@ export function Header() {
   const navItems: {
     title: string;
     path: string;
-  }[] = [{ title: "Items", path: "/items" }];
+  }[] = [
+    { title: "Items", path: "/items" },
+    { title: "Scanner", path: "/scanner" },
+  ];
 
   if (currentUser?.is_superuser) {
-    navItems.push({ title: "Admin", path: "/admin" });
+    navItems.push(
+      { title: "Dashboard", path: "/admin/dashboard" },
+      { title: "All Tickets", path: "/admin/tickets" },
+      { title: "Upload Tickets", path: "/admin/tickets/upload" },
+    );
   }
 
   return (

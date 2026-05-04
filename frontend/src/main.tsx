@@ -13,7 +13,10 @@ import "./styles/globals.scss";
 import "./styles/tailwind.scss";
 
 client.setConfig({
-  baseURL: import.meta.env.VITE_API_URL || "",
+  baseURL:
+    import.meta.env.MODE === "development"
+      ? ""
+      : import.meta.env.VITE_API_URL || "",
   throwOnError: true,
   auth: async () => {
     return localStorage.getItem("access_token") || undefined;

@@ -26,6 +26,12 @@ export default defineConfig({
     },
   },
   server: {
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_URL || "http://backend:8000",
+        changeOrigin: true,
+      },
+    },
     watch: {
       usePolling: true,
       interval: 300,

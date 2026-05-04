@@ -1,0 +1,352 @@
+<stakeholder_best_practices>
+  <general_principles>
+    <principle priority="critical">
+      <name>Constitution is Non-Negotiable</name>
+      <description>
+        The project constitution represents the foundational principles and non-negotiable
+        rules for the project. Any violation of a MUST principle in the constitution is
+        automatically a CRITICAL issue that blocks progression.
+      </description>
+      <rationale>
+        The constitution defines the project's identity and quality standards. Compromising
+        these principles undermines project integrity and creates technical debt.
+      </rationale>
+      <example>
+        <scenario>Constitution states "All API endpoints MUST have authentication"</scenario>
+        <good>Flag any unauthenticated endpoint as CRITICAL violation</good>
+        <bad>Downgrade to HIGH priority because "it's just one endpoint"</bad>
+      </example>
+    </principle>
+
+    <principle priority="critical">
+      <name>Holistic Analysis Over Isolated Checks</name>
+      <description>
+        Examine the entire implementation as a cohesive system, not just individual files
+        or components. Look for cross-cutting concerns, integration issues, and systemic
+        problems that only emerge when viewing the whole.
+      </description>
+      <rationale>
+        Individual components may work correctly in isolation but fail when integrated.
+        Holistic analysis catches architectural mismatches, data flow issues, and
+        emergent problems.
+      </rationale>
+      <example>
+        <scenario>Reviewing a new authentication system</scenario>
+        <good>Check how auth integrates with existing endpoints, middleware, error handling, and logging</good>
+        <bad>Only verify that the auth module itself has no syntax errors</bad>
+      </example>
+    </principle>
+
+    <principle priority="high">
+      <name>Severity-Based Prioritization</name>
+      <description>
+        Categorize all findings by severity (CRITICAL, HIGH, MEDIUM, LOW) and ensure
+        critical issues block progression. Users must explicitly acknowledge and accept
+        risks before proceeding with unresolved critical issues.
+      </description>
+      <rationale>
+        Not all issues are equal. Critical issues can cause data loss, security breaches,
+        or system failures. They must be addressed before release.
+      </rationale>
+      <severity_guidelines>
+        <critical>
+          - Security vulnerabilities
+          - Data loss/corruption risks
+          - Constitution MUST violations
+          - Breaking changes without migration
+          - Spec requirement violations
+        </critical>
+        <high>
+          - Performance degradation
+          - Major architectural deviations
+          - Missing error handling
+          - Incomplete test coverage
+          - Significant inconsistencies
+        </high>
+        <medium>
+          - Style violations
+          - Documentation gaps
+          - Code duplication
+          - Minor inconsistencies
+        </medium>
+        <low>
+          - Cosmetic issues
+          - Optional optimizations
+          - Nice-to-have improvements
+        </low>
+      </severity_guidelines>
+    </principle>
+
+    <principle priority="high">
+      <name>Actionable Feedback with Specificity</name>
+      <description>
+        Every finding must include specific file paths, line numbers, and concrete
+        remediation steps. Vague feedback like "improve error handling" is not actionable.
+      </description>
+      <rationale>
+        Developers need precise guidance to fix issues efficiently. Specific feedback
+        reduces back-and-forth and accelerates resolution.
+      </rationale>
+      <example>
+        <scenario>Error handling issue found</scenario>
+        <good>
+          "Missing error handling in src/api/users.py:45-52. Add try-catch around
+          database query and return 500 status with error message on failure."
+        </good>
+        <bad>"Error handling needs improvement in the users API"</bad>
+      </example>
+    </principle>
+
+    <principle priority="high">
+      <name>User-Driven Remediation</name>
+      <description>
+        Never automatically fix issues or update files without explicit user approval.
+        Present findings, explain severity, and wait for user decision on how to proceed.
+      </description>
+      <rationale>
+        Users may have context or constraints that affect remediation decisions. Automatic
+        fixes can introduce unintended changes or override deliberate design choices.
+      </rationale>
+      <workflow>
+        1. Present findings with severity classifications
+        2. Explain impact and risks
+        3. Offer remediation options (A, B, C)
+        4. Wait for explicit user choice
+        5. Only proceed after user approval
+      </workflow>
+    </principle>
+
+    <principle priority="medium">
+      <name>Validation Cycles for Confirmation</name>
+      <description>
+        After issues are fixed, re-run validation to confirm resolution. Don't assume
+        fixes are correct without verification.
+      </description>
+      <rationale>
+        Fixes can introduce new issues or incompletely address the original problem.
+        Validation cycles ensure quality and prevent regression.
+      </rationale>
+      <example>
+        <scenario>User fixes critical security issue</scenario>
+        <good>Re-run security checks to verify the vulnerability is resolved</good>
+        <bad>Assume the fix is correct and proceed to PR creation</bad>
+      </example>
+    </principle>
+  </general_principles>
+
+  <validation_conventions>
+    <convention category="git_analysis">
+      <rule>Always use git commands to identify changes</rule>
+      <rationale>Git provides authoritative source of what changed</rationale>
+      <commands>
+        <command>git status - Identify modified, added, deleted files</command>
+        <command>git diff - Examine specific changes</command>
+        <command>git diff --cached - Check staged changes</command>
+        <command>git log -1 - Get latest commit info</command>
+      </commands>
+    </convention>
+
+    <convention category="artifact_loading">
+      <rule>Load artifacts in order of importance</rule>
+      <priority_order>
+        <required>
+          1. tasks.md - Verify all tasks complete
+          2. plan.md - Understand architecture
+          3. constitution.md - Know the rules
+          4. spec.md - Understand requirements
+        </required>
+        <optional>
+          5. data-model.md - Entity relationships
+          6. contracts/ - API specifications
+          7. research.md - Technical decisions
+          8. checklists/ - Quality criteria
+        </optional>
+      </priority_order>
+    </convention>
+
+    <convention category="issue_documentation">
+      <rule>Use consistent format for all findings</rule>
+      <template>
+        ### [Issue Title]
+        - **Location**: [file:line]
+        - **Severity**: [CRITICAL|HIGH|MEDIUM|LOW]
+        - **Description**: [What is wrong]
+        - **Impact**: [How this affects the system]
+        - **Mitigation**: [Specific steps to fix]
+      </template>
+    </convention>
+
+    <convention category="findings_file">
+      <rule>Only create findings.md if --create-findings-file flag is present</rule>
+      <structure>
+        # Code Review Findings
+        
+        ## Summary
+        [Brief overview]
+        
+        ## Critical Issues
+        [Issues that block release]
+        
+        ## High Priority Issues
+        [Issues that should be fixed]
+        
+        ## Medium Priority Issues
+        [Issues that can be deferred]
+        
+        ## Low Priority Issues
+        [Optional improvements]
+        
+        ## Positive Findings
+        [Good practices observed]
+      </structure>
+    </convention>
+  </validation_conventions>
+
+  <common_pitfalls>
+    <pitfall>
+      <description>Downgrading constitution violations to lower severity</description>
+      <why_problematic>
+        Constitution MUST principles are non-negotiable. Downgrading them undermines
+        project integrity and creates precedent for ignoring standards.
+      </why_problematic>
+      <correct_approach>
+        Always classify constitution MUST violations as CRITICAL. If the principle
+        itself needs revision, that's a separate constitution update process.
+      </correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <description>Providing vague or generic feedback</description>
+      <why_problematic>
+        Generic feedback like "improve code quality" doesn't give developers actionable
+        guidance. It wastes time and leads to incomplete fixes.
+      </why_problematic>
+      <correct_approach>
+        Always include specific file paths, line numbers, and concrete remediation steps.
+        Show code examples when helpful.
+      </correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <description>Automatically fixing issues without user approval</description>
+      <why_problematic>
+        Users may have context or constraints that affect how issues should be fixed.
+        Automatic fixes can override deliberate design choices.
+      </why_problematic>
+      <correct_approach>
+        Present findings, explain options, and wait for explicit user decision before
+        making any changes.
+      </correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <description>Checking individual files in isolation</description>
+      <why_problematic>
+        Files don't exist in isolation. Integration issues, data flow problems, and
+        architectural mismatches only emerge when viewing the system holistically.
+      </why_problematic>
+      <correct_approach>
+        Always examine how changes integrate with the rest of the system. Check
+        cross-cutting concerns, dependencies, and emergent behaviors.
+      </correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <description>Skipping validation after fixes</description>
+      <why_problematic>
+        Fixes can introduce new issues or incompletely address the original problem.
+        Without re-validation, you can't confirm the issue is truly resolved.
+      </why_problematic>
+      <correct_approach>
+        After any fixes, re-run relevant validation checks to confirm resolution and
+        ensure no new issues were introduced.
+      </correct_approach>
+    </pitfall>
+  </common_pitfalls>
+
+  <quality_checklist>
+    <category name="before_validation">
+      <item>Understand validation scope and user requirements</item>
+      <item>Identify all relevant artifacts to load</item>
+      <item>Verify prerequisite scripts are available</item>
+      <item>Check if --create-findings-file flag is present</item>
+    </category>
+
+    <category name="during_validation">
+      <item>Load artifacts in priority order</item>
+      <item>Use git commands to identify all changes</item>
+      <item>Check each validation dimension systematically</item>
+      <item>Categorize findings by severity as discovered</item>
+      <item>Document specific locations and remediation steps</item>
+      <item>Verify constitution compliance for all changes</item>
+    </category>
+
+    <category name="before_reporting">
+      <item>Ensure all findings have severity classifications</item>
+      <item>Verify all findings include specific file paths</item>
+      <item>Confirm remediation steps are actionable</item>
+      <item>Check that positive findings are included</item>
+      <item>Validate report structure is complete</item>
+    </category>
+
+    <category name="during_remediation">
+      <item>Present findings clearly with severity context</item>
+      <item>Explain impact and risks for each severity level</item>
+      <item>Offer specific remediation options</item>
+      <item>Wait for explicit user decision</item>
+      <item>Only proceed after user approval</item>
+      <item>Re-validate after fixes are applied</item>
+    </category>
+
+    <category name="before_pr_creation">
+      <item>Confirm no CRITICAL issues remain</item>
+      <item>Verify all HIGH issues are resolved or documented</item>
+      <item>Check that all tasks are marked complete</item>
+      <item>Ensure tests are passing</item>
+      <item>Validate documentation is updated</item>
+      <item>Confirm constitution compliance</item>
+    </category>
+  </quality_checklist>
+
+  <communication_guidelines>
+    <guideline name="severity_communication">
+      <description>Clearly explain what each severity level means</description>
+      <template>
+        CRITICAL: These issues MUST be fixed before proceeding. They pose security
+        risks, violate constitution principles, or can cause data loss.
+        
+        HIGH: These issues SHOULD be fixed before release. They affect performance,
+        maintainability, or user experience significantly.
+        
+        MEDIUM: These issues CAN be fixed in follow-up work. They affect code quality
+        but don't block release.
+        
+        LOW: These are OPTIONAL improvements that enhance code quality but aren't
+        necessary for release.
+      </template>
+    </guideline>
+
+    <guideline name="decision_prompts">
+      <description>Use clear, structured prompts for user decisions</description>
+      <format>
+        [Severity] issues detected. Would you like me to:
+        (A) [Action option with clear outcome]
+        (B) [Alternative action with clear outcome]
+        (C) [Third option if applicable]
+        
+        Please respond with A, B, or C.
+      </format>
+    </guideline>
+
+    <guideline name="progress_updates">
+      <description>Keep user informed during long validation processes</description>
+      <examples>
+        <example>"Loading artifacts... (2/4 complete)"</example>
+        <example>"Analyzing git changes... (15 files modified)"</example>
+        <example>"Running validation checks... (3/6 dimensions complete)"</example>
+      </examples>
+    </guideline>
+  </communication_guidelines>
+</stakeholder_best_practices>
+
+<!-- Made with Bob -->

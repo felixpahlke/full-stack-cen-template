@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<best_practices>
+  <category name="Implementation Standards">
+    <practice>
+      <title>Follow the Plan</title>
+      <description>
+        Always implement according to the validated plan, tasks, and checklist. 
+        Do not deviate without documenting the reason and escalating if necessary.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Incremental Implementation</title>
+      <description>
+        Build incrementally, validating each component before moving to the next.
+        This allows for early detection of issues and easier debugging.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Test as You Build</title>
+      <description>
+        Create and run tests alongside implementation. Don't wait until the end 
+        to validate functionality. Unit tests, integration tests, and validation 
+        scripts should be part of the implementation process.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Document Deviations</title>
+      <description>
+        If implementation reveals that the plan or architecture needs adjustment,
+        document the deviation clearly and escalate to the appropriate mode 
+        (Architect or Strategist) for resolution.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Code Quality">
+    <practice>
+      <title>Follow Project Standards</title>
+      <description>
+        Adhere to the coding standards, style guides, and conventions established 
+        in the project. Consistency is critical for maintainability.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Write Clean, Readable Code</title>
+      <description>
+        Code should be self-documenting where possible. Use clear variable names,
+        appropriate comments, and logical structure. Future maintainers (including 
+        yourself) will thank you.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Handle Errors Gracefully</title>
+      <description>
+        Implement proper error handling, logging, and recovery mechanisms.
+        Don't let errors cascade or leave the system in an inconsistent state.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Optimize Appropriately</title>
+      <description>
+        Focus on correctness first, then optimize if needed. Premature optimization 
+        is the root of many problems. Profile before optimizing.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Integration and Dependencies">
+    <practice>
+      <title>Manage Dependencies Carefully</title>
+      <description>
+        Document all dependencies clearly. Use version pinning where appropriate.
+        Ensure dependencies are compatible and don't introduce conflicts.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Test Integrations Thoroughly</title>
+      <description>
+        Integration points are common sources of bugs. Test all interfaces,
+        APIs, and module boundaries carefully. Verify data flow and error handling.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Environment Consistency</title>
+      <description>
+        Ensure development, testing, and production environments are as similar 
+        as possible. Use containerization or environment management tools to 
+        maintain consistency.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Validation and Testing">
+    <practice>
+      <title>Comprehensive Test Coverage</title>
+      <description>
+        Aim for high test coverage, but focus on meaningful tests. Test edge cases,
+        error conditions, and integration points. Don't just test the happy path.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Automated Validation</title>
+      <description>
+        Automate validation wherever possible. Use CI/CD pipelines, automated 
+        tests, and validation scripts to catch issues early.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Performance Testing</title>
+      <description>
+        Test performance under realistic conditions. Identify bottlenecks and 
+        resource constraints before they become production issues.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Documentation">
+    <practice>
+      <title>Update Documentation</title>
+      <description>
+        Keep documentation in sync with implementation. Update README files,
+        API docs, and inline comments as you build. Stale documentation is 
+        worse than no documentation.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Document Decisions</title>
+      <description>
+        Record significant implementation decisions and their rationale.
+        This helps future maintainers understand why things were done a certain way.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Create Usage Examples</title>
+      <description>
+        Provide clear examples of how to use new features or APIs. Examples 
+        are often more valuable than lengthy explanations.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Collaboration and Communication">
+    <practice>
+      <title>Clear Progress Updates</title>
+      <description>
+        Provide regular updates on implementation progress. Report completed 
+        checklist items, blockers, and any issues discovered.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Escalate Promptly</title>
+      <description>
+        Don't struggle in silence. If you encounter architectural issues,
+        specification gaps, or strategic concerns, escalate to the appropriate 
+        mode immediately.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Code Reviews</title>
+      <description>
+        When working in a team, participate in code reviews. Both giving and 
+        receiving feedback improves code quality and knowledge sharing.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Security">
+    <practice>
+      <title>Security by Design</title>
+      <description>
+        Consider security implications during implementation. Validate inputs,
+        sanitize outputs, use secure APIs, and follow security best practices.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Secrets Management</title>
+      <description>
+        Never hardcode secrets, credentials, or sensitive data. Use environment 
+        variables, secret management systems, or secure configuration files.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Dependency Security</title>
+      <description>
+        Regularly check dependencies for known vulnerabilities. Keep dependencies 
+        updated and use security scanning tools.
+      </description>
+    </practice>
+  </category>
+
+  <category name="Version Control">
+    <practice>
+      <title>Meaningful Commits</title>
+      <description>
+        Make atomic, logical commits with clear messages. Each commit should 
+        represent a single logical change that can be understood and reviewed.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Branch Strategy</title>
+      <description>
+        Follow the project's branching strategy. Use feature branches for new 
+        work, and keep branches focused and short-lived.
+      </description>
+    </practice>
+
+    <practice>
+      <title>Clean History</title>
+      <description>
+        Keep commit history clean and meaningful. Squash or rebase when appropriate,
+        but preserve important historical context.
+      </description>
+    </practice>
+  </category>
+</best_practices>
+
+<!-- Made with Bob -->

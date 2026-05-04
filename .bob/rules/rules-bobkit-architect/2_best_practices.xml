@@ -1,0 +1,503 @@
+<bobkit_architect_best_practices>
+  <overview>
+    Best practices and guidelines for the BobKit-Architect mode to ensure high-quality
+    planning artifacts, clear dependencies, and smooth transitions to implementation.
+  </overview>
+
+  <general_principles>
+    <principle priority="critical">
+      <name>Constitution First</name>
+      <description>
+        Always validate against project constitution before proceeding. Constitution
+        violations are non-negotiable and must be resolved.
+      </description>
+      <rationale>
+        The constitution defines the project's core principles and constraints. Ignoring
+        or diluting these principles leads to technical debt and architectural drift.
+      </rationale>
+      <application>
+        - Load constitution at start of every planning phase
+        - Check each design decision against constitutional principles
+        - Flag violations as CRITICAL in analysis
+        - Never proceed with implementation if constitution conflicts exist
+      </application>
+    </principle>
+
+    <principle priority="high">
+      <name>Progressive Disclosure</name>
+      <description>
+        Load and process only the information needed for the current step. Avoid
+        dumping entire files into context.
+      </description>
+      <rationale>
+        Token efficiency is critical for complex planning tasks. Loading unnecessary
+        context wastes tokens and reduces analysis quality.
+      </rationale>
+      <application>
+        - Extract specific sections from specs and plans
+        - Summarize long sections into key points
+        - Use targeted queries instead of full file reads
+        - Load additional context only when gaps detected
+      </application>
+    </principle>
+
+    <principle priority="high">
+      <name>Traceability Throughout</name>
+      <description>
+        Maintain clear traceability from requirements through tasks. Every task should
+        map to requirements, every requirement should have tasks.
+      </description>
+      <rationale>
+        Traceability ensures completeness, enables impact analysis, and facilitates
+        validation. Missing traceability leads to scope creep and missed requirements.
+      </rationale>
+      <application>
+        - Map tasks to user stories and requirements
+        - Reference spec sections in plan decisions
+        - Include requirement IDs in task descriptions
+        - Generate coverage reports in analysis phase
+      </application>
+    </principle>
+
+    <principle priority="high">
+      <name>Dependency Clarity</name>
+      <description>
+        Make all dependencies explicit. Tasks should have clear prerequisites and
+        blocking relationships.
+      </description>
+      <rationale>
+        Clear dependencies enable parallel execution, prevent rework, and ensure
+        correct implementation order.
+      </rationale>
+      <application>
+        - Order tasks by dependency (foundational first)
+        - Mark parallelizable tasks with [P]
+        - Create dependency graphs showing completion order
+        - Validate no circular dependencies exist
+      </application>
+    </principle>
+
+    <principle priority="medium">
+      <name>Actionable Artifacts</name>
+      <description>
+        Every artifact should be immediately actionable without additional context.
+        Tasks should be specific enough for direct implementation.
+      </description>
+      <rationale>
+        Vague or incomplete artifacts require clarification loops, slowing development
+        and increasing risk of misinterpretation.
+      </rationale>
+      <application>
+        - Include exact file paths in tasks
+        - Specify concrete acceptance criteria
+        - Provide clear success metrics
+        - Avoid ambiguous terms without definitions
+      </application>
+    </principle>
+  </general_principles>
+
+  <planning_phase_practices>
+    <practice category="setup">
+      <name>Script Execution First</name>
+      <rule>Always run setup scripts before any planning work</rule>
+      <rationale>Scripts provide canonical paths and ensure consistent environment</rationale>
+      <example>
+        Run setup-plan.sh or check-prerequisites.sh to get FEATURE_DIR, BRANCH_NAME,
+        and other required paths before loading any files.
+      </example>
+    </practice>
+
+    <practice category="research">
+      <name>Resolve All Clarifications</name>
+      <rule>Phase 0 must resolve ALL "NEEDS CLARIFICATION" markers</rule>
+      <rationale>Unresolved clarifications block design and lead to rework</rationale>
+      <approach>
+        - Extract all NEEDS CLARIFICATION from Technical Context
+        - Generate research tasks for each unknown
+        - Consolidate findings in research.md with Decision/Rationale/Alternatives
+        - Update plan with resolved information
+      </approach>
+    </practice>
+
+    <practice category="design">
+      <name>Data Model First</name>
+      <rule>Define data entities before API contracts</rule>
+      <rationale>APIs operate on data; data model drives contract design</rationale>
+      <approach>
+        - Extract entities from functional requirements
+        - Define fields, relationships, validation rules
+        - Document state transitions if applicable
+        - Use data model to inform contract generation
+      </approach>
+    </practice>
+
+    <practice category="validation">
+      <name>Constitution Check Twice</name>
+      <rule>Validate against constitution before AND after design</rule>
+      <rationale>Design decisions may introduce new constitutional conflicts</rationale>
+      <checkpoints>
+        - Initial check: Validate spec against constitution
+        - Post-design check: Validate plan, data model, contracts against constitution
+        - Flag any violations as blocking issues
+      </checkpoints>
+    </practice>
+
+    <practice category="agent_context">
+      <name>Update Agent Context</name>
+      <rule>Run agent context update scripts after Phase 1 design</rule>
+      <rationale>Keeps AI assistants informed of new technologies and patterns</rationale>
+      <approach>
+        - Run update-agent-context script with appropriate agent type
+        - Script detects which AI agent is in use
+        - Updates agent-specific context file
+        - Preserves manual additions between markers
+      </approach>
+    </practice>
+  </planning_phase_practices>
+
+  <task_generation_practices>
+    <practice category="organization">
+      <name>User Story Organization</name>
+      <rule>Organize tasks by user story, not by technical layer</rule>
+      <rationale>Enables independent implementation and testing of complete features</rationale>
+      <structure>
+        - Phase 1: Setup (project initialization)
+        - Phase 2: Foundational (blocking prerequisites)
+        - Phase 3+: One phase per user story (priority order)
+        - Final Phase: Polish and cross-cutting concerns
+      </structure>
+      <example>
+        Instead of "Phase: Models" with all models, create "Phase: User Story 1"
+        with models, services, and endpoints needed for that story.
+      </example>
+    </practice>
+
+    <practice category="format">
+      <name>Strict Checklist Format</name>
+      <rule>Every task MUST follow: - [ ] [TaskID] [P?] [Story?] Description with file path</rule>
+      <rationale>Consistent format enables parsing, tracking, and automation</rationale>
+      <components>
+        - Checkbox: Always - [ ]
+        - Task ID: Sequential T001, T002, T003...
+        - [P] marker: Only for parallelizable tasks
+        - [Story] label: US1, US2, etc. for user story phases only
+        - Description: Clear action with exact file path
+      </components>
+      <examples>
+        <good>- [ ] T001 Create project structure per implementation plan</good>
+        <good>- [ ] T005 [P] Implement authentication middleware in src/middleware/auth.py</good>
+        <good>- [ ] T012 [P] [US1] Create User model in src/models/user.py</good>
+        <bad>- [ ] Create User model (missing ID and file path)</bad>
+        <bad>T001 [US1] Create model (missing checkbox)</bad>
+      </examples>
+    </practice>
+
+    <practice category="dependencies">
+      <name>Dependency Graph Generation</name>
+      <rule>Always generate dependency graph showing user story completion order</rule>
+      <rationale>Visualizes critical path and enables parallel execution planning</rationale>
+      <content>
+        - Show which stories can be implemented in parallel
+        - Identify blocking dependencies between stories
+        - Highlight foundational tasks that block multiple stories
+        - Provide parallel execution examples per story
+      </content>
+    </practice>
+
+    <practice category="validation">
+      <name>Task Completeness Validation</name>
+      <rule>Validate each user story has all needed tasks and is independently testable</rule>
+      <rationale>Incomplete task lists lead to implementation gaps and rework</rationale>
+      <checklist>
+        - Each story has models, services, endpoints, integration tasks
+        - Each story has independent test criteria
+        - Each story can be completed without waiting for other stories
+        - File paths are specific and unambiguous
+      </checklist>
+    </practice>
+
+    <practice category="testing">
+      <name>Tests Are Optional</name>
+      <rule>Only generate test tasks if explicitly requested in spec or by user</rule>
+      <rationale>Not all projects require TDD; avoid imposing unnecessary overhead</rationale>
+      <approach>
+        - Check spec for testing requirements
+        - Check user input for TDD preference
+        - If tests requested: Include test tasks before implementation in each story phase
+        - If not requested: Focus on implementation tasks only
+      </approach>
+    </practice>
+  </task_generation_practices>
+
+  <checklist_generation_practices>
+    <practice category="purpose">
+      <name>Unit Tests for Requirements</name>
+      <rule>Checklists test requirement QUALITY, not implementation correctness</rule>
+      <rationale>Checklists validate that requirements are well-written, not that code works</rationale>
+      <focus>
+        - Completeness: Are all necessary requirements present?
+        - Clarity: Are requirements unambiguous and specific?
+        - Consistency: Do requirements align without conflicts?
+        - Measurability: Can requirements be objectively verified?
+        - Coverage: Are all scenarios/edge cases addressed?
+      </focus>
+      <prohibited>
+        - ❌ "Verify the button clicks correctly"
+        - ❌ "Test error handling works"
+        - ❌ "Confirm API returns 200"
+      </prohibited>
+      <required>
+        - ✅ "Are visual hierarchy requirements defined for all card types?"
+        - ✅ "Is 'prominent display' quantified with specific sizing/positioning?"
+        - ✅ "Are hover state requirements consistent across all interactive elements?"
+      </required>
+    </practice>
+
+    <practice category="questions">
+      <name>Dynamic Clarification Questions</name>
+      <rule>Generate contextual questions from user input, not pre-baked catalog</rule>
+      <rationale>Generic questions waste time; targeted questions improve checklist quality</rationale>
+      <approach>
+        - Extract signals from user phrasing and spec/plan/tasks
+        - Generate max 3 initial questions
+        - Skip questions if already unambiguous in user input
+        - May ask up to 2 more follow-ups if scenario classes unclear (max 5 total)
+        - Focus on scope, risk, depth, audience, boundaries
+      </approach>
+    </practice>
+
+    <practice category="traceability">
+      <name>Minimum 80% Traceability</name>
+      <rule>At least 80% of checklist items must include traceability references</rule>
+      <rationale>Traceability enables validation and ensures checklist covers actual requirements</rationale>
+      <references>
+        - Spec section: [Spec §X.Y]
+        - Gap marker: [Gap]
+        - Ambiguity marker: [Ambiguity]
+        - Conflict marker: [Conflict]
+        - Assumption marker: [Assumption]
+      </references>
+    </practice>
+
+    <practice category="consolidation">
+      <name>Content Consolidation</name>
+      <rule>Soft cap at 40 items; prioritize by risk/impact</rule>
+      <rationale>Too many items reduce focus; consolidation improves usability</rationale>
+      <approach>
+        - Merge near-duplicates checking same requirement aspect
+        - If >5 low-impact edge cases, create one consolidated item
+        - Prioritize high-risk areas (security, data integrity, UX)
+        - Focus on actionable findings over exhaustive coverage
+      </approach>
+    </practice>
+
+    <practice category="naming">
+      <name>Descriptive Filenames</name>
+      <rule>Use short, descriptive names based on domain (ux.md, api.md, security.md)</rule>
+      <rationale>Clear names enable easy identification and navigation</rationale>
+      <approach>
+        - Each run creates NEW file (never overwrites)
+        - Use domain-specific names that indicate checklist purpose
+        - Avoid generic names like "checklist1.md"
+        - Clean up obsolete checklists when done
+      </approach>
+    </practice>
+  </checklist_generation_practices>
+
+  <analysis_phase_practices>
+    <practice category="constraint">
+      <name>Strictly Read-Only</name>
+      <rule>NEVER modify files during analysis; only output reports</rule>
+      <rationale>Analysis should be non-destructive; modifications require user approval</rationale>
+      <approach>
+        - Load artifacts for analysis only
+        - Generate findings and recommendations
+        - Offer remediation plan (user must approve)
+        - If user approves, use separate commands to apply fixes
+      </approach>
+    </practice>
+
+    <practice category="detection">
+      <name>High-Signal Findings Only</name>
+      <rule>Limit to 50 findings; aggregate remainder in overflow summary</rule>
+      <rationale>Too many findings reduce actionability; focus on high-impact issues</rationale>
+      <priorities>
+        - CRITICAL: Constitution violations, missing core artifacts, zero coverage
+        - HIGH: Duplicates, conflicts, ambiguous security/performance
+        - MEDIUM: Terminology drift, missing non-functional coverage
+        - LOW: Style/wording improvements, minor redundancy
+      </priorities>
+    </practice>
+
+    <practice category="coverage">
+      <name>Coverage Mapping</name>
+      <rule>Map every requirement to tasks; identify gaps and orphans</rule>
+      <rationale>Ensures completeness and prevents scope gaps</rationale>
+      <outputs>
+        - Coverage summary table (requirement → tasks)
+        - Unmapped tasks (tasks with no requirement)
+        - Coverage percentage (requirements with ≥1 task)
+        - Gap analysis (requirements with zero tasks)
+      </outputs>
+    </practice>
+
+    <practice category="constitution">
+      <name>Constitution Authority</name>
+      <rule>Constitution conflicts are automatically CRITICAL</rule>
+      <rationale>Constitution defines non-negotiable principles; violations must be fixed</rationale>
+      <approach>
+        - Load constitution principles and normative statements
+        - Check each requirement and design decision against principles
+        - Flag any MUST violations as CRITICAL
+        - Require adjustment of spec/plan/tasks, not constitution dilution
+      </approach>
+    </practice>
+
+    <practice category="reporting">
+      <name>Actionable Next Steps</name>
+      <rule>Always provide concrete next actions based on findings</rule>
+      <rationale>Analysis without action guidance is incomplete</rationale>
+      <content>
+        - If CRITICAL: Recommend resolving before implementation
+        - If LOW/MEDIUM: User may proceed with improvement suggestions
+        - Provide explicit command suggestions (e.g., "Run /bobkit.specify with refinement")
+        - Offer remediation plan for top N issues
+      </content>
+    </practice>
+  </analysis_phase_practices>
+
+  <mode_transition_practices>
+    <practice category="readiness">
+      <name>Validate Before Transition</name>
+      <rule>Ensure all prerequisites met before transitioning to next mode</rule>
+      <rationale>Premature transitions lead to rework and incomplete artifacts</rationale>
+      <checkpoints>
+        - Plan complete: All NEEDS CLARIFICATION resolved, constitution validated
+        - Tasks complete: All user stories have tasks, dependencies clear
+        - Analysis complete: No CRITICAL issues, coverage acceptable
+      </checkpoints>
+    </practice>
+
+    <practice category="communication">
+      <name>Clear Transition Signals</name>
+      <rule>Explicitly state when ready to transition and why</rule>
+      <rationale>Clear signals help users understand workflow progress</rationale>
+      <format>
+        - State current phase completion
+        - List artifacts generated
+        - Indicate readiness for next phase
+        - Suggest next command
+        - Explain transition reason
+      </format>
+    </practice>
+
+    <practice category="context">
+      <name>Preserve Context Across Transitions</name>
+      <rule>Ensure all necessary context is captured in artifacts before transition</rule>
+      <rationale>Context loss leads to rework and inconsistencies</rationale>
+      <approach>
+        - Document all decisions in plan/tasks
+        - Include rationale for key choices
+        - Reference constitution principles used
+        - Maintain traceability to requirements
+      </approach>
+    </practice>
+  </mode_transition_practices>
+
+  <common_pitfalls>
+    <pitfall>
+      <name>Ignoring Constitution</name>
+      <description>Proceeding with design that violates constitutional principles</description>
+      <why_problematic>Creates technical debt and architectural drift</why_problematic>
+      <correct_approach>Always validate against constitution; flag violations as CRITICAL</correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <name>Vague Task Descriptions</name>
+      <description>Tasks without specific file paths or clear acceptance criteria</description>
+      <why_problematic>Leads to implementation ambiguity and rework</why_problematic>
+      <correct_approach>Include exact file paths and specific, measurable outcomes</correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <name>Missing Dependencies</name>
+      <description>Tasks without clear prerequisites or blocking relationships</description>
+      <why_problematic>Causes implementation order errors and rework</why_problematic>
+      <correct_approach>Create dependency graph; order tasks by prerequisites</correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <name>Implementation Testing Checklists</name>
+      <description>Checklist items that test code behavior instead of requirement quality</description>
+      <why_problematic>Confuses requirements validation with implementation testing</why_problematic>
+      <correct_approach>Focus on requirement completeness, clarity, consistency, not code correctness</correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <name>Incomplete Coverage Analysis</name>
+      <description>Not mapping all requirements to tasks or identifying orphaned tasks</description>
+      <why_problematic>Leads to scope gaps and wasted implementation effort</why_problematic>
+      <correct_approach>Generate coverage tables; identify gaps and orphans</correct_approach>
+    </pitfall>
+
+    <pitfall>
+      <name>Token Waste</name>
+      <description>Loading entire files into context when only sections needed</description>
+      <why_problematic>Reduces analysis quality and increases costs</why_problematic>
+      <correct_approach>Use progressive disclosure; load only necessary sections</correct_approach>
+    </pitfall>
+  </common_pitfalls>
+
+  <quality_checklist>
+    <category name="before_planning">
+      <item>Constitution loaded and understood</item>
+      <item>Specification is complete and validated</item>
+      <item>Setup scripts executed successfully</item>
+      <item>All required paths obtained</item>
+    </category>
+
+    <category name="during_planning">
+      <item>All NEEDS CLARIFICATION markers resolved</item>
+      <item>Technical Context filled completely</item>
+      <item>Constitution check passed</item>
+      <item>Data model extracted from requirements</item>
+      <item>API contracts generated from functional requirements</item>
+      <item>Agent context updated</item>
+    </category>
+
+    <category name="during_task_generation">
+      <item>Tasks organized by user story</item>
+      <item>All tasks follow strict checklist format</item>
+      <item>Dependencies clearly defined</item>
+      <item>Parallelizable tasks marked with [P]</item>
+      <item>Each user story independently testable</item>
+      <item>File paths specific and unambiguous</item>
+    </category>
+
+    <category name="during_checklist_generation">
+      <item>Checklist tests requirement quality, not implementation</item>
+      <item>Minimum 80% traceability achieved</item>
+      <item>Items organized by quality dimensions</item>
+      <item>Descriptive filename used</item>
+      <item>Content consolidated (≤40 items)</item>
+    </category>
+
+    <category name="during_analysis">
+      <item>All required artifacts loaded</item>
+      <item>Constitution principles validated</item>
+      <item>Coverage mapping complete</item>
+      <item>Findings prioritized by severity</item>
+      <item>Actionable next steps provided</item>
+      <item>No files modified (read-only)</item>
+    </category>
+
+    <category name="before_transition">
+      <item>All artifacts generated and validated</item>
+      <item>No CRITICAL issues remaining</item>
+      <item>Clear next command suggested</item>
+      <item>Context preserved in artifacts</item>
+    </category>
+  </quality_checklist>
+</bobkit_architect_best_practices>
+
+<!-- Made with Bob -->

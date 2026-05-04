@@ -1,0 +1,472 @@
+<bobkit_architect_tool_usage>
+  <overview>
+    Specific guidance for using Bob's tools effectively in BobKit-Architect mode.
+    This mode focuses on planning, task generation, checklist creation, and analysis.
+  </overview>
+
+  <tool_priorities>
+    <priority level="1">
+      <tool>execute_command</tool>
+      <when>Always use FIRST to run setup/prerequisite scripts</when>
+      <why>Scripts provide canonical paths and ensure consistent environment</why>
+      <examples>
+        <example>scripts/bash/setup-plan.sh --json</example>
+        <example>scripts/bash/check-prerequisites.sh --json</example>
+        <example>scripts/bash/update-agent-context.sh bobide</example>
+      </examples>
+    </priority>
+
+    <priority level="2">
+      <tool>read_file</tool>
+      <when>After getting paths from scripts, load required artifacts</when>
+      <why>Need context from spec, plan, constitution to make decisions</why>
+      <best_practices>
+        <practice>Read multiple related files in single operation (up to 5 files)</practice>
+        <practice>Use line ranges for large files to load specific sections</practice>
+        <practice>Load constitution at start of every planning phase</practice>
+        <practice>Progressive disclosure: load only what's needed for current step</practice>
+      </best_practices>
+    </priority>
+
+    <priority level="3">
+      <tool>write_to_file</tool>
+      <when>Creating new planning artifacts (plan.md, tasks.md, checklists)</when>
+      <why>Generate complete, structured documents from templates</why>
+      <best_practices>
+        <practice>Use templates as structure reference</practice>
+        <practice>Provide COMPLETE file content (no truncation)</practice>
+        <practice>Include accurate line_count</practice>
+        <practice>Create parent directories automatically</practice>
+      </best_practices>
+    </priority>
+
+    <priority level="4">
+      <tool>apply_diff</tool>
+      <when>Making targeted updates to existing artifacts</when>
+      <why>Surgical edits preserve formatting and context</why>
+      <best_practices>
+        <practice>Read file first to ensure exact content match</practice>
+        <practice>Use multiple SEARCH/REPLACE blocks in single operation</practice>
+        <practice>Include line numbers for accuracy</practice>
+        <practice>Prefer over write_to_file for updates</practice>
+      </best_practices>
+    </priority>
+
+    <priority level="5">
+      <tool>ask_followup_question</tool>
+      <when>Need clarification for checklist generation or ambiguous requirements</when>
+      <why>Targeted questions improve artifact quality</why>
+      <best_practices>
+        <practice>Provide 2-4 specific, actionable suggestions</practice>
+        <practice>Order suggestions by likelihood or importance</practice>
+        <practice>Make suggestions complete (no placeholders)</practice>
+        <practice>Use for checklist focus/depth questions</practice>
+      </best_practices>
+    </priority>
+  </tool_priorities>
+
+  <command_specific_guidance>
+    <command name="plan">
+      <script_usage>
+        <bash>scripts/bash/setup-plan.sh --json</bash>
+        <powershell>scripts/powershell/setup-plan.ps1 -Json</powershell>
+        <output>FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH paths</output>
+        <timing>Run ONCE at start, parse JSON immediately</timing>
+      </script_usage>
+
+      <file_operations>
+        <operation sequence="1">
+          <action>Read FEATURE_SPEC and constitution</action>
+          <tools>read_file (multiple files in one call)</tools>
+        </operation>
+        <operation sequence="2">
+          <action>Create research.md</action>
+          <tools>write_to_file</tools>
+        </operation>
+        <operation sequence="3">
+          <action>Create data-model.md</action>
+          <tools>write_to_file</tools>
+        </operation>
+        <operation sequence="4">
+          <action>Create contracts/ files</action>
+          <tools>write_to_file (one per contract)</tools>
+        </operation>
+        <operation sequence="5">
+          <action>Create quickstart.md</action>
+          <tools>write_to_file</tools>
+        </operation>
+        <operation sequence="6">
+          <action>Update IMPL_PLAN</action>
+          <tools>write_to_file (complete plan)</tools>
+        </operation>
+        <operation sequence="7">
+          <action>Update agent context</action>
+          <tools>execute_command (agent script)</tools>
+        </operation>
+      </file_operations>
+
+      <validation_checkpoints>
+        <checkpoint>All NEEDS CLARIFICATION resolved in research.md</checkpoint>
+        <checkpoint>Constitution check passed (no violations)</checkpoint>
+        <checkpoint>Data model extracted from requirements</checkpoint>
+        <checkpoint>Contracts generated from functional requirements</checkpoint>
+        <checkpoint>Agent context updated successfully</checkpoint>
+      </validation_checkpoints>
+    </command>
+
+    <command name="tasks">
+      <script_usage>
+        <bash>scripts/bash/check-prerequisites.sh --json</bash>
+        <powershell>scripts/powershell/check-prerequisites.ps1 -Json</powershell>
+        <output>FEATURE_DIR, AVAILABLE_DOCS list</output>
+        <timing>Run ONCE at start, parse JSON immediately</timing>
+      </script_usage>
+
+      <file_operations>
+        <operation sequence="1">
+          <action>Read plan.md and spec.md (REQUIRED)</action>
+          <tools>read_file (both files in one call)</tools>
+        </operation>
+        <operation sequence="2">
+          <action>Read optional artifacts (data-model, contracts, research, quickstart)</action>
+          <tools>read_file (multiple files if available)</tools>
+        </operation>
+        <operation sequence="3">
+          <action>Generate tasks.md</action>
+          <tools>write_to_file (complete task list)</tools>
+        </operation>
+      </file_operations>
+
+      <task_format_validation>
+        <rule>Every task: - [ ] [TaskID] [P?] [Story?] Description with file path</rule>
+        <rule>Task IDs sequential: T001, T002, T003...</rule>
+        <rule>[P] only for parallelizable tasks</rule>
+        <rule>[Story] (US1, US2, etc.) only for user story phase tasks</rule>
+        <rule>Description must include exact file path</rule>
+      </task_format_validation>
+
+      <organization_structure>
+        <phase>Phase 1: Setup (project initialization)</phase>
+        <phase>Phase 2: Foundational (blocking prerequisites)</phase>
+        <phase>Phase 3+: User Stories (one phase per story, priority order)</phase>
+        <phase>Final Phase: Polish and cross-cutting concerns</phase>
+      </organization_structure>
+    </command>
+
+    <command name="checklist">
+      <script_usage>
+        <bash>scripts/bash/check-prerequisites.sh --json</bash>
+        <powershell>scripts/powershell/check-prerequisites.ps1 -Json</powershell>
+        <output>FEATURE_DIR, AVAILABLE_DOCS list</output>
+        <timing>Run ONCE at start, parse JSON immediately</timing>
+      </script_usage>
+
+      <clarification_workflow>
+        <step number="1">
+          <action>Generate up to 3 contextual clarifying questions</action>
+          <tool>ask_followup_question</tool>
+          <format>
+            - Derive from user phrasing and spec/plan signals
+            - Only ask about information that materially changes checklist
+            - Skip if already unambiguous in user input
+            - Present with suggested answers
+          </format>
+        </step>
+        <step number="2">
+          <action>May ask up to 2 more follow-ups if scenario classes unclear</action>
+          <tool>ask_followup_question</tool>
+          <limit>Maximum 5 total questions</limit>
+        </step>
+      </clarification_workflow>
+
+      <file_operations>
+        <operation sequence="1">
+          <action>Read spec.md (REQUIRED)</action>
+          <tools>read_file</tools>
+        </operation>
+        <operation sequence="2">
+          <action>Read plan.md and tasks.md (OPTIONAL)</action>
+          <tools>read_file (if available)</tools>
+        </operation>
+        <operation sequence="3">
+          <action>Create checklists/ directory if needed</action>
+          <tools>execute_command (mkdir -p)</tools>
+        </operation>
+        <operation sequence="4">
+          <action>Generate checklist file</action>
+          <tools>write_to_file</tools>
+          <naming>Use short, descriptive name (ux.md, api.md, security.md)</naming>
+          <behavior>Each run creates NEW file (never overwrites)</behavior>
+        </operation>
+      </file_operations>
+
+      <checklist_principles>
+        <principle>Test requirement QUALITY, not implementation correctness</principle>
+        <principle>Focus on completeness, clarity, consistency, measurability, coverage</principle>
+        <principle>Minimum 80% traceability (spec sections, gaps, ambiguities)</principle>
+        <principle>Use question format: "Are [requirements] defined/specified/documented?"</principle>
+        <principle>Organize by quality dimensions (not technical layers)</principle>
+      </checklist_principles>
+
+      <prohibited_patterns>
+        <pattern>Verify the button clicks correctly</pattern>
+        <pattern>Test error handling works</pattern>
+        <pattern>Confirm API returns 200</pattern>
+        <pattern>Any item testing implementation behavior</pattern>
+      </prohibited_patterns>
+
+      <required_patterns>
+        <pattern>Are visual hierarchy requirements defined for all card types?</pattern>
+        <pattern>Is 'prominent display' quantified with specific sizing/positioning?</pattern>
+        <pattern>Are hover state requirements consistent across all interactive elements?</pattern>
+        <pattern>Any item testing requirement quality</pattern>
+      </required_patterns>
+    </command>
+
+    <command name="analyze">
+      <script_usage>
+        <bash>scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks</bash>
+        <powershell>scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks</powershell>
+        <output>FEATURE_DIR, AVAILABLE_DOCS list (must include tasks.md)</output>
+        <timing>Run ONCE at start, abort if tasks.md missing</timing>
+      </script_usage>
+
+      <file_operations>
+        <operation sequence="1">
+          <action>Read spec.md, plan.md, tasks.md (ALL REQUIRED)</action>
+          <tools>read_file (all three files in one call)</tools>
+          <approach>Use progressive disclosure - load only necessary sections</approach>
+        </operation>
+        <operation sequence="2">
+          <action>Read constitution</action>
+          <tools>read_file</tools>
+        </operation>
+        <operation sequence="3">
+          <action>NO FILE WRITES - analysis is read-only</action>
+          <constraint>STRICTLY READ-ONLY mode</constraint>
+        </operation>
+      </file_operations>
+
+      <analysis_workflow>
+        <step number="1">
+          <action>Build semantic models</action>
+          <details>
+            - Requirements inventory with stable keys
+            - User story/action inventory
+            - Task coverage mapping
+            - Constitution rule set
+          </details>
+        </step>
+        <step number="2">
+          <action>Run detection passes</action>
+          <passes>
+            <pass>Duplication Detection</pass>
+            <pass>Ambiguity Detection</pass>
+            <pass>Underspecification</pass>
+            <pass>Constitution Alignment</pass>
+            <pass>Coverage Gaps</pass>
+            <pass>Inconsistency</pass>
+          </passes>
+          <limit>Maximum 50 findings; aggregate remainder</limit>
+        </step>
+        <step number="3">
+          <action>Assign severity levels</action>
+          <levels>
+            <level>CRITICAL: Constitution violations, missing core artifacts, zero coverage</level>
+            <level>HIGH: Duplicates, conflicts, ambiguous security/performance</level>
+            <level>MEDIUM: Terminology drift, missing non-functional coverage</level>
+            <level>LOW: Style/wording improvements, minor redundancy</level>
+          </levels>
+        </step>
+        <step number="4">
+          <action>Generate analysis report</action>
+          <format>Markdown table with findings, coverage summary, metrics</format>
+          <output>Console output only (no file write)</output>
+        </step>
+        <step number="5">
+          <action>Provide next actions</action>
+          <details>
+            - If CRITICAL: Recommend resolving before implementation
+            - If LOW/MEDIUM: User may proceed with suggestions
+            - Provide explicit command suggestions
+          </details>
+        </step>
+        <step number="6">
+          <action>Offer remediation</action>
+          <tool>ask_followup_question</tool>
+          <details>Ask if user wants concrete remediation edits (do NOT apply automatically)</details>
+        </step>
+      </analysis_workflow>
+
+      <constitution_authority>
+        <rule>Constitution is NON-NEGOTIABLE</rule>
+        <rule>Conflicts are automatically CRITICAL</rule>
+        <rule>Require adjustment of spec/plan/tasks, not constitution dilution</rule>
+      </constitution_authority>
+    </command>
+  </command_specific_guidance>
+
+  <tool_specific_best_practices>
+    <tool name="execute_command">
+      <use_case>Running setup scripts and agent context updates</use_case>
+      <best_practices>
+        <practice>Always run scripts from repo root</practice>
+        <practice>Parse JSON output immediately</practice>
+        <practice>Handle single quotes in args with escape syntax or double quotes</practice>
+        <practice>Verify script exit code (0 = success)</practice>
+      </best_practices>
+      <script_examples>
+        <example>
+          <description>Run plan setup script</description>
+          <command>scripts/bash/setup-plan.sh --json</command>
+          <parse>Extract FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH from JSON</parse>
+        </example>
+        <example>
+          <description>Update agent context for Bob-IDE</description>
+          <command>scripts/bash/update-agent-context.sh bobide</command>
+          <timing>After Phase 1 design artifacts generated</timing>
+        </example>
+      </script_examples>
+    </tool>
+
+    <tool name="read_file">
+      <use_case>Loading specifications, plans, and constitution</use_case>
+      <best_practices>
+        <practice>Read up to 5 related files in single operation</practice>
+        <practice>Use line ranges for large files (load specific sections)</practice>
+        <practice>Combine adjacent line ranges (less than 10 lines apart)</practice>
+        <practice>Use multiple ranges for content separated by more than 10 lines</practice>
+        <practice>Load constitution at start of every planning phase</practice>
+      </best_practices>
+      <read_examples>
+        <example>
+          <description>Load spec and constitution together</description>
+          <note>Read both files in single read_file operation</note>
+        </example>
+        <example>
+          <description>Load plan sections with line ranges</description>
+          <note>Use line ranges to load specific sections like Technical Context (1-50) and Phase 1 Design (100-150)</note>
+        </example>
+      </read_examples>
+    </tool>
+
+    <tool name="write_to_file">
+      <use_case>Creating new planning artifacts</use_case>
+      <best_practices>
+        <practice>Provide COMPLETE file content (no truncation)</practice>
+        <practice>Include accurate line_count</practice>
+        <practice>Use templates as structure reference</practice>
+        <practice>Create parent directories automatically</practice>
+        <practice>Preserve markdown formatting and heading hierarchy</practice>
+      </best_practices>
+      <write_examples>
+        <example>
+          <description>Create implementation plan</description>
+          <note>Write complete plan following template structure with accurate line count</note>
+        </example>
+        <example>
+          <description>Create task list</description>
+          <note>Write complete task list with all phases and proper formatting</note>
+        </example>
+        <example>
+          <description>Create checklist</description>
+          <note>Write complete checklist with all items and traceability references</note>
+        </example>
+      </write_examples>
+    </tool>
+
+    <tool name="apply_diff">
+      <use_case>Making targeted updates to existing artifacts</use_case>
+      <best_practices>
+        <practice>Read file first to ensure exact content match</practice>
+        <practice>Use multiple SEARCH/REPLACE blocks in single operation</practice>
+        <practice>Include line numbers for accuracy</practice>
+        <practice>Prefer over write_to_file for updates to existing files</practice>
+      </best_practices>
+      <diff_examples>
+        <example>
+          <description>Update plan with research findings</description>
+          <note>Use apply_diff to replace NEEDS CLARIFICATION sections with resolved information</note>
+        </example>
+        <example>
+          <description>Add new tasks to existing task list</description>
+          <note>Use apply_diff to insert new tasks in appropriate phase</note>
+        </example>
+      </diff_examples>
+    </tool>
+
+    <tool name="ask_followup_question">
+      <use_case>Clarifying checklist focus, depth, and requirements</use_case>
+      <best_practices>
+        <practice>Provide 2-4 specific, actionable suggestions</practice>
+        <practice>Order suggestions by likelihood or importance</practice>
+        <practice>Make suggestions complete (no placeholders)</practice>
+        <practice>Use for checklist focus/depth questions</practice>
+        <practice>Present options as markdown table when appropriate</practice>
+      </best_practices>
+      <question_examples>
+        <example>
+          <description>Clarify checklist focus</description>
+          <note>Ask about which quality dimensions to prioritize (completeness, clarity, consistency, etc.)</note>
+        </example>
+        <example>
+          <description>Clarify checklist depth</description>
+          <note>Ask whether lightweight pre-commit sanity list or formal release gate</note>
+        </example>
+        <example>
+          <description>Clarify checklist audience</description>
+          <note>Ask whether for author only or peers during PR review</note>
+        </example>
+      </question_examples>
+    </tool>
+  </tool_specific_best_practices>
+
+  <common_tool_sequences>
+    <sequence name="plan_workflow">
+      <step>1. execute_command: Run setup-plan.sh --json</step>
+      <step>2. read_file: Load spec.md and constitution</step>
+      <step>3. write_to_file: Create research.md</step>
+      <step>4. write_to_file: Create data-model.md</step>
+      <step>5. write_to_file: Create contracts/*.yaml</step>
+      <step>6. write_to_file: Create quickstart.md</step>
+      <step>7. write_to_file: Update plan.md</step>
+      <step>8. execute_command: Run update-agent-context.sh</step>
+    </sequence>
+
+    <sequence name="tasks_workflow">
+      <step>1. execute_command: Run check-prerequisites.sh --json</step>
+      <step>2. read_file: Load plan.md and spec.md</step>
+      <step>3. read_file: Load optional artifacts (data-model, contracts, etc.)</step>
+      <step>4. write_to_file: Create tasks.md</step>
+    </sequence>
+
+    <sequence name="checklist_workflow">
+      <step>1. execute_command: Run check-prerequisites.sh --json</step>
+      <step>2. ask_followup_question: Clarify focus/depth/audience (up to 5 questions)</step>
+      <step>3. read_file: Load spec.md</step>
+      <step>4. read_file: Load plan.md and tasks.md (if available)</step>
+      <step>5. execute_command: Create checklists/ directory</step>
+      <step>6. write_to_file: Create checklist file</step>
+    </sequence>
+
+    <sequence name="analyze_workflow">
+      <step>1. execute_command: Run check-prerequisites.sh --json --require-tasks</step>
+      <step>2. read_file: Load spec.md, plan.md, tasks.md</step>
+      <step>3. read_file: Load constitution</step>
+      <step>4. (Analysis in memory - no file operations)</step>
+      <step>5. (Output report to console - no file write)</step>
+      <step>6. ask_followup_question: Offer remediation (if user wants)</step>
+    </sequence>
+  </common_tool_sequences>
+
+  <efficiency_tips>
+    <tip>Batch file reads: Read up to 5 related files in single read_file operation</tip>
+    <tip>Use line ranges: Load only necessary sections of large files</tip>
+    <tip>Progressive disclosure: Load additional context only when gaps detected</tip>
+    <tip>Prefer apply_diff over write_to_file for updates to existing files</tip>
+    <tip>Parse script JSON immediately: Don't make assumptions about paths</tip>
+    <tip>Validate before proceeding: Check script exit codes and file existence</tip>
+  </efficiency_tips>
+</bobkit_architect_tool_usage>
+
+<!-- Made with Bob -->

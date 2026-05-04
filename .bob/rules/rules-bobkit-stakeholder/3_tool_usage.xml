@@ -1,0 +1,482 @@
+<stakeholder_tool_usage>
+  <tool_priorities>
+    <priority level="1">
+      <tool>execute_command</tool>
+      <when>First action - run prerequisite scripts and git commands</when>
+      <why>Scripts provide structured context; git shows authoritative change history</why>
+    </priority>
+    
+    <priority level="2">
+      <tool>read_file</tool>
+      <when>After scripts - load planning and implementation artifacts</when>
+      <why>Need full context of requirements, plans, and implementation to validate</why>
+    </priority>
+    
+    <priority level="3">
+      <tool>search_files</tool>
+      <when>When looking for specific patterns or issues across codebase</when>
+      <why>Efficient way to find security issues, style violations, or patterns</why>
+    </priority>
+    
+    <priority level="4">
+      <tool>list_code_definition_names</tool>
+      <when>When understanding code structure and architecture</when>
+      <why>Provides high-level view of classes, functions, and organization</why>
+    </priority>
+    
+    <priority level="5">
+      <tool>write_to_file</tool>
+      <when>Only when creating findings.md or updating tasks.md after user approval</when>
+      <why>Stakeholder mode has limited write access - only for documentation</why>
+    </priority>
+    
+    <priority level="6">
+      <tool>switch_mode</tool>
+      <when>When user approves remediation that requires implementation</when>
+      <why>Engineer mode needed for code fixes; Architect for design issues</why>
+    </priority>
+  </tool_priorities>
+
+  <tool_specific_guidance>
+    <tool name="execute_command">
+      <purpose>Run scripts and git commands for context and change analysis</purpose>
+      
+      <best_practices>
+        <practice>Always run prerequisite script first to get feature directory</practice>
+        <practice>Use git status to identify all modified files</practice>
+        <practice>Use git diff to examine specific changes</practice>
+        <practice>Check for uncommitted changes with git status</practice>
+        <practice>Verify tests pass with appropriate test commands</practice>
+      </best_practices>
+      
+      <common_commands>
+        <command>
+          <name>Run prerequisite script (bash)</name>
+          <syntax>scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks</syntax>
+          <output>JSON with FEATURE_DIR and AVAILABLE_DOCS</output>
+        </command>
+        
+        <command>
+          <name>Run prerequisite script (PowerShell)</name>
+          <syntax>scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks</syntax>
+          <output>JSON with FEATURE_DIR and AVAILABLE_DOCS</output>
+        </command>
+        
+        <command>
+          <name>Check git status</name>
+          <syntax>git status --porcelain</syntax>
+          <output>List of modified, added, deleted files</output>
+        </command>
+        
+        <command>
+          <name>View git changes</name>
+          <syntax>git diff</syntax>
+          <output>Detailed diff of all changes</output>
+        </command>
+        
+        <command>
+          <name>View staged changes</name>
+          <syntax>git diff --cached</syntax>
+          <output>Diff of staged changes</output>
+        </command>
+        
+        <command>
+          <name>Check for merge conflicts</name>
+          <syntax>git diff --check</syntax>
+          <output>List of conflict markers if any</output>
+        </command>
+        
+        <command>
+          <name>Run tests</name>
+          <syntax>npm test / pytest / go test / etc.</syntax>
+          <output>Test results and coverage</output>
+        </command>
+      </common_commands>
+      
+      <example><![CDATA[
+<execute_command>
+<command>scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks</command>
+</execute_command>
+
+# Parse JSON output to get FEATURE_DIR and AVAILABLE_DOCS
+# Then use these paths to load artifacts
+      ]]></example>
+    </tool>
+
+    <tool name="read_file">
+      <purpose>Load planning and implementation artifacts for validation</purpose>
+      
+      <best_practices>
+        <practice>Load required artifacts first (tasks, plan, constitution, spec)</practice>
+        <practice>Load optional artifacts only if they exist</practice>
+        <practice>Use line ranges for large files to focus on relevant sections</practice>
+        <practice>Read up to 5 files at once for efficiency</practice>
+        <practice>Build semantic models from loaded content</practice>
+      </best_practices>
+      
+      <loading_strategy>
+        <phase name="required_artifacts">
+          <files>
+            <file>tasks.md - Verify all tasks complete</file>
+            <file>plan.md - Understand architecture and tech stack</file>
+            <file>constitution.md - Know non-negotiable principles</file>
+            <file>spec.md - Understand original requirements</file>
+          </files>
+        </phase>
+        
+        <phase name="optional_artifacts">
+          <files>
+            <file>data-model.md - Entity relationships (if exists)</file>
+            <file>contracts/*.yaml - API specifications (if exists)</file>
+            <file>research.md - Technical decisions (if exists)</file>
+            <file>checklists/*.md - Quality criteria (if exists)</file>
+          </files>
+        </phase>
+        
+        <phase name="implementation_files">
+          <files>
+            <file>Modified source files identified by git</file>
+            <file>New files added in implementation</file>
+            <file>Test files for coverage validation</file>
+          </files>
+        </phase>
+      </loading_strategy>
+      
+      <example><![CDATA[
+<read_file>
+<args>
+  <file>
+    <path>specs/feature-name/tasks.md</path>
+  </file>
+  <file>
+    <path>specs/feature-name/plan.md</path>
+  </file>
+  <file>
+    <path>memory/bobkit/constitution.md</path>
+  </file>
+  <file>
+    <path>specs/feature-name/spec.md</path>
+  </file>
+</args>
+</read_file>
+      ]]></example>
+    </tool>
+
+    <tool name="search_files">
+      <purpose>Find specific patterns, issues, or code across the codebase</purpose>
+      
+      <best_practices>
+        <practice>Use for finding security vulnerabilities (hardcoded secrets, SQL injection)</practice>
+        <practice>Search for style violations or anti-patterns</practice>
+        <practice>Find TODO/FIXME comments that need attention</practice>
+        <practice>Locate specific error handling patterns</practice>
+        <practice>Use regex for flexible pattern matching</practice>
+      </best_practices>
+      
+      <common_searches>
+        <search>
+          <name>Find hardcoded secrets</name>
+          <regex>(password|secret|api_key|token)\s*=\s*['"]\w+['"]</regex>
+          <severity>CRITICAL</severity>
+        </search>
+        
+        <search>
+          <name>Find SQL injection risks</name>
+          <regex>execute\([^?]*\+.*\)</regex>
+          <severity>CRITICAL</severity>
+        </search>
+        
+        <search>
+          <name>Find TODO comments</name>
+          <regex>TODO|FIXME|HACK|XXX</regex>
+          <severity>MEDIUM</severity>
+        </search>
+        
+        <search>
+          <name>Find missing error handling</name>
+          <regex>try\s*{[^}]*}\s*catch\s*\(\s*\)\s*{</regex>
+          <severity>HIGH</severity>
+        </search>
+        
+        <search>
+          <name>Find console.log in production</name>
+          <regex>console\.(log|debug|info)</regex>
+          <severity>MEDIUM</severity>
+        </search>
+      </common_searches>
+      
+      <example><![CDATA[
+<search_files>
+<path>src/</path>
+<regex>(password|secret|api_key|token)\s*=\s*['"]\w+['"]</regex>
+<file_pattern>*.py</file_pattern>
+</search_files>
+      ]]></example>
+    </tool>
+
+    <tool name="list_code_definition_names">
+      <purpose>Understand code structure and architectural organization</purpose>
+      
+      <best_practices>
+        <practice>Use to get overview of classes and functions in modified files</practice>
+        <practice>Check for naming consistency across modules</practice>
+        <practice>Verify architectural patterns are followed</practice>
+        <practice>Identify missing or unexpected components</practice>
+      </best_practices>
+      
+      <example><![CDATA[
+<list_code_definition_names>
+<path>src/api/</path>
+</list_code_definition_names>
+
+# Analyze output for:
+# - Consistent naming conventions
+# - Expected architectural patterns
+# - Missing components from plan
+# - Unexpected additions
+      ]]></example>
+    </tool>
+
+    <tool name="write_to_file">
+      <purpose>Create findings.md or update tasks.md after user approval</purpose>
+      
+      <best_practices>
+        <practice>Only write findings.md if --create-findings-file flag present</practice>
+        <practice>Only update tasks.md if user explicitly approves option A</practice>
+        <practice>Use consistent format for findings documentation</practice>
+        <practice>Include all severity levels in findings.md</practice>
+        <practice>Add remediation tasks to tasks.md with clear descriptions</practice>
+      </best_practices>
+      
+      <findings_structure>
+        <template><![CDATA[
+# Code Review Findings
+
+## Summary
+[Brief overview of validation results]
+- Total issues: [count]
+- Critical: [count]
+- High: [count]
+- Medium: [count]
+- Low: [count]
+
+## Critical Issues
+
+### [Issue Title]
+- **Location**: [file:line]
+- **Description**: [What is wrong]
+- **Impact**: [How this affects the system]
+- **Mitigation**: [Specific steps to fix]
+
+## High Priority Issues
+[Same format]
+
+## Medium Priority Issues
+[Same format]
+
+## Low Priority Issues
+[Same format]
+
+## Positive Findings
+- [Well-implemented features]
+- [Good practices observed]
+        ]]></template>
+      </findings_structure>
+      
+      <tasks_update_format>
+        <template><![CDATA[
+## Remediation Tasks
+
+- [ ] [REMED-001] [CRITICAL] Fix security vulnerability in src/auth.py:45
+- [ ] [REMED-002] [HIGH] Add error handling to src/api/users.py:120-135
+- [ ] [REMED-003] [MEDIUM] Update documentation in README.md
+        ]]></template>
+      </tasks_update_format>
+      
+      <example><![CDATA[
+<write_to_file>
+<path>findings.md</path>
+<content>
+# Code Review Findings
+
+## Summary
+Comprehensive validation completed. Found 3 critical issues that must be resolved.
+
+## Critical Issues
+
+### Hardcoded API Key in Configuration
+- **Location**: src/config.py:12
+- **Description**: API key is hardcoded in source code
+- **Impact**: Security vulnerability - credentials exposed in version control
+- **Mitigation**: Move API key to environment variable and update config to read from env
+
+<!-- Made with Bob -->
+
+        
+        <scenario>
+          <condition>Architectural issues require design review</condition>
+          <target_mode>bobkit-architect</target_mode>
+          <reason>Fundamental design problems need architectural authority</reason>
+        </scenario>
+        
+        <scenario>
+          <condition>Spec violations or requirement conflicts found</condition>
+          <target_mode>bobkit-strategist</target_mode>
+          <reason>Specification needs clarification or revision</reason>
+        </scenario>
+      </transition_scenarios>
+      
+      <example><![CDATA[
+<switch_mode>
+<mode_slug>bobkit-engineer</mode_slug>
+<reason>User approved fixing 5 critical and 3 high-priority issues. Updated tasks.md with remediation tasks.</reason>
+</switch_mode>
+      ]]></example>
+    </tool>
+
+    <tool name="ask_followup_question">
+      <purpose>Get user decisions on remediation approach</purpose>
+      
+      <best_practices>
+        <practice>Use for critical decision points (fix now vs document)</practice>
+        <practice>Provide clear options with explicit outcomes</practice>
+        <practice>Explain severity context before asking</practice>
+        <practice>Limit to 2-4 options maximum</practice>
+        <practice>Make options actionable and complete</practice>
+      </best_practices>
+      
+      <decision_templates>
+        <template name="critical_high_issues">
+          <question>
+            Critical/high-priority issues detected that should be resolved before proceeding.
+            Would you like me to:
+          </question>
+          <suggestions>
+            <suggest>Update tasks.md and switch to Engineer mode to fix them</suggest>
+            <suggest>Document them in findings.md and proceed anyway (not recommended)</suggest>
+          </suggestions>
+        </template>
+        
+        <template name="medium_low_issues">
+          <question>
+            Medium/low-priority issues detected. Would you like me to:
+          </question>
+          <suggestions>
+            <suggest>Update tasks.md and switch to Engineer mode to fix them</suggest>
+            <suggest>Document them in findings.md for later review</suggest>
+            <suggest>Proceed as is (issues noted but not blocking)</suggest>
+          </suggestions>
+        </template>
+        
+        <template name="pr_creation">
+          <question>
+            Code review complete with no blocking issues. Would you like to create a Pull Request?
+          </question>
+          <suggestions>
+            <suggest>Yes, create PR now</suggest>
+            <suggest>No, I'll create it manually later</suggest>
+          </suggestions>
+        </template>
+      </decision_templates>
+      
+      <example><![CDATA[
+<ask_followup_question>
+<question>Critical/high-priority issues detected that should be resolved before proceeding. Would you like me to:</question>
+<follow_up>
+<suggest mode="bobkit-engineer">Update tasks.md and switch to Engineer mode to fix them</suggest>
+<suggest>Document them in findings.md and proceed anyway (not recommended)</suggest>
+</follow_up>
+</ask_followup_question>
+      ]]></example>
+    </tool>
+  </tool_specific_guidance>
+
+  <validation_workflow_tools>
+    <workflow_step number="1">
+      <action>Initialize context</action>
+      <tools>
+        <tool>execute_command - Run prerequisite script</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="2">
+      <action>Analyze changes</action>
+      <tools>
+        <tool>execute_command - Run git status and git diff</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="3">
+      <action>Load artifacts</action>
+      <tools>
+        <tool>read_file - Load required and optional artifacts</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="4">
+      <action>Perform validation</action>
+      <tools>
+        <tool>search_files - Find specific issues</tool>
+        <tool>list_code_definition_names - Understand structure</tool>
+        <tool>read_file - Examine specific files</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="5">
+      <action>Report findings</action>
+      <tools>
+        <tool>Present findings in structured format (no tool needed)</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="6">
+      <action>Get user decision</action>
+      <tools>
+        <tool>ask_followup_question - Prompt for remediation choice</tool>
+      </tools>
+    </workflow_step>
+    
+    <workflow_step number="7">
+      <action>Execute remediation</action>
+      <tools>
+        <tool>write_to_file - Create findings.md or update tasks.md</tool>
+        <tool>switch_mode - Transition to Engineer/Architect/Strategist</tool>
+      </tools>
+    </workflow_step>
+  </validation_workflow_tools>
+
+  <efficiency_tips>
+    <tip>Load multiple files at once (up to 5) with read_file for efficiency</tip>
+    <tip>Use search_files instead of reading every file when looking for patterns</tip>
+    <tip>Run git commands once and parse output rather than multiple calls</tip>
+    <tip>Build semantic models from artifacts to avoid re-reading</tip>
+    <tip>Use line ranges in read_file for large files to focus on relevant sections</tip>
+    <tip>Cache artifact content in thinking tags to avoid re-loading</tip>
+  </efficiency_tips>
+
+  <anti_patterns>
+    <anti_pattern>
+      <description>Reading files one at a time when multiple are needed</description>
+      <why_bad>Wastes tokens and time with multiple tool calls</why_bad>
+      <correct_approach>Use read_file with multiple file elements (up to 5)</correct_approach>
+    </anti_pattern>
+    
+    <anti_pattern>
+      <description>Running git diff multiple times for different files</description>
+      <why_bad>Inefficient and redundant</why_bad>
+      <correct_approach>Run git diff once and parse all changes</correct_approach>
+    </anti_pattern>
+    
+    <anti_pattern>
+      <description>Using write_to_file without user approval</description>
+      <why_bad>Violates user-driven remediation principle</why_bad>
+      <correct_approach>Always get explicit approval before writing files</correct_approach>
+    </anti_pattern>
+    
+    <anti_pattern>
+      <description>Switching modes without clear reason</description>
+      <why_bad>Confuses user and breaks workflow continuity</why_bad>
+      <correct_approach>Provide specific reason explaining why mode switch is needed</correct_approach>
+    </anti_pattern>
+  </anti_patterns>
+</stakeholder_tool_usage>

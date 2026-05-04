@@ -2,60 +2,93 @@
 
 import {
   type Client,
+  formDataBodySerializer,
   type Options as Options2,
   type TDataShape,
   urlSearchParamsBodySerializer,
 } from "./client";
 import { client } from "./client.gen";
 import type {
-  CreateItemData,
-  CreateItemErrors,
-  CreateItemResponses,
-  CreateUserData,
-  CreateUserErrors,
-  CreateUserResponses,
-  DeleteItemData,
-  DeleteItemErrors,
-  DeleteItemResponses,
-  DeleteUserData,
-  DeleteUserErrors,
-  DeleteUserMeData,
-  DeleteUserMeResponses,
-  DeleteUserResponses,
-  LoginAccessTokenData,
-  LoginAccessTokenErrors,
-  LoginAccessTokenResponses,
-  ReadItemData,
-  ReadItemErrors,
-  ReadItemResponses,
-  ReadItemsData,
-  ReadItemsErrors,
-  ReadItemsResponses,
-  ReadUserByIdData,
-  ReadUserByIdErrors,
-  ReadUserByIdResponses,
-  ReadUserMeData,
-  ReadUserMeResponses,
-  ReadUsersData,
-  ReadUsersErrors,
-  ReadUsersResponses,
-  RegisterUserData,
-  RegisterUserErrors,
-  RegisterUserResponses,
-  TestTokenData,
-  TestTokenResponses,
-  UpdateItemData,
-  UpdateItemErrors,
-  UpdateItemResponses,
-  UpdatePasswordMeData,
-  UpdatePasswordMeErrors,
-  UpdatePasswordMeResponses,
-  UpdateUserData,
-  UpdateUserErrors,
-  UpdateUserMeData,
-  UpdateUserMeErrors,
-  UpdateUserMeResponses,
-  UpdateUserResponses,
+  ItemsCreateItemData,
+  ItemsCreateItemErrors,
+  ItemsCreateItemResponses,
+  ItemsDeleteItemData,
+  ItemsDeleteItemErrors,
+  ItemsDeleteItemResponses,
+  ItemsReadItemData,
+  ItemsReadItemErrors,
+  ItemsReadItemResponses,
+  ItemsReadItemsData,
+  ItemsReadItemsErrors,
+  ItemsReadItemsResponses,
+  ItemsUpdateItemData,
+  ItemsUpdateItemErrors,
+  ItemsUpdateItemResponses,
+  LoginLoginAccessTokenData,
+  LoginLoginAccessTokenErrors,
+  LoginLoginAccessTokenResponses,
+  LoginTestTokenData,
+  LoginTestTokenResponses,
+  TicketsDeleteTicketData,
+  TicketsDeleteTicketErrors,
+  TicketsDeleteTicketResponses,
+  TicketsDownloadTicketPdfData,
+  TicketsDownloadTicketPdfErrors,
+  TicketsDownloadTicketPdfResponses,
+  TicketsGetDashboardStatsData,
+  TicketsGetDashboardStatsResponses,
+  TicketsGetRecentScansData,
+  TicketsGetRecentScansErrors,
+  TicketsGetRecentScansResponses,
+  TicketsReadTicketData,
+  TicketsReadTicketErrors,
+  TicketsReadTicketResponses,
+  TicketsReadTicketsByHostData,
+  TicketsReadTicketsByHostErrors,
+  TicketsReadTicketsByHostResponses,
+  TicketsReadTicketScanEventsData,
+  TicketsReadTicketScanEventsErrors,
+  TicketsReadTicketScanEventsResponses,
+  TicketsReadTicketsData,
+  TicketsReadTicketsErrors,
+  TicketsReadTicketsResponses,
+  TicketsUpdateTicketData,
+  TicketsUpdateTicketErrors,
+  TicketsUpdateTicketResponses,
+  TicketsUploadCsvAndGenerateTicketsData,
+  TicketsUploadCsvAndGenerateTicketsErrors,
+  TicketsUploadCsvAndGenerateTicketsResponses,
+  TicketsValidateTicketData,
+  TicketsValidateTicketErrors,
+  TicketsValidateTicketResponses,
+  UsersCreateUserData,
+  UsersCreateUserErrors,
+  UsersCreateUserResponses,
+  UsersDeleteUserData,
+  UsersDeleteUserErrors,
+  UsersDeleteUserMeData,
+  UsersDeleteUserMeResponses,
+  UsersDeleteUserResponses,
+  UsersReadUserByIdData,
+  UsersReadUserByIdErrors,
+  UsersReadUserByIdResponses,
+  UsersReadUserMeData,
+  UsersReadUserMeResponses,
+  UsersReadUsersData,
+  UsersReadUsersErrors,
+  UsersReadUsersResponses,
+  UsersRegisterUserData,
+  UsersRegisterUserErrors,
+  UsersRegisterUserResponses,
+  UsersUpdatePasswordMeData,
+  UsersUpdatePasswordMeErrors,
+  UsersUpdatePasswordMeResponses,
+  UsersUpdateUserData,
+  UsersUpdateUserErrors,
+  UsersUpdateUserMeData,
+  UsersUpdateUserMeErrors,
+  UsersUpdateUserMeResponses,
+  UsersUpdateUserResponses,
 } from "./types.gen";
 
 export type Options<
@@ -81,12 +114,12 @@ export class Login {
    *
    * OAuth2 compatible token login, get an access token for future requests
    */
-  public static loginAccessToken<ThrowOnError extends boolean = false>(
-    options: Options<LoginAccessTokenData, ThrowOnError>,
+  public static loginLoginAccessToken<ThrowOnError extends boolean = false>(
+    options: Options<LoginLoginAccessTokenData, ThrowOnError>,
   ) {
     return (options.client ?? client).post<
-      LoginAccessTokenResponses,
-      LoginAccessTokenErrors,
+      LoginLoginAccessTokenResponses,
+      LoginLoginAccessTokenErrors,
       ThrowOnError
     >({
       ...urlSearchParamsBodySerializer,
@@ -105,11 +138,11 @@ export class Login {
    *
    * Test access token
    */
-  public static testToken<ThrowOnError extends boolean = false>(
-    options?: Options<TestTokenData, ThrowOnError>,
+  public static loginTestToken<ThrowOnError extends boolean = false>(
+    options?: Options<LoginTestTokenData, ThrowOnError>,
   ) {
     return (options?.client ?? client).post<
-      TestTokenResponses,
+      LoginTestTokenResponses,
       unknown,
       ThrowOnError
     >({
@@ -127,12 +160,12 @@ export class Users {
    *
    * Retrieve users.
    */
-  public static readUsers<ThrowOnError extends boolean = false>(
-    options?: Options<ReadUsersData, ThrowOnError>,
+  public static usersReadUsers<ThrowOnError extends boolean = false>(
+    options?: Options<UsersReadUsersData, ThrowOnError>,
   ) {
     return (options?.client ?? client).get<
-      ReadUsersResponses,
-      ReadUsersErrors,
+      UsersReadUsersResponses,
+      UsersReadUsersErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -147,12 +180,12 @@ export class Users {
    *
    * Create new user.
    */
-  public static createUser<ThrowOnError extends boolean = false>(
-    options: Options<CreateUserData, ThrowOnError>,
+  public static usersCreateUser<ThrowOnError extends boolean = false>(
+    options: Options<UsersCreateUserData, ThrowOnError>,
   ) {
     return (options.client ?? client).post<
-      CreateUserResponses,
-      CreateUserErrors,
+      UsersCreateUserResponses,
+      UsersCreateUserErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -171,11 +204,11 @@ export class Users {
    *
    * Delete own user.
    */
-  public static deleteUserMe<ThrowOnError extends boolean = false>(
-    options?: Options<DeleteUserMeData, ThrowOnError>,
+  public static usersDeleteUserMe<ThrowOnError extends boolean = false>(
+    options?: Options<UsersDeleteUserMeData, ThrowOnError>,
   ) {
     return (options?.client ?? client).delete<
-      DeleteUserMeResponses,
+      UsersDeleteUserMeResponses,
       unknown,
       ThrowOnError
     >({
@@ -191,11 +224,11 @@ export class Users {
    *
    * Get current user.
    */
-  public static readUserMe<ThrowOnError extends boolean = false>(
-    options?: Options<ReadUserMeData, ThrowOnError>,
+  public static usersReadUserMe<ThrowOnError extends boolean = false>(
+    options?: Options<UsersReadUserMeData, ThrowOnError>,
   ) {
     return (options?.client ?? client).get<
-      ReadUserMeResponses,
+      UsersReadUserMeResponses,
       unknown,
       ThrowOnError
     >({
@@ -211,12 +244,12 @@ export class Users {
    *
    * Update own user.
    */
-  public static updateUserMe<ThrowOnError extends boolean = false>(
-    options: Options<UpdateUserMeData, ThrowOnError>,
+  public static usersUpdateUserMe<ThrowOnError extends boolean = false>(
+    options: Options<UsersUpdateUserMeData, ThrowOnError>,
   ) {
     return (options.client ?? client).patch<
-      UpdateUserMeResponses,
-      UpdateUserMeErrors,
+      UsersUpdateUserMeResponses,
+      UsersUpdateUserMeErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -235,12 +268,12 @@ export class Users {
    *
    * Update own password.
    */
-  public static updatePasswordMe<ThrowOnError extends boolean = false>(
-    options: Options<UpdatePasswordMeData, ThrowOnError>,
+  public static usersUpdatePasswordMe<ThrowOnError extends boolean = false>(
+    options: Options<UsersUpdatePasswordMeData, ThrowOnError>,
   ) {
     return (options.client ?? client).patch<
-      UpdatePasswordMeResponses,
-      UpdatePasswordMeErrors,
+      UsersUpdatePasswordMeResponses,
+      UsersUpdatePasswordMeErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -259,12 +292,12 @@ export class Users {
    *
    * Create new user without the need to be logged in.
    */
-  public static registerUser<ThrowOnError extends boolean = false>(
-    options: Options<RegisterUserData, ThrowOnError>,
+  public static usersRegisterUser<ThrowOnError extends boolean = false>(
+    options: Options<UsersRegisterUserData, ThrowOnError>,
   ) {
     return (options.client ?? client).post<
-      RegisterUserResponses,
-      RegisterUserErrors,
+      UsersRegisterUserResponses,
+      UsersRegisterUserErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -282,12 +315,12 @@ export class Users {
    *
    * Delete a user.
    */
-  public static deleteUser<ThrowOnError extends boolean = false>(
-    options: Options<DeleteUserData, ThrowOnError>,
+  public static usersDeleteUser<ThrowOnError extends boolean = false>(
+    options: Options<UsersDeleteUserData, ThrowOnError>,
   ) {
     return (options.client ?? client).delete<
-      DeleteUserResponses,
-      DeleteUserErrors,
+      UsersDeleteUserResponses,
+      UsersDeleteUserErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -302,12 +335,12 @@ export class Users {
    *
    * Get a specific user by id.
    */
-  public static readUserById<ThrowOnError extends boolean = false>(
-    options: Options<ReadUserByIdData, ThrowOnError>,
+  public static usersReadUserById<ThrowOnError extends boolean = false>(
+    options: Options<UsersReadUserByIdData, ThrowOnError>,
   ) {
     return (options.client ?? client).get<
-      ReadUserByIdResponses,
-      ReadUserByIdErrors,
+      UsersReadUserByIdResponses,
+      UsersReadUserByIdErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -322,12 +355,12 @@ export class Users {
    *
    * Update a user.
    */
-  public static updateUser<ThrowOnError extends boolean = false>(
-    options: Options<UpdateUserData, ThrowOnError>,
+  public static usersUpdateUser<ThrowOnError extends boolean = false>(
+    options: Options<UsersUpdateUserData, ThrowOnError>,
   ) {
     return (options.client ?? client).patch<
-      UpdateUserResponses,
-      UpdateUserErrors,
+      UsersUpdateUserResponses,
+      UsersUpdateUserErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -348,12 +381,12 @@ export class Items {
    *
    * Retrieve items.
    */
-  public static readItems<ThrowOnError extends boolean = false>(
-    options?: Options<ReadItemsData, ThrowOnError>,
+  public static itemsReadItems<ThrowOnError extends boolean = false>(
+    options?: Options<ItemsReadItemsData, ThrowOnError>,
   ) {
     return (options?.client ?? client).get<
-      ReadItemsResponses,
-      ReadItemsErrors,
+      ItemsReadItemsResponses,
+      ItemsReadItemsErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -368,12 +401,12 @@ export class Items {
    *
    * Create new item.
    */
-  public static createItem<ThrowOnError extends boolean = false>(
-    options: Options<CreateItemData, ThrowOnError>,
+  public static itemsCreateItem<ThrowOnError extends boolean = false>(
+    options: Options<ItemsCreateItemData, ThrowOnError>,
   ) {
     return (options.client ?? client).post<
-      CreateItemResponses,
-      CreateItemErrors,
+      ItemsCreateItemResponses,
+      ItemsCreateItemErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -392,12 +425,12 @@ export class Items {
    *
    * Delete an item.
    */
-  public static deleteItem<ThrowOnError extends boolean = false>(
-    options: Options<DeleteItemData, ThrowOnError>,
+  public static itemsDeleteItem<ThrowOnError extends boolean = false>(
+    options: Options<ItemsDeleteItemData, ThrowOnError>,
   ) {
     return (options.client ?? client).delete<
-      DeleteItemResponses,
-      DeleteItemErrors,
+      ItemsDeleteItemResponses,
+      ItemsDeleteItemErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -412,12 +445,12 @@ export class Items {
    *
    * Get item by ID.
    */
-  public static readItem<ThrowOnError extends boolean = false>(
-    options: Options<ReadItemData, ThrowOnError>,
+  public static itemsReadItem<ThrowOnError extends boolean = false>(
+    options: Options<ItemsReadItemData, ThrowOnError>,
   ) {
     return (options.client ?? client).get<
-      ReadItemResponses,
-      ReadItemErrors,
+      ItemsReadItemResponses,
+      ItemsReadItemErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -432,12 +465,12 @@ export class Items {
    *
    * Update an item.
    */
-  public static updateItem<ThrowOnError extends boolean = false>(
-    options: Options<UpdateItemData, ThrowOnError>,
+  public static itemsUpdateItem<ThrowOnError extends boolean = false>(
+    options: Options<ItemsUpdateItemData, ThrowOnError>,
   ) {
     return (options.client ?? client).put<
-      UpdateItemResponses,
-      UpdateItemErrors,
+      ItemsUpdateItemResponses,
+      ItemsUpdateItemErrors,
       ThrowOnError
     >({
       responseType: "json",
@@ -448,6 +481,247 @@ export class Items {
         "Content-Type": "application/json",
         ...options.headers,
       },
+    });
+  }
+}
+
+export class Tickets {
+  /**
+   * Upload Csv And Generate Tickets
+   *
+   * Upload CSV file and generate tickets for all guests.
+   *
+   * Expected CSV format (Airtable export):
+   * - Semicolon delimiter
+   * - UTF-8 with BOM encoding
+   * - Columns: Vorname, Nachname, E-Mail, Rolle, Age Guest, E-mail Host Gast
+   *
+   * Returns:
+   * Dictionary with success count, error count, and details
+   */
+  public static ticketsUploadCsvAndGenerateTickets<
+    ThrowOnError extends boolean = false,
+  >(options: Options<TicketsUploadCsvAndGenerateTicketsData, ThrowOnError>) {
+    return (options.client ?? client).post<
+      TicketsUploadCsvAndGenerateTicketsResponses,
+      TicketsUploadCsvAndGenerateTicketsErrors,
+      ThrowOnError
+    >({
+      ...formDataBodySerializer,
+      responseType: "json",
+      url: "/api/v1/tickets/upload-csv",
+      ...options,
+      headers: {
+        "Content-Type": null,
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Read Tickets
+   *
+   * Get all tickets with pagination.
+   */
+  public static ticketsReadTickets<ThrowOnError extends boolean = false>(
+    options?: Options<TicketsReadTicketsData, ThrowOnError>,
+  ) {
+    return (options?.client ?? client).get<
+      TicketsReadTicketsResponses,
+      TicketsReadTicketsErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/",
+      ...options,
+    });
+  }
+
+  /**
+   * Read Tickets By Host
+   *
+   * Get all tickets for a specific host (IBMer).
+   */
+  public static ticketsReadTicketsByHost<ThrowOnError extends boolean = false>(
+    options: Options<TicketsReadTicketsByHostData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).get<
+      TicketsReadTicketsByHostResponses,
+      TicketsReadTicketsByHostErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/by-host/{host_email}",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Dashboard Stats
+   *
+   * Get real-time dashboard statistics for ticket monitoring.
+   *
+   * Returns:
+   * Dictionary with total tickets, scanned tickets, remaining tickets, and scan rate
+   */
+  public static ticketsGetDashboardStats<ThrowOnError extends boolean = false>(
+    options?: Options<TicketsGetDashboardStatsData, ThrowOnError>,
+  ) {
+    return (options?.client ?? client).get<
+      TicketsGetDashboardStatsResponses,
+      unknown,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/dashboard",
+      ...options,
+    });
+  }
+
+  /**
+   * Get Recent Scans
+   *
+   * Get recent scan events for monitoring dashboard.
+   *
+   * Returns the last N scan events with ticket details, ordered by timestamp descending.
+   *
+   * Args:
+   * limit: Maximum number of scan events to return (default: 50)
+   *
+   * Returns:
+   * ScanEventsPublic with recent scan events
+   */
+  public static ticketsGetRecentScans<ThrowOnError extends boolean = false>(
+    options?: Options<TicketsGetRecentScansData, ThrowOnError>,
+  ) {
+    return (options?.client ?? client).get<
+      TicketsGetRecentScansResponses,
+      TicketsGetRecentScansErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/recent-scans",
+      ...options,
+    });
+  }
+
+  /**
+   * Delete Ticket
+   *
+   * Delete a ticket by ID.
+   */
+  public static ticketsDeleteTicket<ThrowOnError extends boolean = false>(
+    options: Options<TicketsDeleteTicketData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).delete<
+      TicketsDeleteTicketResponses,
+      TicketsDeleteTicketErrors,
+      ThrowOnError
+    >({ url: "/api/v1/tickets/{ticket_id}", ...options });
+  }
+
+  /**
+   * Read Ticket
+   *
+   * Get a specific ticket by ID.
+   */
+  public static ticketsReadTicket<ThrowOnError extends boolean = false>(
+    options: Options<TicketsReadTicketData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).get<
+      TicketsReadTicketResponses,
+      TicketsReadTicketErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/{ticket_id}",
+      ...options,
+    });
+  }
+
+  /**
+   * Update Ticket
+   *
+   * Update a ticket.
+   */
+  public static ticketsUpdateTicket<ThrowOnError extends boolean = false>(
+    options: Options<TicketsUpdateTicketData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).patch<
+      TicketsUpdateTicketResponses,
+      TicketsUpdateTicketErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/{ticket_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Download Ticket Pdf
+   *
+   * Download ticket as PDF.
+   */
+  public static ticketsDownloadTicketPdf<ThrowOnError extends boolean = false>(
+    options: Options<TicketsDownloadTicketPdfData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).get<
+      TicketsDownloadTicketPdfResponses,
+      TicketsDownloadTicketPdfErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/{ticket_id}/pdf",
+      ...options,
+    });
+  }
+
+  /**
+   * Validate Ticket
+   *
+   * Validate a ticket for entry (real-time duplicate prevention).
+   *
+   * Uses row-level locking (SELECT ... FOR UPDATE) to prevent race conditions
+   * when multiple scanners attempt to validate the same ticket simultaneously.
+   *
+   * Returns:
+   * Dictionary with validation result and ticket status
+   */
+  public static ticketsValidateTicket<ThrowOnError extends boolean = false>(
+    options: Options<TicketsValidateTicketData, ThrowOnError>,
+  ) {
+    return (options.client ?? client).post<
+      TicketsValidateTicketResponses,
+      TicketsValidateTicketErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/{ticket_id}/validate",
+      ...options,
+    });
+  }
+
+  /**
+   * Read Ticket Scan Events
+   *
+   * Get all scan events for a specific ticket (audit trail).
+   */
+  public static ticketsReadTicketScanEvents<
+    ThrowOnError extends boolean = false,
+  >(options: Options<TicketsReadTicketScanEventsData, ThrowOnError>) {
+    return (options.client ?? client).get<
+      TicketsReadTicketScanEventsResponses,
+      TicketsReadTicketScanEventsErrors,
+      ThrowOnError
+    >({
+      responseType: "json",
+      url: "/api/v1/tickets/{ticket_id}/scan-events",
+      ...options,
     });
   }
 }

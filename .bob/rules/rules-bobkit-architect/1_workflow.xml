@@ -1,0 +1,357 @@
+<bobkit_architect_workflow>
+  <overview>
+    The BobKit-Architect mode orchestrates the planning, task generation, checklist creation,
+    and analysis phases of the BobKit lifecycle. This workflow ensures specifications are
+    translated into actionable, validated implementation plans before code is written.
+  </overview>
+
+  <mode_responsibilities>
+    <responsibility>Convert specifications into structured implementation plans</responsibility>
+    <responsibility>Generate dependency-ordered task lists from design artifacts</responsibility>
+    <responsibility>Create domain-specific quality checklists for requirements validation</responsibility>
+    <responsibility>Perform cross-artifact consistency and quality analysis</responsibility>
+    <responsibility>Validate technical soundness and architectural coherence</responsibility>
+    <responsibility>Manage transitions to implementation modes when ready</responsibility>
+  </mode_responsibilities>
+
+  <lifecycle_phases>
+    <phase name="plan">
+      <command>/bobkit.plan</command>
+      <purpose>Execute implementation planning workflow using plan template</purpose>
+      <inputs>
+        <input>Feature specification (spec.md)</input>
+        <input>Project constitution</input>
+        <input>Plan template</input>
+      </inputs>
+      <outputs>
+        <output>Implementation plan (plan.md)</output>
+        <output>Research documentation (research.md)</output>
+        <output>Data model (data-model.md)</output>
+        <output>API contracts (contracts/)</output>
+        <output>Quickstart guide (quickstart.md)</output>
+        <output>Updated agent context</output>
+      </outputs>
+      <workflow>
+        <step number="1">
+          <action>Run setup script to get feature paths and branch info</action>
+          <validation>Verify FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH paths</validation>
+        </step>
+        <step number="2">
+          <action>Load context from spec and constitution</action>
+          <validation>Ensure all required sections are present</validation>
+        </step>
+        <step number="3">
+          <action>Fill Technical Context section</action>
+          <details>Mark unknowns as "NEEDS CLARIFICATION" for Phase 0 research</details>
+        </step>
+        <step number="4">
+          <action>Execute Constitution Check</action>
+          <validation>ERROR on violations unless justified</validation>
+        </step>
+        <step number="5">
+          <action>Phase 0: Generate research.md</action>
+          <details>Resolve all NEEDS CLARIFICATION items through research</details>
+        </step>
+        <step number="6">
+          <action>Phase 1: Generate design artifacts</action>
+          <details>Create data-model.md, contracts/, quickstart.md</details>
+        </step>
+        <step number="7">
+          <action>Update agent context</action>
+          <details>Run agent script to update AI assistant context files</details>
+        </step>
+        <step number="8">
+          <action>Re-evaluate Constitution Check post-design</action>
+          <validation>Ensure design aligns with principles</validation>
+        </step>
+        <step number="9">
+          <action>Report completion</action>
+          <details>Output branch, plan path, and generated artifacts</details>
+        </step>
+      </workflow>
+    </phase>
+
+    <phase name="tasks">
+      <command>/bobkit.tasks</command>
+      <purpose>Generate actionable, dependency-ordered tasks from design artifacts</purpose>
+      <inputs>
+        <input>Implementation plan (plan.md) - REQUIRED</input>
+        <input>Feature specification (spec.md) - REQUIRED</input>
+        <input>Data model (data-model.md) - OPTIONAL</input>
+        <input>API contracts (contracts/) - OPTIONAL</input>
+        <input>Research documentation (research.md) - OPTIONAL</input>
+        <input>Quickstart guide (quickstart.md) - OPTIONAL</input>
+      </inputs>
+      <outputs>
+        <output>Task list (tasks.md) with dependency graph</output>
+      </outputs>
+      <workflow>
+        <step number="1">
+          <action>Run prerequisite check script</action>
+          <validation>Verify FEATURE_DIR and AVAILABLE_DOCS</validation>
+        </step>
+        <step number="2">
+          <action>Load design documents</action>
+          <details>Read plan.md, spec.md, and optional artifacts</details>
+        </step>
+        <step number="3">
+          <action>Extract tech stack and project structure from plan</action>
+        </step>
+        <step number="4">
+          <action>Extract user stories with priorities from spec</action>
+        </step>
+        <step number="5">
+          <action>Map entities to user stories (if data-model exists)</action>
+        </step>
+        <step number="6">
+          <action>Map endpoints to user stories (if contracts exist)</action>
+        </step>
+        <step number="7">
+          <action>Generate tasks organized by user story</action>
+          <details>
+            - Phase 1: Setup tasks
+            - Phase 2: Foundational tasks (blocking prerequisites)
+            - Phase 3+: One phase per user story (priority order)
+            - Final Phase: Polish and cross-cutting concerns
+          </details>
+        </step>
+        <step number="8">
+          <action>Generate dependency graph</action>
+          <details>Show user story completion order</details>
+        </step>
+        <step number="9">
+          <action>Create parallel execution examples</action>
+          <details>Identify tasks that can run concurrently</details>
+        </step>
+        <step number="10">
+          <action>Validate task completeness</action>
+          <validation>Each user story has all needed tasks and is independently testable</validation>
+        </step>
+        <step number="11">
+          <action>Report completion</action>
+          <details>Output tasks.md path, task counts, parallel opportunities, MVP scope</details>
+        </step>
+      </workflow>
+      <task_format>
+        <rule>Every task MUST follow: - [ ] [TaskID] [P?] [Story?] Description with file path</rule>
+        <rule>Task IDs are sequential: T001, T002, T003...</rule>
+        <rule>[P] marker for parallelizable tasks only</rule>
+        <rule>[Story] label (US1, US2, etc.) for user story phase tasks only</rule>
+        <rule>Description must include exact file path</rule>
+      </task_format>
+    </phase>
+
+    <phase name="checklist">
+      <command>/bobkit.checklist</command>
+      <purpose>Generate custom quality checklists for requirements validation</purpose>
+      <concept>
+        Checklists are "Unit Tests for Requirements" - they validate the quality,
+        clarity, and completeness of requirements, NOT implementation correctness.
+      </concept>
+      <inputs>
+        <input>Feature specification (spec.md)</input>
+        <input>Implementation plan (plan.md) - OPTIONAL</input>
+        <input>Task list (tasks.md) - OPTIONAL</input>
+        <input>User requirements and focus areas</input>
+      </inputs>
+      <outputs>
+        <output>Domain-specific checklist in checklists/ directory</output>
+      </outputs>
+      <workflow>
+        <step number="1">
+          <action>Run prerequisite check script</action>
+          <validation>Verify FEATURE_DIR and AVAILABLE_DOCS</validation>
+        </step>
+        <step number="2">
+          <action>Generate contextual clarifying questions (max 3 initial)</action>
+          <details>
+            - Derive from user phrasing and extracted signals
+            - Only ask about information that materially changes checklist content
+            - Skip if already unambiguous in user input
+            - May ask up to 2 more follow-ups if scenario classes unclear (max 5 total)
+          </details>
+        </step>
+        <step number="3">
+          <action>Understand user request</action>
+          <details>
+            - Derive checklist theme (security, review, deploy, UX, etc.)
+            - Consolidate explicit must-have items
+            - Map focus selections to category scaffolding
+          </details>
+        </step>
+        <step number="4">
+          <action>Load feature context</action>
+          <details>
+            - Load only necessary portions relevant to focus areas
+            - Prefer summarizing long sections
+            - Use progressive disclosure
+          </details>
+        </step>
+        <step number="5">
+          <action>Generate checklist items</action>
+          <details>
+            - Create checklists/ directory if needed
+            - Use short, descriptive filename (e.g., ux.md, api.md, security.md)
+            - Number items sequentially starting from CHK001
+            - Each run creates NEW file (never overwrites)
+          </details>
+        </step>
+        <step number="6">
+          <action>Structure checklist by quality dimensions</action>
+          <categories>
+            <category>Requirement Completeness</category>
+            <category>Requirement Clarity</category>
+            <category>Requirement Consistency</category>
+            <category>Acceptance Criteria Quality</category>
+            <category>Scenario Coverage</category>
+            <category>Edge Case Coverage</category>
+            <category>Non-Functional Requirements</category>
+            <category>Dependencies and Assumptions</category>
+            <category>Ambiguities and Conflicts</category>
+          </categories>
+        </step>
+        <step number="7">
+          <action>Report completion</action>
+          <details>Output checklist path, item count, focus areas, depth level</details>
+        </step>
+      </workflow>
+      <checklist_principles>
+        <principle>Test requirements quality, NOT implementation correctness</principle>
+        <principle>Ask about what's WRITTEN (or not written) in the spec</principle>
+        <principle>Focus on completeness, clarity, consistency, measurability, coverage</principle>
+        <principle>Minimum 80% of items must include traceability references</principle>
+        <principle>Use question format asking about requirement quality</principle>
+      </checklist_principles>
+    </phase>
+
+    <phase name="analyze">
+      <command>/bobkit.analyze</command>
+      <purpose>Perform cross-artifact consistency and quality analysis</purpose>
+      <constraint>STRICTLY READ-ONLY - no file modifications</constraint>
+      <inputs>
+        <input>Feature specification (spec.md) - REQUIRED</input>
+        <input>Implementation plan (plan.md) - REQUIRED</input>
+        <input>Task list (tasks.md) - REQUIRED</input>
+        <input>Project constitution</input>
+      </inputs>
+      <outputs>
+        <output>Analysis report (not written to file)</output>
+        <output>Optional remediation plan (user must approve)</output>
+      </outputs>
+      <workflow>
+        <step number="1">
+          <action>Run prerequisite check script with --require-tasks</action>
+          <validation>Abort if any required file missing</validation>
+        </step>
+        <step number="2">
+          <action>Load artifacts with progressive disclosure</action>
+          <details>
+            - From spec: Overview, Requirements, User Stories, Edge Cases
+            - From plan: Architecture, Data Model, Phases, Constraints
+            - From tasks: Task IDs, Descriptions, Phases, File paths
+            - From constitution: Principles and normative statements
+          </details>
+        </step>
+        <step number="3">
+          <action>Build semantic models</action>
+          <details>
+            - Requirements inventory with stable keys
+            - User story/action inventory
+            - Task coverage mapping
+            - Constitution rule set
+          </details>
+        </step>
+        <step number="4">
+          <action>Run detection passes (limit 50 findings)</action>
+          <passes>
+            <pass>Duplication Detection</pass>
+            <pass>Ambiguity Detection</pass>
+            <pass>Underspecification</pass>
+            <pass>Constitution Alignment</pass>
+            <pass>Coverage Gaps</pass>
+            <pass>Inconsistency</pass>
+          </passes>
+        </step>
+        <step number="5">
+          <action>Assign severity levels</action>
+          <levels>
+            <level>CRITICAL: Constitution violations, missing core artifacts, zero coverage</level>
+            <level>HIGH: Duplicates, conflicts, ambiguous security/performance, untestable criteria</level>
+            <level>MEDIUM: Terminology drift, missing non-functional coverage, underspecified edge cases</level>
+            <level>LOW: Style/wording improvements, minor redundancy</level>
+          </levels>
+        </step>
+        <step number="6">
+          <action>Produce compact analysis report</action>
+          <sections>
+            <section>Findings table with ID, Category, Severity, Location, Summary, Recommendation</section>
+            <section>Coverage summary table</section>
+            <section>Constitution alignment issues</section>
+            <section>Unmapped tasks</section>
+            <section>Metrics (total requirements, tasks, coverage %, issue counts)</section>
+          </sections>
+        </step>
+        <step number="7">
+          <action>Provide next actions</action>
+          <details>
+            - If CRITICAL: Recommend resolving before implementation
+            - If LOW/MEDIUM: User may proceed with improvement suggestions
+            - Provide explicit command suggestions
+          </details>
+        </step>
+        <step number="8">
+          <action>Offer remediation</action>
+          <details>Ask user if they want concrete remediation edits (do NOT apply automatically)</details>
+        </step>
+      </workflow>
+      <constitution_authority>
+        Constitution is NON-NEGOTIABLE. Conflicts are automatically CRITICAL and require
+        adjustment of spec, plan, or tasks - not dilution or reinterpretation of principles.
+      </constitution_authority>
+    </phase>
+  </lifecycle_phases>
+
+  <mode_transitions>
+    <transition from="strategist" to="architect">
+      <trigger>Specification is complete and validated</trigger>
+      <command>/bobkit.plan</command>
+      <reason>Ready to convert spec into implementation plan</reason>
+    </transition>
+    
+    <transition from="architect" to="architect">
+      <trigger>Plan complete, need tasks</trigger>
+      <command>/bobkit.tasks</command>
+      <reason>Generate actionable task list from design artifacts</reason>
+    </transition>
+    
+    <transition from="architect" to="architect">
+      <trigger>Need quality validation checklist</trigger>
+      <command>/bobkit.checklist</command>
+      <reason>Create domain-specific requirements quality checklist</reason>
+    </transition>
+    
+    <transition from="architect" to="architect">
+      <trigger>Tasks complete, need validation</trigger>
+      <command>/bobkit.analyze</command>
+      <reason>Validate consistency and quality across artifacts</reason>
+    </transition>
+    
+    <transition from="architect" to="engineer">
+      <trigger>All planning artifacts validated and ready</trigger>
+      <command>/bobkit.implement</command>
+      <reason>Begin implementation with validated plan and tasks</reason>
+    </transition>
+  </mode_transitions>
+
+  <key_principles>
+    <principle>Always validate against project constitution</principle>
+    <principle>Ensure technical soundness before implementation</principle>
+    <principle>Create clear dependencies and execution order</principle>
+    <principle>Generate actionable, unambiguous artifacts</principle>
+    <principle>Maintain traceability across all artifacts</principle>
+    <principle>Use progressive disclosure to manage token efficiency</principle>
+    <principle>Provide clear next actions and transition points</principle>
+  </key_principles>
+</bobkit_architect_workflow>
+
+<!-- Made with Bob -->

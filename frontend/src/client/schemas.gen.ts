@@ -57,6 +57,25 @@ export const Body_login_login_access_tokenSchema = {
   title: "Body_login-login_access_token",
 } as const;
 
+export const Body_tickets_upload_csv_and_generate_ticketsSchema = {
+  properties: {
+    file: {
+      type: "string",
+      format: "binary",
+      title: "File",
+    },
+  },
+  type: "object",
+  required: ["file"],
+  title: "Body_tickets-upload_csv_and_generate_tickets",
+} as const;
+
+export const EmailStatusSchema = {
+  type: "string",
+  enum: ["pending", "processing", "sent", "failed", "bounced"],
+  title: "EmailStatus",
+} as const;
+
 export const HTTPValidationErrorSchema = {
   properties: {
     detail: {
@@ -194,6 +213,343 @@ export const MessageSchema = {
   type: "object",
   required: ["message"],
   title: "Message",
+} as const;
+
+export const ScanEventPublicSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    ticket_id: {
+      type: "string",
+      format: "uuid",
+      title: "Ticket Id",
+    },
+    timestamp: {
+      type: "string",
+      format: "date-time",
+      title: "Timestamp",
+    },
+    scanner_device_id: {
+      type: "string",
+      title: "Scanner Device Id",
+    },
+    scanner_user_id: {
+      type: "string",
+      title: "Scanner User Id",
+    },
+    scan_result: {
+      $ref: "#/components/schemas/ScanResult",
+    },
+    error_message: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Error Message",
+    },
+    network_latency_ms: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Network Latency Ms",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "ticket_id",
+    "timestamp",
+    "scanner_device_id",
+    "scanner_user_id",
+    "scan_result",
+    "error_message",
+    "network_latency_ms",
+  ],
+  title: "ScanEventPublic",
+} as const;
+
+export const ScanEventsPublicSchema = {
+  properties: {
+    data: {
+      items: {
+        $ref: "#/components/schemas/ScanEventPublic",
+      },
+      type: "array",
+      title: "Data",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+    },
+  },
+  type: "object",
+  required: ["data", "count"],
+  title: "ScanEventsPublic",
+} as const;
+
+export const ScanResultSchema = {
+  type: "string",
+  enum: ["granted", "already_scanned", "invalid", "network_error"],
+  title: "ScanResult",
+} as const;
+
+export const TicketPublicSchema = {
+  properties: {
+    first_name: {
+      type: "string",
+      maxLength: 255,
+      title: "First Name",
+    },
+    last_name: {
+      type: "string",
+      maxLength: 255,
+      title: "Last Name",
+    },
+    guest_email: {
+      type: "string",
+      maxLength: 255,
+      title: "Guest Email",
+    },
+    role: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Role",
+    },
+    host_email: {
+      type: "string",
+      maxLength: 255,
+      title: "Host Email",
+    },
+    guest_age: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Guest Age",
+    },
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    qr_code_data: {
+      type: "string",
+      title: "Qr Code Data",
+    },
+    is_scanned: {
+      type: "boolean",
+      title: "Is Scanned",
+    },
+    scanned_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Scanned At",
+    },
+    scanner_device_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Scanner Device Id",
+    },
+    scanner_user_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Scanner User Id",
+    },
+    email_sent: {
+      type: "boolean",
+      title: "Email Sent",
+    },
+    email_sent_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Email Sent At",
+    },
+    email_delivery_status: {
+      $ref: "#/components/schemas/EmailStatus",
+    },
+    email_retry_count: {
+      type: "integer",
+      title: "Email Retry Count",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+    },
+    updated_at: {
+      type: "string",
+      format: "date-time",
+      title: "Updated At",
+    },
+  },
+  type: "object",
+  required: [
+    "first_name",
+    "last_name",
+    "guest_email",
+    "host_email",
+    "id",
+    "qr_code_data",
+    "is_scanned",
+    "scanned_at",
+    "scanner_device_id",
+    "scanner_user_id",
+    "email_sent",
+    "email_sent_at",
+    "email_delivery_status",
+    "email_retry_count",
+    "created_at",
+    "updated_at",
+  ],
+  title: "TicketPublic",
+} as const;
+
+export const TicketUpdateSchema = {
+  properties: {
+    first_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "First Name",
+    },
+    last_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Name",
+    },
+    guest_email: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Guest Email",
+    },
+    role: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Role",
+    },
+    host_email: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Host Email",
+    },
+    guest_age: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Guest Age",
+    },
+  },
+  type: "object",
+  title: "TicketUpdate",
+} as const;
+
+export const TicketsPublicSchema = {
+  properties: {
+    data: {
+      items: {
+        $ref: "#/components/schemas/TicketPublic",
+      },
+      type: "array",
+      title: "Data",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+    },
+  },
+  type: "object",
+  required: ["data", "count"],
+  title: "TicketsPublic",
 } as const;
 
 export const TokenSchema = {

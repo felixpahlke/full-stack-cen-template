@@ -14,8 +14,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutScannerRouteImport } from './routes/_layout/scanner'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutAdminDashboardRouteImport } from './routes/_layout/admin/dashboard'
+import { Route as LayoutAdminTicketsIndexRouteImport } from './routes/_layout/admin/tickets/index'
+import { Route as LayoutAdminTicketsUploadRouteImport } from './routes/_layout/admin/tickets/upload'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -41,6 +46,11 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutScannerRoute = LayoutScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutItemsRoute = LayoutItemsRouteImport.update({
   id: '/items',
   path: '/items',
@@ -51,38 +61,94 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutAdminRoute,
+} as any)
+const LayoutAdminDashboardRoute = LayoutAdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => LayoutAdminRoute,
+} as any)
+const LayoutAdminTicketsIndexRoute = LayoutAdminTicketsIndexRouteImport.update({
+  id: '/tickets/',
+  path: '/tickets/',
+  getParentRoute: () => LayoutAdminRoute,
+} as any)
+const LayoutAdminTicketsUploadRoute =
+  LayoutAdminTicketsUploadRouteImport.update({
+    id: '/tickets/upload',
+    path: '/tickets/upload',
+    getParentRoute: () => LayoutAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof LayoutAdminRoute
+  '/admin': typeof LayoutAdminRouteWithChildren
   '/items': typeof LayoutItemsRoute
+  '/scanner': typeof LayoutScannerRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/admin/dashboard': typeof LayoutAdminDashboardRoute
+  '/admin/': typeof LayoutAdminIndexRoute
+  '/admin/tickets/upload': typeof LayoutAdminTicketsUploadRoute
+  '/admin/tickets': typeof LayoutAdminTicketsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
+  '/scanner': typeof LayoutScannerRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/admin/dashboard': typeof LayoutAdminDashboardRoute
+  '/admin': typeof LayoutAdminIndexRoute
+  '/admin/tickets/upload': typeof LayoutAdminTicketsUploadRoute
+  '/admin/tickets': typeof LayoutAdminTicketsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/admin': typeof LayoutAdminRouteWithChildren
   '/_layout/items': typeof LayoutItemsRoute
+  '/_layout/scanner': typeof LayoutScannerRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/admin/dashboard': typeof LayoutAdminDashboardRoute
+  '/_layout/admin/': typeof LayoutAdminIndexRoute
+  '/_layout/admin/tickets/upload': typeof LayoutAdminTicketsUploadRoute
+  '/_layout/admin/tickets/': typeof LayoutAdminTicketsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/signup' | '/admin' | '/items' | '/settings' | '/'
+  fullPaths:
+    | '/login'
+    | '/signup'
+    | '/admin'
+    | '/items'
+    | '/scanner'
+    | '/settings'
+    | '/'
+    | '/admin/dashboard'
+    | '/admin/'
+    | '/admin/tickets/upload'
+    | '/admin/tickets'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/admin' | '/items' | '/settings' | '/'
+  to:
+    | '/login'
+    | '/signup'
+    | '/items'
+    | '/scanner'
+    | '/settings'
+    | '/'
+    | '/admin/dashboard'
+    | '/admin'
+    | '/admin/tickets/upload'
+    | '/admin/tickets'
   id:
     | '__root__'
     | '/_layout'
@@ -90,8 +156,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_layout/admin'
     | '/_layout/items'
+    | '/_layout/scanner'
     | '/_layout/settings'
     | '/_layout/'
+    | '/_layout/admin/dashboard'
+    | '/_layout/admin/'
+    | '/_layout/admin/tickets/upload'
+    | '/_layout/admin/tickets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/scanner': {
+      id: '/_layout/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof LayoutScannerRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/items': {
       id: '/_layout/items'
       path: '/items'
@@ -151,19 +229,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/admin/': {
+      id: '/_layout/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof LayoutAdminIndexRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
+    '/_layout/admin/dashboard': {
+      id: '/_layout/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof LayoutAdminDashboardRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
+    '/_layout/admin/tickets/': {
+      id: '/_layout/admin/tickets/'
+      path: '/tickets'
+      fullPath: '/admin/tickets'
+      preLoaderRoute: typeof LayoutAdminTicketsIndexRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
+    '/_layout/admin/tickets/upload': {
+      id: '/_layout/admin/tickets/upload'
+      path: '/tickets/upload'
+      fullPath: '/admin/tickets/upload'
+      preLoaderRoute: typeof LayoutAdminTicketsUploadRouteImport
+      parentRoute: typeof LayoutAdminRoute
+    }
   }
 }
 
+interface LayoutAdminRouteChildren {
+  LayoutAdminDashboardRoute: typeof LayoutAdminDashboardRoute
+  LayoutAdminIndexRoute: typeof LayoutAdminIndexRoute
+  LayoutAdminTicketsUploadRoute: typeof LayoutAdminTicketsUploadRoute
+  LayoutAdminTicketsIndexRoute: typeof LayoutAdminTicketsIndexRoute
+}
+
+const LayoutAdminRouteChildren: LayoutAdminRouteChildren = {
+  LayoutAdminDashboardRoute: LayoutAdminDashboardRoute,
+  LayoutAdminIndexRoute: LayoutAdminIndexRoute,
+  LayoutAdminTicketsUploadRoute: LayoutAdminTicketsUploadRoute,
+  LayoutAdminTicketsIndexRoute: LayoutAdminTicketsIndexRoute,
+}
+
+const LayoutAdminRouteWithChildren = LayoutAdminRoute._addFileChildren(
+  LayoutAdminRouteChildren,
+)
+
 interface LayoutRouteChildren {
-  LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutAdminRoute: typeof LayoutAdminRouteWithChildren
   LayoutItemsRoute: typeof LayoutItemsRoute
+  LayoutScannerRoute: typeof LayoutScannerRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
-  LayoutAdminRoute: LayoutAdminRoute,
+  LayoutAdminRoute: LayoutAdminRouteWithChildren,
   LayoutItemsRoute: LayoutItemsRoute,
+  LayoutScannerRoute: LayoutScannerRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
