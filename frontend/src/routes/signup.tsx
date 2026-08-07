@@ -27,7 +27,7 @@ export const Route = createFileRoute("/signup")({
   },
 });
 
-export function SignUp() {
+function SignUp() {
   const { signUpMutation, error, resetError } = useAuth();
   const form = useForm({
     defaultValues: {

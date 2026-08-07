@@ -19,3 +19,7 @@ of `immutability` and `static-components`. These remain known gaps rather than c
 Biome also cannot ban `@ts-nocheck` or require descriptions on `@ts-expect-error`. The canonical
 check supplements it with `scripts/lint-ts-comments.mjs`, which bans `@ts-ignore` and
 `@ts-nocheck` and requires a description of at least three characters for `@ts-expect-error`.
+
+`useComponentExportOnlyModules` is disabled only for TanStack Router file routes. Exporting their
+component functions prevents the router plugin from code-splitting them; all non-route frontend
+modules keep the Fast Refresh rule enabled.

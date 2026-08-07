@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_layout/admin")({
   validateSearch: (search) => usersSearchSchema.parse(search),
 });
 
-export function Admin() {
+function Admin() {
   return (
     <div className="w-full">
       <h1 className="py-2 text-center text-2xl font-bold md:text-left">Users Management</h1>
