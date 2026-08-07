@@ -12,6 +12,8 @@ TEAL='\033[0;36m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+OAUTH2_PROXY_IMAGE="quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561"
+
 print_status() { echo -e "${TEAL}==>     $1${NC}"; }
 print_success() { echo -e "${GREEN}==>     $1${NC}"; }
 print_error() { echo -e "${RED}==>     $1${NC}"; }
@@ -21,6 +23,40 @@ print_section() {
     echo -e "${TEAL}========================================${NC}"
     echo -e "${TEAL}  $1${NC}"
     echo -e "${TEAL}========================================${NC}"
+}
+
+ensure_oauth_upstream_password() {
+    local value="${OAUTH2_PROXY_UPSTREAM_PASSWORD:-}"
+    local first_character="${value:0:1}"
+    if [[ -z "$value" || "$value" == "generate-on-first-dev-run" || "$value" == "replace-me" || "$value" =~ ^\<.*\>$ ]]; then
+        OAUTH2_PROXY_UPSTREAM_PASSWORD=$(openssl rand -hex 32)
+        export OAUTH2_PROXY_UPSTREAM_PASSWORD
+        print_success "Generated private OAuth proxy/backend seam credential"
+    elif [[ ${#value} -lt 32 || -z "${value//$first_character/}" ]]; then
+        print_error "OAUTH2_PROXY_UPSTREAM_PASSWORD must be a non-placeholder random value of at least 32 characters. Run npm run dev to generate local values."
+        return 1
+    fi
+}
+
+write_backend_secret_env_file() {
+    local destination="$1"
+    local has_upstream_password=false
+
+    : > "$destination"
+    chmod 600 "$destination"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]] && continue
+        if [[ "$line" =~ ^([A-Za-z0-9_]+)= ]]; then
+            local var_name="${BASH_REMATCH[1]}"
+            [[ "$var_name" == _* ]] && continue
+            printf '%s=%s\n' "$var_name" "${!var_name:-}" >> "$destination"
+            [[ "$var_name" == "OAUTH2_PROXY_UPSTREAM_PASSWORD" ]] && has_upstream_password=true
+        fi
+    done < "$ENV_FILE"
+
+    if [[ "$OAUTH_ENABLED" == "true" && "$has_upstream_password" == "false" ]]; then
+        printf 'OAUTH2_PROXY_UPSTREAM_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD" >> "$destination"
+    fi
 }
 
 print_section "PRE-CHECKS"
@@ -105,6 +141,10 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     exit 1
 fi
 print_success "All required environment variables are set"
+
+if [[ "$OAUTH_ENABLED" == "true" ]]; then
+    ensure_oauth_upstream_password || exit 1
+fi
 
 check_nginx_config() {
     # Skip nginx check for backend-only deployments
@@ -351,55 +391,74 @@ deploy_oauth_proxy() {
         # Construct OAuth proxy URL
         OAUTH_PROXY_URL="https://oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
         
-        # Create or update OAuth proxy secrets
+        local oauth_secret_file
+        local secret_status=0
+        oauth_secret_file=$(mktemp "${TMPDIR:-/tmp}/cen-ce-oauth-secret.XXXXXX") || exit 1
+        chmod 600 "$oauth_secret_file"
+        {
+            printf 'OAUTH2_PROXY_COOKIE_DOMAIN=%s\n' "oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
+            printf 'OAUTH2_PROXY_COOKIE_SECRET=%s\n' "$OAUTH2_PROXY_COOKIE_SECRET"
+            printf 'OAUTH2_PROXY_CLIENT_ID=%s\n' "$OAUTH2_PROXY_CLIENT_ID"
+            printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$OAUTH2_PROXY_CLIENT_SECRET"
+            printf 'OAUTH2_PROXY_OIDC_ISSUER_URL=%s\n' "$OAUTH2_PROXY_OIDC_ISSUER_URL"
+            printf 'OAUTH2_PROXY_REDIRECT_URL=%s\n' "${OAUTH_PROXY_URL}/oauth2/callback"
+            printf 'OAUTH2_PROXY_BASIC_AUTH_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD"
+        } > "$oauth_secret_file"
+
+        # Create or update OAuth proxy secrets without exposing values in arguments.
         if ! ibmcloud ce secret get --name oauth-proxy-secret &>/dev/null; then
             print_status "Creating OAuth proxy secrets..."
             ibmcloud ce secret create --name oauth-proxy-secret \
-                --from-literal=OAUTH2_PROXY_COOKIE_DOMAIN=oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud \
-                --from-literal=OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET} \
-                --from-literal=OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID} \
-                --from-literal=OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET} \
-                --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=${OAUTH2_PROXY_OIDC_ISSUER_URL} \
-                --from-literal=OAUTH2_PROXY_REDIRECT_URL=${OAUTH_PROXY_URL}/oauth2/callback || { print_error "Failed to create OAuth secrets"; exit 1; }
+                --from-env-file "$oauth_secret_file" || secret_status=$?
         else
             print_status "Updating OAuth proxy secrets..."
             ibmcloud ce secret update --name oauth-proxy-secret \
-                --from-literal=OAUTH2_PROXY_COOKIE_DOMAIN=oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud \
-                --from-literal=OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET} \
-                --from-literal=OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID} \
-                --from-literal=OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET} \
-                --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=${OAUTH2_PROXY_OIDC_ISSUER_URL} \
-                --from-literal=OAUTH2_PROXY_REDIRECT_URL=${OAUTH_PROXY_URL}/oauth2/callback || { print_error "Failed to update OAuth secrets"; exit 1; }
+                --from-env-file "$oauth_secret_file" || secret_status=$?
         fi
+        rm -f "$oauth_secret_file"
+        [[ "$secret_status" -eq 0 ]] || { print_error "Failed to store OAuth secrets"; exit 1; }
+
+        local -a OAUTH_PROXY_ARGUMENTS=(
+            --argument="--provider=oidc"
+            --argument="--email-domain=*"
+            --argument="--http-address=:4180"
+            --argument="--pass-basic-auth=true"
+            --argument="--pass-user-headers=true"
+            --argument="--pass-authorization-header=false"
+            --argument="--set-authorization-header=false"
+            --argument="--skip-auth-strip-headers=true"
+            --argument="--cookie-secure=true"
+            --argument="--cookie-httponly=true"
+            --argument="--cookie-samesite=lax"
+            --argument="--insecure-oidc-allow-unverified-email=true"
+            --argument="--pass-host-header=false"
+            --argument="--skip-provider-button=true"
+            --argument="--upstream-timeout=300s"
+            --argument="--upstream=http://${_CE_FRONTEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/"
+            --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/api/"
+            --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/static/"
+        )
         
         # Deploy or update OAuth proxy application
         if ibmcloud ce application get --name oauth-proxy &>/dev/null; then
             print_status "Updating OAuth proxy application..."
             ibmcloud ce application update \
                 --name oauth-proxy \
+                --image "$OAUTH2_PROXY_IMAGE" \
                 --env-from-secret oauth-proxy-secret \
-                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to update OAuth proxy"; exit 1; }
+                --min-scale 1 --max-scale 2 --scale-down-delay 600 \
+                "${OAUTH_PROXY_ARGUMENTS[@]}" || { print_error "Failed to update OAuth proxy"; exit 1; }
         else
             print_status "Creating OAuth proxy application..."
             ibmcloud ce application create \
                 --name oauth-proxy \
-                --image quay.io/oauth2-proxy/oauth2-proxy:latest \
+                --image "$OAUTH2_PROXY_IMAGE" \
                 --port http1:4180 --cpu 0.25 --memory 0.5G \
                 --min-scale 1 --max-scale 2 --scale-down-delay 600 \
                 --env-from-secret oauth-proxy-secret \
                 --probe-live initial-delay=10 --probe-live type=http --probe-live path=/ping --probe-live port=4180 \
                 --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/ping --probe-ready port=4180 \
-                --argument="--provider=oidc" \
-                --argument="--email-domain=*" \
-                --argument="--http-address=:4180" \
-                --argument="--pass-authorization-header=true" \
-                --argument="--insecure-oidc-allow-unverified-email=true" \
-                --argument="--pass-host-header=false" \
-                --argument="--skip-provider-button=true" \
-                --argument="--upstream-timeout=300s" \
-                --argument="--upstream=http://${_CE_FRONTEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/" \
-                --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/api/" \
-                --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/static/" || { print_error "Failed to create OAuth proxy"; exit 1; }
+                "${OAUTH_PROXY_ARGUMENTS[@]}" || { print_error "Failed to create OAuth proxy"; exit 1; }
         fi
         print_success "OAuth proxy deployed successfully!"
         
@@ -574,14 +633,10 @@ deploy_applications() {
     
     # Update backend secrets with new CORS origins
     SECRET_NAME="${_CE_BACKEND_ENV_SECRET_NAME}"
-    FROM_LITERALS=()
-    while IFS= read -r line; do
-        # Skip comments and empty lines early to avoid xargs quote parsing issues
-        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
-        line=$(echo "$line" | xargs)
-        [[ $line == _* ]] && continue
-        FROM_LITERALS+=(--from-literal "$line")
-    done < "$ENV_FILE"
+    local backend_secret_file
+    local backend_secret_status=0
+    backend_secret_file=$(mktemp "${TMPDIR:-/tmp}/cen-ce-backend-secret.XXXXXX") || exit 1
+    write_backend_secret_env_file "$backend_secret_file"
     
     if ibmcloud ce secret get --name "$SECRET_NAME" &>/dev/null; then
         print_status "Removing existing backend secrets to ensure strict sync..."
@@ -589,7 +644,9 @@ deploy_applications() {
     fi
 
     print_status "Creating backend secrets..."
-    ibmcloud ce secret create --name "$SECRET_NAME" "${FROM_LITERALS[@]}" || { print_error "Failed to create secrets"; exit 1; }
+    ibmcloud ce secret create --name "$SECRET_NAME" --from-env-file "$backend_secret_file" || backend_secret_status=$?
+    rm -f "$backend_secret_file"
+    [[ "$backend_secret_status" -eq 0 ]] || { print_error "Failed to create secrets"; exit 1; }
     
     if ibmcloud ce application get --name "${_CE_BACKEND_APPLICATION_NAME}" &>/dev/null; then
         print_status "Updating backend application..."

@@ -12,9 +12,15 @@
 # Secret Management Functions
 #############################################
 
-# Function to build dynamic secret creation command
-build_secret_literals() {
-    local secret_literals=""
+# Write the backend environment to a protected file so secret values never appear
+# in command arguments or logs.
+write_backend_secret_env_file() {
+    local destination="$1"
+    local has_upstream_password=false
+    local has_well_known_url=false
+
+    : > "$destination"
+    chmod 600 "$destination"
     
     # Read all variables from env file
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -32,13 +38,34 @@ build_secret_literals() {
             if [[ "$var_name" == "GITHUB_HOST" || "$var_name" == "GITHUB_TOKEN" || "$var_name" == _* ]]; then
                 continue
             fi
-            
-            # Add to secret literals
-            secret_literals+=" --from-literal=$var_name=\"$var_value\""
+
+            printf '%s=%s\n' "$var_name" "$var_value" >> "$destination"
+            if [[ "$var_name" == "OAUTH2_PROXY_UPSTREAM_PASSWORD" ]]; then
+                has_upstream_password=true
+            elif [[ "$var_name" == "OAUTH2_PROXY_WELL_KNOWN_URL" ]]; then
+                has_well_known_url=true
+            fi
         fi
     done < "$ENV_FILE"
-    
-    echo "$secret_literals"
+
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" && "$has_upstream_password" == "false" ]]; then
+        printf 'OAUTH2_PROXY_UPSTREAM_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD" >> "$destination"
+    fi
+    if [[ "${DEPLOY_OAUTH:-false}" == "true" && "$has_well_known_url" == "false" && -n "${OAUTH2_PROXY_WELL_KNOWN_URL:-}" ]]; then
+        printf 'OAUTH2_PROXY_WELL_KNOWN_URL=%s\n' "$OAUTH2_PROXY_WELL_KNOWN_URL" >> "$destination"
+    fi
+}
+
+create_backend_env_secret() {
+    local secret_name="$1"
+    local secret_file
+    local status=0
+
+    secret_file=$(mktemp "${TMPDIR:-/tmp}/cen-backend-secret.XXXXXX") || return 1
+    write_backend_secret_env_file "$secret_file"
+    oc create secret generic "$secret_name" --from-env-file="$secret_file" || status=$?
+    rm -f "$secret_file"
+    return "$status"
 }
 
 # Function to get all VITE_ prefixed variables
@@ -83,12 +110,7 @@ create_initial_app_env_secret() {
     
     print_status "Creating initial application environment secret $secret_name..." "secrets"
     
-    # Build dynamic secret creation command
-    local secret_cmd="oc create secret generic $secret_name"
-    secret_cmd+=$(build_secret_literals)
-    
-    # Execute the command
-    eval "$secret_cmd"
+    create_backend_env_secret "$secret_name"
     
     return 0
 }
@@ -155,11 +177,7 @@ update_app_env_secret_with_urls() {
     
     # Recreate the secret with all values including URLs
     print_status "Recreating application environment secret with URLs..." "secrets"
-    local secret_cmd="oc create secret generic $secret_name"
-    secret_cmd+=$(build_secret_literals)
-    
-    # Execute the command
-    eval "$secret_cmd"
+    create_backend_env_secret "$secret_name"
     
     print_success "Updated environment secret with backend URL: https://$backend_url" "secrets"
     if [[ -n "$frontend_url" ]]; then
