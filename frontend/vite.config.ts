@@ -1,4 +1,5 @@
 import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig, loadEnv } from "vite";
@@ -10,10 +11,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     envDir: root,
-    plugins: [react(), tanstackRouter({ target: "react", autoCodeSplitting: true })],
-    css: {
-      preprocessorOptions: { scss: { silenceDeprecations: ["mixed-decls"] } },
-    },
+    plugins: [
+      tanstackRouter({ target: "react", autoCodeSplitting: true }),
+      react(),
+      tailwindcss(),
+    ],
     resolve: { alias: { "@": path.resolve(import.meta.dirname, "./src") } },
     server: {
       host: true,
