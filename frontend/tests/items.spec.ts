@@ -15,13 +15,17 @@ test("authenticated OIDC subject can create, list, read, update, and delete an i
 
   await row.getByRole("button", { name: `Actions for ${title}` }).click();
   await page.getByRole("menuitem", { name: "Edit Item" }).click();
-  await page.getByLabel("Title").fill(updatedTitle);
-  await page.getByRole("button", { name: "Save" }).click();
+  const editDialog = page.getByRole("dialog", { name: "Edit Item" });
+  await editDialog.getByRole("textbox", { name: "Title" }).fill(updatedTitle);
+  await editDialog.getByRole("button", { name: "Save" }).click();
   const updatedRow = page.getByRole("row").filter({ hasText: updatedTitle });
   await expect(updatedRow).toBeVisible();
 
   await updatedRow.getByRole("button", { name: `Actions for ${updatedTitle}` }).click();
   await page.getByRole("menuitem", { name: "Delete Item" }).click();
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Delete Item" })
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
   await expect(updatedRow).not.toBeVisible();
 });
