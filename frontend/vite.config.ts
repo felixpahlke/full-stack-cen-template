@@ -1,38 +1,35 @@
 import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  build: {
-    // Carbon's compiled SCSS contains a legacy media-query expression that Lightning CSS rejects.
-    cssMinify: "esbuild",
-  },
-  plugins: [
-    react(),
-    tanstackRouter({
-      target: "react",
-      autoCodeSplitting: true,
-    }),
-  ],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        silenceDeprecations: ["mixed-decls"],
+export default defineConfig(({ mode }) => {
+  const root = path.resolve(import.meta.dirname, "..");
+  const env = loadEnv(mode, root, "");
+
+  return {
+    envDir: root,
+    plugins: [
+      tanstackRouter({
+        target: "react",
+        autoCodeSplitting: true,
+      }),
+      react(),
+      tailwindcss(),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "./src"),
       },
     },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "~@ibm": path.resolve(__dirname, "node_modules/@ibm"),
+    server: {
+      port: Number(env.WEB_PORT) || 5173,
+      strictPort: true,
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
     },
-  },
-  server: {
-    watch: {
-      usePolling: true,
-      interval: 300,
-    },
-  },
+  };
 });

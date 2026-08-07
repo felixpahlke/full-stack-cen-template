@@ -1,0 +1,54 @@
+:root {
+  --radius: 0;
+  --background: var(--cds-background, #f4f4f4);
+  --foreground: var(--cds-text-primary, #161616);
+  --card: var(--cds-layer-01, #ffffff);
+  --card-foreground: var(--cds-text-primary, #161616);
+  --popover: var(--cds-layer-01, #ffffff);
+  --popover-foreground: var(--cds-text-primary, #161616);
+  --primary: var(--cds-button-primary, #0f62fe);
+  --primary-foreground: var(--cds-text-on-color, #ffffff);
+  --secondary: var(--cds-layer-accent-01, #e0e0e0);
+  --secondary-foreground: var(--cds-text-primary, #161616);
+  --muted: var(--cds-layer-01, #ffffff);
+  --muted-foreground: var(--cds-text-secondary, #525252);
+  --accent: var(--cds-layer-hover-01, #e8e8e8);
+  --accent-foreground: var(--cds-text-primary, #161616);
+  --destructive: var(--cds-support-error, #da1e28);
+  --destructive-foreground: var(--cds-text-on-color, #ffffff);
+  --border: var(--cds-border-subtle-01, #c6c6c6);
+  --input: var(--cds-field-01, #f4f4f4);
+  --ring: var(--cds-focus, #0f62fe);
+  --chart-1: #0f62fe;
+  --chart-2: #8a3ffc;
+  --chart-3: #007d79;
+  --chart-4: #ff832b;
+  --chart-5: #d02670;
+}
+
+.dark {
+  --background: var(--cds-background, #262626);
+  --foreground: var(--cds-text-primary, #f4f4f4);
+  --card: var(--cds-layer-01, #393939);
+  --card-foreground: var(--cds-text-primary, #f4f4f4);
+  --popover: var(--cds-layer-01, #393939);
+  --popover-foreground: var(--cds-text-primary, #f4f4f4);
+  --primary: var(--cds-button-primary, #0f62fe);
+  --primary-foreground: var(--cds-text-on-color, #ffffff);
+  --secondary: var(--cds-layer-accent-01, #525252);
+  --secondary-foreground: var(--cds-text-primary, #f4f4f4);
+  --muted: var(--cds-layer-01, #393939);
+  --muted-foreground: var(--cds-text-secondary, #c6c6c6);
+  --accent: var(--cds-layer-hover-01, #474747);
+  --accent-foreground: var(--cds-text-primary, #f4f4f4);
+  --destructive: var(--cds-support-error, #fa4d56);
+  --destructive-foreground: var(--cds-text-on-color, #ffffff);
+  --border: var(--cds-border-subtle-01, #525252);
+  --input: var(--cds-field-01, #393939);
+  --ring: var(--cds-focus, #ffffff);
+  --chart-1: #78a9ff;
+  --chart-2: #be95ff;
+  --chart-3: #42be65;
+  --chart-4: #ff832b;
+  --chart-5: #ee5396;
+}

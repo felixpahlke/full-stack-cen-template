@@ -1,9 +1,7 @@
-import { UserAvatar } from "@carbon/icons-react";
+import { Logout, User, UserAvatar } from "@carbon/icons-react";
 import { Button, Menu, MenuItem } from "@carbon/react";
 import { useRouter } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { FiLogOut, FiUser } from "react-icons/fi";
-import { cn } from "@/lib/utils";
 import useAuth from "../../hooks/useAuth";
 
 interface UserMenuProps {
@@ -35,7 +33,7 @@ const UserMenu = ({ className }: UserMenuProps) => {
   return (
     <>
       {/* Desktop */}
-      <div className={cn("abolute right-4 hidden lg:block", className)}>
+      <div className={`hidden h-full lg:block ${className ?? ""}`}>
         <div className="h-full">
           <Button
             ref={buttonRef}
@@ -60,13 +58,13 @@ const UserMenu = ({ className }: UserMenuProps) => {
                   setIsOpen(false);
                   router.navigate({ to: "/settings" });
                 }}
-                renderIcon={() => <FiUser className="mr-2 h-4 w-4" />}
+                renderIcon={() => <User className="mr-2 h-4 w-4" />}
               />
               <MenuItem
                 label="Log out"
                 onClick={handleLogout}
-                className="font-bold text-cds-text-error"
-                renderIcon={() => <FiLogOut className="mr-2 h-4 w-4" />}
+                className="font-bold text-destructive"
+                renderIcon={() => <Logout className="mr-2 h-4 w-4" />}
               />
             </Menu>
           )}

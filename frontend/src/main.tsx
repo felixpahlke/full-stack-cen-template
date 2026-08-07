@@ -7,8 +7,8 @@ import { client } from "./client/client.gen";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { trackFlavor } from "./lib/trackFlavor";
 import { routeTree } from "./routeTree.gen";
-import "./styles/globals.scss";
-import "./styles/tailwind.scss";
+import "./styles/carbon.scss";
+import "./styles/index.css";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",

@@ -23,7 +23,7 @@ const TanStackDevtools =
 
 export const Route = createRootRoute({
   component: () => (
-    <div className="bg-cds-background min-h-[calc(100dvh-47px)]">
+    <div className="min-h-[calc(100dvh-47px)] bg-background">
       <Outlet />
       <Suspense>
         <TanStackDevtools />

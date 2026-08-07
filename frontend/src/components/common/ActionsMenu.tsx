@@ -13,13 +13,18 @@ interface ActionsMenuProps {
   disabled?: boolean;
 }
 
-const ActionsMenu = ({ type, value }: ActionsMenuProps) => {
+const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   return (
     <>
-      <OverflowMenu size="sm" flipped aria-label="Actions menu">
+      <OverflowMenu
+        size="sm"
+        flipped
+        disabled={disabled}
+        iconDescription={`Actions for ${"title" in value ? value.title : value.full_name || value.email}`}
+      >
         <OverflowMenuItem
           itemText={
             <div className="flex items-center gap-2">
