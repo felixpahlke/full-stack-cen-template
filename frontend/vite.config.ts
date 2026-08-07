@@ -11,11 +11,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     envDir: root,
-    plugins: [
-      tanstackRouter({ target: "react", autoCodeSplitting: true }),
-      react(),
-      tailwindcss(),
-    ],
+    plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), tailwindcss()],
     resolve: { alias: { "@": path.resolve(import.meta.dirname, "./src") } },
     server: {
       host: true,
