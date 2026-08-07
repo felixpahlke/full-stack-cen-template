@@ -1,84 +1,66 @@
-# FastAPI Project - Frontend
+# FastAPI Project — Frontend
 
-The frontend is built with [Vite](https://vitejs.dev/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [TanStack Query](https://tanstack.com/query), [TanStack Router](https://tanstack.com/router), [Carbon](https://carbondesignsystem.com/) and [Carboncn UI](https://www.carboncn.dev/).
+The frontend uses React, TypeScript, Vite, TanStack Query and Router, shadcn/ui with
+Radix primitives, and Tailwind CSS 4. Direct dependencies are exact-pinned and the
+lockfile is managed by npm.
 
 ## Install dependencies
 
-Note: you might need to change your node version with nvm.
-you can get nvm [here](https://github.com/nvm-sh/nvm#installing-and-updating)
+From the repository root, install the root and frontend dependencies with npm:
+
+```bash
+npm ci
+npm --prefix frontend ci
+```
+
+Node.js 20.19 or newer is required. If you use nvm, the frontend includes an
+`.nvmrc` file:
 
 ```bash
 cd frontend
-nvm install # this will install the node version specified in .nvmrc
+nvm install
 nvm use
-```
-
-Install the dependencies:
-
-```bash
-npm install
 ```
 
 ## Frontend development
 
-_Note: for more detailed tips, e.g. on how to **create a new page**, see the tutorials [here](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials/tree/main/full-stack-tutorial-watsonx-chat)_
-
-The frontend will be started in development mode with hot reloading, inside the Docker Compose stack, so you don't have to worry about the correct node version or other dependencies.
+Start the complete development stack from the repository root:
 
 ```bash
-docker compose watch
-```
-
-Open your browser at http://localhost:5173/
-
-### (optional ) Using the Local Frontend Dev Server
-
-Should you still want to use the local dev server, you can do so by following these steps:
-
-```bash
-# Stop the frontend container if running in Docker
-docker compose stop frontend
-
-cd frontend
 npm run dev
 ```
 
-Open your browser at http://localhost:5173/
+This starts PostgreSQL and Adminer in Compose, then runs the FastAPI backend and Vite
+natively with reload/HMR. Open http://localhost:5173/. See
+[`../.docs/development.md`](../.docs/development.md) for ports and troubleshooting.
+
+To run Vite by itself when a compatible backend is already available:
+
+```bash
+npm --prefix frontend run dev
+```
+
+Vite loads environment variables from the repository root. Set `VITE_API_URL` in the
+root `.env` when the API is not served through the same origin.
 
 ## Generate Client
 
-### Automatically
-
-- Activate the backend virtual environment.
-- From the top level project directory, run the script:
-
-```bash
-./scripts/generate-client.sh
-```
-
-- Commit the changes.
-
-### Manually
-
-- Start the Docker Compose stack.
-
-- Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
-
-- To simplify the names in the generated frontend client code, modify the `openapi.json` file by running the following script:
-
-```bash
-node modify-openapi-operationids.js
-```
-
-- To generate the frontend client, run:
+Generate the OpenAPI document, TypeScript client, and route tree through the offline
+root pipeline:
 
 ```bash
 npm run generate-client
 ```
 
-- Commit the changes.
+The command derives OpenAPI directly from the backend application, so no running API or
+network download is required. Never edit `src/client/` or `src/routeTree.gen.ts`
+manually. Verify generated artifacts with:
 
-Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
+```bash
+npm run check:generated
+```
+
+Run `npm --prefix frontend run generate-routes` when only route source files changed.
 
 ## Code Structure
 
@@ -91,9 +73,16 @@ The frontend code is structured as follows:
 - `frontend/src/hooks` - Custom hooks.
 - `frontend/src/routes` - The different routes of the frontend which include the pages.
 
+## Styling and themes
+
+Tailwind 4 is configured in CSS through `src/styles/index.css`; there is no
+`tailwind.config.js` or PostCSS configuration. The shadcn `new-york` color tokens live
+in `src/styles/themes/neutral.css`. Theme selection supports light, dark, and system
+settings and persists under `vite-ui-theme` in local storage.
+
 ## Using a Remote API
 
-If you want to use a remote API, you can set the environment variable `VITE_API_URL` to the URL of the remote API. For example, you can set it in the `frontend/.env` file:
+Set `VITE_API_URL` in the repository root `.env`:
 
 ```env
 VITE_API_URL=https://api.my-domain.example.com
@@ -103,33 +92,37 @@ Then, when you run the frontend, it will use that URL as the base URL for the AP
 
 ## End-to-End Testing with Playwright
 
-The frontend includes initial end-to-end tests using Playwright. To run the tests, you need to have the Docker Compose stack running. Start the stack with the following command:
+Start the development stack in one terminal:
 
 ```bash
-docker compose up -d --wait backend
+npm run dev
 ```
 
-Then, you can run the tests with the following command:
+Then run the Chromium suite from another terminal:
 
 ```bash
-npx playwright test
+npm run test:e2e
 ```
 
-You can also run your tests in UI mode to see the browser and interact with it running:
+For interactive Playwright UI mode:
 
 ```bash
-npx playwright test --ui
+npm --prefix frontend exec playwright test --ui
 ```
 
-To stop and remove the Docker Compose stack and clean the data created in tests, use the following command:
+If native browser binaries are unavailable, run the matching
+`mcr.microsoft.com/playwright` image and forward ports 5173 and 8000 to the host. The
+image tag must match the exact `@playwright/test` version in `package.json`.
+
+## Verification
+
+From the repository root:
 
 ```bash
-docker compose down -v
+npm run check
+npm run verify
+npm --prefix frontend audit
 ```
-
-To update the tests, navigate to the tests directory and modify the existing test files or add new ones as needed.
-
-For more information on writing and running Playwright tests, refer to the official [Playwright documentation](https://playwright.dev/docs/intro).
 
 ### Removing the frontend
 
