@@ -12,9 +12,6 @@
     "indentStyle": "space",
     "lineWidth": 100
   },
-  "linter": {
-    "enabled": true
-  },
   "assist": {
     "actions": {
       "source": {

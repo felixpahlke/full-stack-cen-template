@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: package-lock.json
       - uses: astral-sh/setup-uv@v9.0.0
         with:
           python-version: "3.12"
@@ -27,9 +28,6 @@ jobs:
         run: |
           npm ci
           uv sync --project backend --frozen
-      - name: Check
-        run: npm run check
-      - name: Test
-        run: npm test
-      - name: Build production image
-        run: docker build -f backend/Dockerfile backend
+      - run: npm run check
+      - run: npm run test
+      - run: npm run build
