@@ -1,244 +1,89 @@
 #!/usr/bin/env bash
-#
-# SSH Key Management Library
-#
-# This library provides:
-# - GitHub deploy key verification
-# - GitHub deploy key creation
-# - SSH key deletion
-# - SSH key setup and configuration
-#
-#############################################
-# SSH Key Management Functions
-#############################################
 
-# Function to check if deploy key exists on GitHub
-check_github_deploy_key() {
-    local repo_url=$1
-    local public_key=$2
-    local github_host="${GITHUB_HOST:-$DEFAULT_GITHUB_HOST}"
-    
-    # Extract owner and repo from SSH URL
-    # Format: git@github.com:owner/repo.git or git@github.ibm.com:owner/repo.git
-    if [[ $repo_url =~ git@[^:]+:([^/]+)/(.+)\.git ]]; then
-        local owner="${BASH_REMATCH[1]}"
-        local repo="${BASH_REMATCH[2]}"
-        
-        # Check if GITHUB_TOKEN is available
-        if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-            print_warning "GITHUB_TOKEN not set. Cannot verify deploy key automatically." "ssh"
-            return 1
-        fi
-        
-        # Query GitHub API for deploy keys
-        local response
-        local http_code
-        response=$(curl -s -w "\n%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.$github_host/repos/$owner/$repo/keys")
-        
-        http_code=$(echo "$response" | tail -n1)
-        response=$(echo "$response" | sed '$d')
-        
-        # Check for API errors
-        if [[ "$http_code" != "200" ]]; then
-            print_warning "Failed to check deploy keys (HTTP $http_code). API response:" "ssh"
-            echo "$response" | head -n 5
-            return 1
-        fi
-        
-        # Check if the public key exists
-        if echo "$response" | grep -q "$(echo "$public_key" | awk '{print $2}')"; then
-            return 0
-        fi
-    fi
-    
-    return 1
-}
-
-# Function to add deploy key to GitHub
-add_github_deploy_key() {
-    local repo_url=$1
-    local public_key=$2
-    local key_title="OpenShift Deploy Key - $(date +%Y%m%d)"
-    local github_host="${GITHUB_HOST:-$DEFAULT_GITHUB_HOST}"
-    
-    # Extract owner and repo from SSH URL
-    if [[ $repo_url =~ git@[^:]+:([^/]+)/(.+)\.git ]]; then
-        local owner="${BASH_REMATCH[1]}"
-        local repo="${BASH_REMATCH[2]}"
-        
-        # Check if GITHUB_TOKEN is available
-        if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-            print_warning "GITHUB_TOKEN not set. Cannot add deploy key automatically." "ssh"
-            return 1
-        fi
-        
-        print_status "Adding deploy key to GitHub repository ($github_host)..." "ssh"
-        
-        # Add deploy key via GitHub API
-        local response
-        local http_code
-        response=$(curl -s -w "\n%{http_code}" -X POST \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.$github_host/repos/$owner/$repo/keys" \
-            -d "{\"title\":\"$key_title\",\"key\":\"$public_key\",\"read_only\":false}")
-        
-        http_code=$(echo "$response" | tail -n1)
-        response=$(echo "$response" | sed '$d')
-        
-        if [[ "$http_code" == "201" ]] && echo "$response" | grep -q '"id"'; then
-            print_success "Deploy key added to GitHub successfully!" "ssh"
-            return 0
-        else
-            print_error "Failed to add deploy key to GitHub (HTTP $http_code)" "ssh"
-            print_error "API Response:" "ssh"
-            echo "$response" | jq '.' 2>/dev/null || echo "$response"
-            
-            # Provide helpful error messages
-            if echo "$response" | grep -q "key is already in use"; then
-                print_warning "This SSH key is already registered. You may need to use --regenerate-ssh-key" "ssh"
-            elif [[ "$http_code" == "401" ]]; then
-                print_error "Authentication failed. Check your GITHUB_TOKEN permissions." "ssh"
-            elif [[ "$http_code" == "404" ]]; then
-                print_error "Repository not found. Check GIT_SSH_URL and token permissions." "ssh"
-            fi
-            return 1
-        fi
-    fi
-
-    print_error "Invalid GIT_SSH_URL format. Expected: git@$github_host:owner/repo.git" "ssh"
-    
-    return 1
-}
-
-# Function to delete SSH keys
-delete_ssh_keys() {
-    local key_path="$HOME/.ssh/$PROJECT_NAME/ocp-key"
-    local pub_key_path="$HOME/.ssh/$PROJECT_NAME/ocp-key.pub"
-    local github_host="${GITHUB_HOST:-$DEFAULT_GITHUB_HOST}"
-    
-    print_status "Deleting SSH keys..." "ssh"
-    
-    # Delete local keys
-    if [[ -f "$key_path" ]]; then
-        rm -f "$key_path"
-        print_status "Deleted local private key" "ssh"
-    fi
-    
-    if [[ -f "$pub_key_path" ]]; then
-        local public_key
-        public_key=$(cat "$pub_key_path")
-        rm -f "$pub_key_path"
-        print_status "Deleted local public key" "ssh"
-        
-        # Delete from GitHub if GITHUB_TOKEN is available
-        if [[ -n "${GITHUB_TOKEN:-}" && $GIT_SSH_URL =~ git@[^:]+:([^/]+)/(.+)\.git ]]; then
-            local owner="${BASH_REMATCH[1]}"
-            local repo="${BASH_REMATCH[2]}"
-            
-            # Get all deploy keys
-            local keys_response
-            local http_code
-            keys_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
-                "https://api.$github_host/repos/$owner/$repo/keys")
-            
-            http_code=$(echo "$keys_response" | tail -n1)
-            keys_response=$(echo "$keys_response" | sed '$d')
-            
-            if [[ "$http_code" != "200" ]]; then
-                print_warning "Failed to retrieve deploy keys from GitHub (HTTP $http_code)" "ssh"
-            else
-                # Find and delete matching key
-                local key_id
-                key_id=$(echo "$keys_response" | jq -r ".[] | select(.key | contains(\"$(echo "$public_key" | awk '{print $2}')\")) | .id" 2>/dev/null)
-                
-                if [[ -n "$key_id" ]]; then
-                    local delete_response
-                    delete_response=$(curl -s -w "\n%{http_code}" -X DELETE \
-                        -H "Authorization: token $GITHUB_TOKEN" \
-                        "https://api.$github_host/repos/$owner/$repo/keys/$key_id")
-                    
-                    local delete_code=$(echo "$delete_response" | tail -n1)
-                    if [[ "$delete_code" == "204" ]]; then
-                        print_status "Deleted deploy key from GitHub" "ssh"
-                    else
-                        print_warning "Failed to delete deploy key from GitHub (HTTP $delete_code)" "ssh"
-                    fi
-                else
-                    print_status "Deploy key not found on GitHub (may have been already deleted)" "ssh"
-                fi
-            fi
-        fi
-    fi
-    
-    # Delete from OpenShift
-    if resource_exists "secret" "git-secret"; then
-        oc delete secret git-secret
-        print_status "Deleted git-secret from OpenShift" "ssh"
-    fi
-    
-    print_success "SSH keys deleted successfully" "ssh"
-    return 0
-}
-
-# Function to create SSH keys for Git access
-setup_ssh_keys() {
-    mkdir -p "$HOME/.ssh/$PROJECT_NAME"
-    local key_path="$HOME/.ssh/$PROJECT_NAME/ocp-key"
-    local pub_key_path="$HOME/.ssh/$PROJECT_NAME/ocp-key.pub"
-    local need_user_input=false
-    
-    # Check if keys exist and are valid
-    if [[ -f "$key_path" && -f "$pub_key_path" ]]; then
-        print_status "SSH key pair already exists in ~/.ssh/$PROJECT_NAME/" "ssh"
-        
-        # Check if deploy key exists on GitHub
-        local public_key
-        public_key=$(cat "$pub_key_path")
-        
-        if check_github_deploy_key "$GIT_SSH_URL" "$public_key"; then
-            print_success "Deploy key is already configured on GitHub" "ssh"
-        else
-            print_warning "Deploy key not found on GitHub" "ssh"
-            need_user_input=true
-        fi
+git_repo_parts() {
+    local url=$1 host_without_prefix
+    if [[ "$url" =~ ^git@([^:]+):([^/]+)/(.+)\.git$ ]]; then
+        GIT_HOST=${BASH_REMATCH[1]}; GIT_OWNER=${BASH_REMATCH[2]}; GIT_REPO=${BASH_REMATCH[3]}
+    elif [[ "$url" =~ ^ssh://git@([^/]+)/([^/]+)/(.+)\.git$ ]]; then
+        GIT_HOST=${BASH_REMATCH[1]}; GIT_OWNER=${BASH_REMATCH[2]}; GIT_REPO=${BASH_REMATCH[3]}
     else
-        # Generate new keys
-        print_status "Generating new SSH key pair..." "ssh"
-        ssh-keygen -N '' -f "$key_path" -C "openshift-deploy-key" -q <<< y > /dev/null
-        print_success "SSH key pair generated" "ssh"
-        need_user_input=true
+        print_error "unsupported SSH Git URL: $url"
+        return 1
     fi
-    
-    # Display the public key
-    local public_key
-    public_key=$(cat "$pub_key_path")
-    print_status "Public SSH key for repository access:" "ssh"
-    echo -e "${TEAL}$public_key${NC}"
-    
-    # Try to add deploy key automatically
-    if [[ "$need_user_input" == "true" ]]; then
-        if add_github_deploy_key "$GIT_SSH_URL" "$public_key"; then
-            print_success "Deploy key configured automatically" "ssh"
-        else
-            print_warning "Could not add deploy key automatically" "ssh"
-            print_status "${GREEN}Please add this public key to your GitHub repository as a deploy key${NC}" "ssh"
-            read -p "Press enter once you've added the deploy key..."
+    host_without_prefix=${GIT_HOST#github.}
+    if [[ "$GIT_HOST" == github.com ]]; then GITHUB_API_BASE=https://api.github.com
+    elif [[ "$host_without_prefix" != "$GIT_HOST" ]]; then GITHUB_API_BASE="https://api.${GIT_HOST}"
+    else GITHUB_API_BASE="https://${GIT_HOST}/api/v3"
+    fi
+    GITHUB_REPO_API="${GITHUB_API_BASE}/repos/${GIT_OWNER}/${GIT_REPO}"
+}
+
+make_github_curl_config() {
+    local destination=$1 token=${GITHUB_TOKEN:-}
+    [[ -n "$token" ]] || return 1
+    if [[ "$token" == *$'\n'* || "$token" == *$'\r'* || "$token" == *'"'* ]]; then
+        print_error 'GITHUB_TOKEN contains unsupported characters'
+        return 1
+    fi
+    make_temp_file "$destination"
+    printf 'header = "Authorization: Bearer %s"\n' "$token" > "${!destination}"
+}
+
+github_deploy_key_present() {
+    local fingerprint=$1 response curl_config
+    make_github_curl_config curl_config || return 1
+    response=$(curl --disable --config "$curl_config" --fail --silent --show-error --url "$GITHUB_REPO_API/keys" || true)
+    printf '%s' "$response" | grep -Fq "$fingerprint"
+}
+
+add_github_deploy_key() {
+    local public_key=$1 curl_config payload_file
+    make_github_curl_config curl_config || return 1
+    make_temp_file payload_file
+    node -e 'const fs=require("node:fs"); fs.writeFileSync(process.argv[1], JSON.stringify({title:`OpenShift deploy key - ${process.argv[2]}`,key:process.argv[3],read_only:true}))' \
+        "$payload_file" "$PROJECT_NAME" "$public_key"
+    curl --disable --config "$curl_config" --fail --silent --show-error --request POST \
+        --header 'Accept: application/vnd.github+json' --url "$GITHUB_REPO_API/keys" \
+        --data-binary "@$payload_file" >/dev/null
+}
+
+delete_ssh_keys() {
+    local key_dir=${CEN_DEPLOY_SSH_DIR:-"$HOME/.ssh/$PROJECT_NAME"}
+    local public_file="$key_dir/ocp-key.pub" fingerprint response key_id curl_config
+    [[ -n "$key_dir" && "$key_dir" != / && "$key_dir" != "$HOME" ]] || { print_error 'refusing unsafe SSH key directory'; return 1; }
+    if [[ -f "$public_file" && -n "${GITHUB_TOKEN:-}" ]]; then
+        git_repo_parts "$GIT_SSH_URL"
+        fingerprint=$(awk '{print $2}' "$public_file")
+        make_github_curl_config curl_config
+        response=$(curl --disable --config "$curl_config" --fail --silent --show-error --url "$GITHUB_REPO_API/keys" || true)
+        key_id=$(printf '%s' "$response" | node -e 'let b="";process.stdin.on("data",c=>b+=c);process.stdin.on("end",()=>{const m=JSON.parse(b||"[]").find(x=>x.key?.includes(process.argv[1]));if(m)process.stdout.write(String(m.id))})' "$fingerprint" || true)
+        if [[ -n "$key_id" ]]; then
+            print_warning "Deleting owned local deploy-key association from GitHub (key id $key_id)"
+            curl --disable --config "$curl_config" --fail --silent --show-error --request DELETE --url "$GITHUB_REPO_API/keys/$key_id" >/dev/null || return 1
         fi
     fi
-    
-    # Create or update OpenShift secret
-    if resource_exists "secret" "git-secret"; then
-        print_status "Updating git-secret..." "ssh"
-        oc delete secret git-secret
+    rm -f -- "$key_dir/ocp-key" "$key_dir/ocp-key.pub"
+    delete_owned_oc_resource secret git-secret
+}
+
+setup_ssh_keys() {
+    local key_dir=${CEN_DEPLOY_SSH_DIR:-"$HOME/.ssh/$PROJECT_NAME"}
+    local key_file="$key_dir/ocp-key" public_file="$key_dir/ocp-key.pub" public_key fingerprint
+    git_repo_parts "$GIT_SSH_URL"
+    mkdir -p "$key_dir"; chmod 700 "$key_dir"
+    if [[ ! -f "$key_file" || ! -f "$public_file" ]]; then
+        need_command ssh-keygen
+        ssh-keygen -q -t ed25519 -N '' -C "openshift-${PROJECT_NAME}" -f "$key_file"
     fi
-    
-    print_status "Creating OpenShift secret..." "ssh"
-    oc create secret generic git-secret \
-        --from-file=ssh-privatekey="$key_path" \
-        --type=kubernetes.io/ssh-auth
-    
-    return 0
+    public_key=$(<"$public_file")
+    fingerprint=$(printf '%s' "$public_key" | awk '{print $2}')
+    if ! github_deploy_key_present "$fingerprint" && ! add_github_deploy_key "$public_key"; then
+        print_warning 'GitHub deploy key could not be configured automatically.'
+        printf 'Add this read-only deploy key to %s/%s:\n%s\n' "$GIT_OWNER" "$GIT_REPO" "$public_key" >&2
+        read -r -p 'Press Enter after adding the deploy key...'
+    fi
+    ensure_oc_resource_owned_or_absent secret git-secret
+    oc create secret generic git-secret --from-file=ssh-privatekey="$key_file" \
+        --type=kubernetes.io/ssh-auth --labels "$(cen_ownership_labels)" --dry-run=client -o yaml \
+        | oc apply -f - >&2
 }
