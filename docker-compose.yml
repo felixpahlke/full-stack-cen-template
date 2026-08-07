@@ -1,119 +1,82 @@
+# Development backing and authentication services only. FastAPI and Vite run natively.
 services:
   db:
     image: postgres:12
     restart: "no"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 10s
+      interval: 2s
+      retries: 30
+      timeout: 3s
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
     env_file:
       - .env
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
 
   adminer:
     image: adminer
     restart: "no"
     depends_on:
-      - db
-    environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    ports:
-      - "8080:8080"
-
-  backend:
-    restart: "no"
-    depends_on:
       db:
         condition: service_healthy
-        restart: true
-    env_file:
-      - .env
     environment:
-      - POSTGRES_SERVER=db
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "-f",
-          "http://localhost:8000/api/v1/utils/health-check/",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    build:
-      context: ./backend
-      args:
-        - DOCKER_BUILDKIT=0
+      ADMINER_DESIGN: pepa-linha-dark
     ports:
-      - "8000:8000"
-    command:
-      - fastapi
-      - run
-      - --reload
-      - "app/main.py"
-    develop:
-      watch:
-        - path: ./backend
-          action: sync
-          target: /app
-          ignore:
-            - ./backend/.venv
-            - .venv
-        - path: ./backend/pyproject.toml
-          action: rebuild
+      - "${ADMINER_PORT:-8080}:8080"
 
-  frontend:
+  dex:
+    image: dexidp/dex:latest-distroless
     restart: "no"
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_URL=http://localhost:4180
-        - NODE_ENV=development
-      target: base
-    ports:
-      - "5173:5173"
-    command: >
-      npm run dev
-      --
-      --host 0.0.0.0
     environment:
-      - VITE_API_URL=http://localhost:4180
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    develop:
-      watch:
-        - path: ./frontend/package.json
-          action: rebuild
-  proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:latest
-    env_file:
-      - .env
+      DEX_PORT: ${DEX_PORT:-5556}
+      OAUTH2_PROXY_PORT: ${OAUTH2_PROXY_PORT:-4180}
+      OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OAUTH2_PROXY_CLIENT_SECRET}
     ports:
-      - "4180:4180"
-    command:
-      - "--upstream=http://host.docker.internal:5173/"
-      - "--upstream=http://host.docker.internal:8000/api/"
-      - "--upstream=http://lokal-token-printer:8080/token"
-      - "--provider=oidc"
-      - "--email-domain=*"
-      - "--pass-authorization-header"
-      - "--insecure-oidc-allow-unverified-email"
-      - "--http-address=:4180"
-      - "--skip-provider-button"
-
-  lokal-token-printer:
-    image: ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
+      - "${DEX_PORT:-5556}:5556"
     volumes:
-      - ./lokal-token-printer-config.conf:/etc/nginx/conf.d/default.conf
+      - ./dev/dex/config.yaml:/etc/dex/config.docker.yaml:ro
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561
+    restart: "no"
+    command:
+      - --http-address=0.0.0.0:4180
+      - --provider=oidc
+      - --client-id=${OAUTH2_PROXY_CLIENT_ID}
+      - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
+      - --oidc-issuer-url=http://localhost:${DEX_PORT:-5556}/dex
+      - --skip-oidc-discovery
+      - --login-url=http://localhost:${DEX_PORT:-5556}/dex/auth
+      - --redeem-url=http://dex:5556/dex/token
+      - --oidc-jwks-url=http://dex:5556/dex/keys
+      - --redirect-url=http://localhost:${OAUTH2_PROXY_PORT:-4180}/oauth2/callback
+      - --upstream=http://host.docker.internal:${WEB_PORT:-5173}
+      - --email-domain=*
+      - --cookie-name=_oauth2_proxy
+      - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
+      - --cookie-secure=${OAUTH2_PROXY_COOKIE_SECURE:-false}
+      - --cookie-httponly=true
+      - --cookie-samesite=lax
+      - --basic-auth-password=${OAUTH2_PROXY_UPSTREAM_PASSWORD}
+      - --pass-basic-auth=true
+      - --pass-user-headers=true
+      - --pass-authorization-header=false
+      - --set-authorization-header=false
+      - --insecure-oidc-skip-nonce=false
+      - --code-challenge-method=S256
+      - --skip-provider-button=true
+      - --approval-prompt=auto
+    depends_on:
+      - dex
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "${OAUTH2_PROXY_PORT:-4180}:4180"
 
 volumes:
   app-db-data:
