@@ -2,7 +2,9 @@
 
 import {
   type Client,
+  type ClientMeta,
   type Options as Options2,
+  type RequestResult,
   type TDataShape,
   urlSearchParamsBodySerializer,
 } from "./client";
@@ -61,7 +63,8 @@ import type {
 export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
-> = Options2<TData, ThrowOnError> & {
+  TResponse = unknown,
+> = Options2<TData, ThrowOnError, TResponse> & {
   /**
    * You can provide a client instance returned by `createClient()` instead of
    * individual options. This might be also useful if you want to implement a
@@ -72,7 +75,7 @@ export type Options<
    * You can pass arbitrary values through the `meta` object. This can be
    * used to access values that aren't defined as part of the SDK function.
    */
-  meta?: Record<string, unknown>;
+  meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
 export class Login {
@@ -83,7 +86,7 @@ export class Login {
    */
   public static loginAccessToken<ThrowOnError extends boolean = false>(
     options: Options<LoginAccessTokenData, ThrowOnError>,
-  ) {
+  ): RequestResult<LoginAccessTokenResponses, LoginAccessTokenErrors, ThrowOnError> {
     return (options.client ?? client).post<
       LoginAccessTokenResponses,
       LoginAccessTokenErrors,
@@ -107,7 +110,7 @@ export class Login {
    */
   public static testToken<ThrowOnError extends boolean = false>(
     options?: Options<TestTokenData, ThrowOnError>,
-  ) {
+  ): RequestResult<TestTokenResponses, unknown, ThrowOnError> {
     return (options?.client ?? client).post<TestTokenResponses, unknown, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -125,7 +128,7 @@ export class Users {
    */
   public static readUsers<ThrowOnError extends boolean = false>(
     options?: Options<ReadUsersData, ThrowOnError>,
-  ) {
+  ): RequestResult<ReadUsersResponses, ReadUsersErrors, ThrowOnError> {
     return (options?.client ?? client).get<ReadUsersResponses, ReadUsersErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -141,7 +144,7 @@ export class Users {
    */
   public static createUser<ThrowOnError extends boolean = false>(
     options: Options<CreateUserData, ThrowOnError>,
-  ) {
+  ): RequestResult<CreateUserResponses, CreateUserErrors, ThrowOnError> {
     return (options.client ?? client).post<CreateUserResponses, CreateUserErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -161,7 +164,7 @@ export class Users {
    */
   public static deleteUserMe<ThrowOnError extends boolean = false>(
     options?: Options<DeleteUserMeData, ThrowOnError>,
-  ) {
+  ): RequestResult<DeleteUserMeResponses, unknown, ThrowOnError> {
     return (options?.client ?? client).delete<DeleteUserMeResponses, unknown, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -177,7 +180,7 @@ export class Users {
    */
   public static readUserMe<ThrowOnError extends boolean = false>(
     options?: Options<ReadUserMeData, ThrowOnError>,
-  ) {
+  ): RequestResult<ReadUserMeResponses, unknown, ThrowOnError> {
     return (options?.client ?? client).get<ReadUserMeResponses, unknown, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -193,7 +196,7 @@ export class Users {
    */
   public static updateUserMe<ThrowOnError extends boolean = false>(
     options: Options<UpdateUserMeData, ThrowOnError>,
-  ) {
+  ): RequestResult<UpdateUserMeResponses, UpdateUserMeErrors, ThrowOnError> {
     return (options.client ?? client).patch<
       UpdateUserMeResponses,
       UpdateUserMeErrors,
@@ -217,7 +220,7 @@ export class Users {
    */
   public static updatePasswordMe<ThrowOnError extends boolean = false>(
     options: Options<UpdatePasswordMeData, ThrowOnError>,
-  ) {
+  ): RequestResult<UpdatePasswordMeResponses, UpdatePasswordMeErrors, ThrowOnError> {
     return (options.client ?? client).patch<
       UpdatePasswordMeResponses,
       UpdatePasswordMeErrors,
@@ -241,7 +244,7 @@ export class Users {
    */
   public static registerUser<ThrowOnError extends boolean = false>(
     options: Options<RegisterUserData, ThrowOnError>,
-  ) {
+  ): RequestResult<RegisterUserResponses, RegisterUserErrors, ThrowOnError> {
     return (options.client ?? client).post<RegisterUserResponses, RegisterUserErrors, ThrowOnError>(
       {
         responseType: "json",
@@ -262,7 +265,7 @@ export class Users {
    */
   public static deleteUser<ThrowOnError extends boolean = false>(
     options: Options<DeleteUserData, ThrowOnError>,
-  ) {
+  ): RequestResult<DeleteUserResponses, DeleteUserErrors, ThrowOnError> {
     return (options.client ?? client).delete<DeleteUserResponses, DeleteUserErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -278,7 +281,7 @@ export class Users {
    */
   public static readUserById<ThrowOnError extends boolean = false>(
     options: Options<ReadUserByIdData, ThrowOnError>,
-  ) {
+  ): RequestResult<ReadUserByIdResponses, ReadUserByIdErrors, ThrowOnError> {
     return (options.client ?? client).get<ReadUserByIdResponses, ReadUserByIdErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -294,7 +297,7 @@ export class Users {
    */
   public static updateUser<ThrowOnError extends boolean = false>(
     options: Options<UpdateUserData, ThrowOnError>,
-  ) {
+  ): RequestResult<UpdateUserResponses, UpdateUserErrors, ThrowOnError> {
     return (options.client ?? client).patch<UpdateUserResponses, UpdateUserErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -316,7 +319,7 @@ export class Items {
    */
   public static readItems<ThrowOnError extends boolean = false>(
     options?: Options<ReadItemsData, ThrowOnError>,
-  ) {
+  ): RequestResult<ReadItemsResponses, ReadItemsErrors, ThrowOnError> {
     return (options?.client ?? client).get<ReadItemsResponses, ReadItemsErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -332,7 +335,7 @@ export class Items {
    */
   public static createItem<ThrowOnError extends boolean = false>(
     options: Options<CreateItemData, ThrowOnError>,
-  ) {
+  ): RequestResult<CreateItemResponses, CreateItemErrors, ThrowOnError> {
     return (options.client ?? client).post<CreateItemResponses, CreateItemErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -352,7 +355,7 @@ export class Items {
    */
   public static deleteItem<ThrowOnError extends boolean = false>(
     options: Options<DeleteItemData, ThrowOnError>,
-  ) {
+  ): RequestResult<DeleteItemResponses, DeleteItemErrors, ThrowOnError> {
     return (options.client ?? client).delete<DeleteItemResponses, DeleteItemErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -368,7 +371,7 @@ export class Items {
    */
   public static readItem<ThrowOnError extends boolean = false>(
     options: Options<ReadItemData, ThrowOnError>,
-  ) {
+  ): RequestResult<ReadItemResponses, ReadItemErrors, ThrowOnError> {
     return (options.client ?? client).get<ReadItemResponses, ReadItemErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],
@@ -384,7 +387,7 @@ export class Items {
    */
   public static updateItem<ThrowOnError extends boolean = false>(
     options: Options<UpdateItemData, ThrowOnError>,
-  ) {
+  ): RequestResult<UpdateItemResponses, UpdateItemErrors, ThrowOnError> {
     return (options.client ?? client).put<UpdateItemResponses, UpdateItemErrors, ThrowOnError>({
       responseType: "json",
       security: [{ scheme: "bearer", type: "http" }],

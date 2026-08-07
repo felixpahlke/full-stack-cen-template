@@ -7,7 +7,7 @@ import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { Toaster } from "./components/ui/sonner";
 import { trackFlavor } from "./lib/trackFlavor";
 import { routeTree } from "./routeTree.gen";
-import "./styles/tailwind.css";
+import "./styles/index.css";
 
 client.setConfig({
   baseURL: import.meta.env.VITE_API_URL || "",
