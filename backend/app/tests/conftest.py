@@ -20,21 +20,37 @@ from app.tests.utils.utils import get_superuser_token_headers
 
 TEST_DATABASE_URL = "TEST_DATABASE_URL"
 TEST_DATABASE_ALLOW_UNSAFE_NAME = "TEST_DATABASE_ALLOW_UNSAFE_NAME"
+TEST_DATABASE_CREDENTIALS = {"username": "test", "password": "test", "dbname": "test"}
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 def guard_test_database_url(database_url: str) -> None:
     database_name = make_url(database_url).database or ""
-    if "test" in database_name.lower():
+    normalized_name = database_name.lower()
+    if (
+        normalized_name == "test"
+        or normalized_name.endswith(("_test", "-test"))
+        or normalized_name.startswith(("test_", "test-"))
+    ):
         return
     if os.getenv(TEST_DATABASE_ALLOW_UNSAFE_NAME) == "1":
         return
     raise RuntimeError(
         f"Refusing unsafe {TEST_DATABASE_URL} database name {database_name!r}. "
         "The test suite migrates the target database and DELETES data from it. "
-        "Use a database name containing 'test' (for example, app_test), or set "
+        "Use test, a test_ or test- prefix, or an _test or -test suffix, or set "
         f"{TEST_DATABASE_ALLOW_UNSAFE_NAME}=1 to explicitly allow this database."
     )
+
+
+def create_postgres_container() -> PostgresContainer:
+    return PostgresContainer(
+        "postgres:12", driver="psycopg", **TEST_DATABASE_CREDENTIALS
+    )
+
+
+def create_test_engine(database_url: str) -> Engine:
+    return create_db_engine(database_url)
 
 
 @pytest.fixture(scope="session")
@@ -47,7 +63,7 @@ def database_url() -> Generator[str, None, None]:
 
     postgres = None
     try:
-        postgres = PostgresContainer("postgres:12", driver="psycopg")
+        postgres = create_postgres_container()
         postgres.start()
     except Exception as error:
         if postgres is not None:
@@ -92,11 +108,9 @@ def migrated_database(database_url: str) -> None:
 
 
 @pytest.fixture(scope="session")
-def engine(
-    settings: Settings, migrated_database: None
-) -> Generator[Engine, None, None]:
+def engine(database_url: str, migrated_database: None) -> Generator[Engine, None, None]:
     assert migrated_database is None
-    db_engine = create_db_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+    db_engine = create_test_engine(database_url)
     yield db_engine
     db_engine.dispose()
 
