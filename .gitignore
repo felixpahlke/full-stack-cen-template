@@ -17,7 +17,6 @@ node_modules/
 /blob-report/
 git-push.sh
 /playwright/.cache/
-git-push.sh
 
 # Local misc folder
 /local
