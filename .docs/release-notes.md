@@ -8,6 +8,10 @@ Migrations serialize during backend startup and exact bundled heads are required
 Tests are hermetic; OAuth Playwright traverses the real issuer/proxy path and has a lockfile-matched
 container wrapper.
 
+The backend image now runs `uvicorn app.main:create_app --factory`. The compatibility `app`,
+`settings`, and `engine` exports are lazy factory products rather than shells or eager globals, and
+strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
+
 Deployment now uses strict two-label ownership, exact secret recreation, project-private OAuth
 application workloads in Code Engine, and ready-before-switch staged OpenShift ingress. Real
 cluster smoke testing is still pending; both deployment guides include the required checklist.

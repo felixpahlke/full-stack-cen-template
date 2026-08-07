@@ -124,7 +124,9 @@ def _wait_for_logs(
 def _free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
+        port = sock.getsockname()[1]
+        assert isinstance(port, int)
+        return port
 
 
 def _wait_for_health(port: int, timeout: float = 60) -> None:
