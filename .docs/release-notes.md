@@ -1,41 +1,12 @@
-# Release Notes
+# Release notes — stateless backend modernization
 
-## Latest Changes
+Development and tests are now fully native and Docker-free. `npm run dev` runs reload-enabled
+Uvicorn; the root command facade handles checks, tests, deploy mocks, and the optional Docker image
+build. Obsolete database, Compose, and token-printer residue has been removed without changing the
+public health or API-key example routes.
 
-### Refactors
+Deployment uses strict two-label ownership, fail-closed collisions, and topology absence checks.
+Real cluster smoke tests remain pending; both deployment guides include the complete checklist.
 
-- ♻️ init 1
-
-### Docs
-
-- 📝 init
-
-### Internal
-
-- 👷 init
-
-## 0.0.1
-
-### Highlights
-
-- init
-
-### Features
-
-- init
-
-### Refactors
-
-- ♻️ init
-
-### Upgrades
-
-- ⬆️ init
-
-### Docs
-
-- 💡 init
-
-### Internal
-
-- 👷 init
+See [migration-guide.md](migration-guide.md). Rollback tag:
+`pre-modernization/backend-only-no-db`.

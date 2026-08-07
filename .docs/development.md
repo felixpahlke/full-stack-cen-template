@@ -1,58 +1,41 @@
-# Stateless FastAPI development
+# Stateless development
 
-Development is entirely native for this flavor. There is no frontend, database, Compose stack, or
-other backing service.
-
-## Prerequisites
-
-- Python 3.10–3.12
-- Node.js 20.19 or newer with npm
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
-
-Install the locked dependencies from the repository root:
+## First run
 
 ```bash
 npm ci
 uv sync --project backend
-```
-
-## Environment
-
-Create a local environment file:
-
-```bash
 cp .env.example .env
-```
-
-`npm run dev` requires non-empty `PROJECT_NAME`, `API_KEY`, and `API_PORT` values in that file.
-Application settings load `.env` from the repository root regardless of the shell's working
-directory. Tests and quality checks inject isolated settings and therefore work without `.env`.
-
-## Development server
-
-```bash
 npm run dev
 ```
 
-The supervisor checks that uv and the backend environment exist, confirms `API_PORT` is free, and
-starts native Uvicorn with reload. No Docker command is run. The default URLs are:
+Node.js 20.19+, npm, Python 3.10–3.12, and uv are required. Docker and Compose are not required
+for development, `check`, `test`, `verify`, or `test:deploy`. There is no frontend dependency
+installation.
 
-- API: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- Health check: `http://localhost:8000/api/v1/utils/health-check/`
+`npm run dev` validates `.env`, uv, `backend/.venv`, and `API_PORT`, then starts native Uvicorn
+with reload. It starts no backing service. Required non-empty keys are `CEN_FLAVOR`,
+`ENVIRONMENT`, `PROJECT_NAME`, `BACKEND_CORS_ORIGINS`, `API_KEY`, `API_PORT`, and
+`TELEMETRY_ENABLED`.
 
-Press `Ctrl-C` once for a graceful shutdown. A second signal forces any remaining process to stop.
+| Key | Default | URL |
+| --- | ---: | --- |
+| `API_PORT` | 8000 | API, `/docs`, and `/api/v1/utils/health-check/` |
 
-## Checks and tests
+One Ctrl-C gives Uvicorn up to five seconds, then kills any survivor. A second Ctrl-C forces
+immediate termination. There is no Compose teardown and no database volume.
 
-Run the complete local gate:
+## Quality and troubleshooting
 
 ```bash
-npm run verify
+DOCKER_HOST=unix:///nonexistent npm run verify
+npm run test:deploy
 ```
 
-The gate checks `scripts/*.mjs` with Biome, checks and formats all backend Python with Ruff, runs
-the Node supervisor tests, and runs plain pytest. It neither reads `.env` nor requires Docker.
+The explicit invalid `DOCKER_HOST` is an optional proof that tests are Docker-free, not a setup
+requirement. `npm run build` is deliberately outside `verify` because image building needs Docker.
+No migration or Playwright instructions exist for this branch.
 
-Use `npm run fix` to apply supported formatting and safe lint fixes.
+If the API port is occupied, stop the reported process or change `API_PORT`. If the uv environment
+is missing, rerun `uv sync --project backend`. If settings appear stale, verify commands are run
+from the checkout root and refresh `.env` from `.env.example`.
