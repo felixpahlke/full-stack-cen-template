@@ -67,7 +67,6 @@ export const ItemPublicSchema = {
     },
     owner_id: {
       type: "string",
-      format: "uuid",
       title: "Owner Id",
     },
   },
@@ -182,6 +181,13 @@ export const ValidationErrorSchema = {
     type: {
       type: "string",
       title: "Error Type",
+    },
+    input: {
+      title: "Input",
+    },
+    ctx: {
+      type: "object",
+      title: "Context",
     },
   },
   type: "object",

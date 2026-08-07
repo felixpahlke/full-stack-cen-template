@@ -48,13 +48,8 @@ export class Users {
   public static readUserMe<ThrowOnError extends boolean = false>(
     options?: Options<ReadUserMeData, ThrowOnError>,
   ) {
-    return (options?.client ?? client).get<
-      ReadUserMeResponses,
-      unknown,
-      ThrowOnError
-    >({
+    return (options?.client ?? client).get<ReadUserMeResponses, unknown, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/users/me",
       ...options,
     });
@@ -70,13 +65,8 @@ export class Items {
   public static readItems<ThrowOnError extends boolean = false>(
     options?: Options<ReadItemsData, ThrowOnError>,
   ) {
-    return (options?.client ?? client).get<
-      ReadItemsResponses,
-      ReadItemsErrors,
-      ThrowOnError
-    >({
+    return (options?.client ?? client).get<ReadItemsResponses, ReadItemsErrors, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/items/",
       ...options,
     });
@@ -90,13 +80,8 @@ export class Items {
   public static createItem<ThrowOnError extends boolean = false>(
     options: Options<CreateItemData, ThrowOnError>,
   ) {
-    return (options.client ?? client).post<
-      CreateItemResponses,
-      CreateItemErrors,
-      ThrowOnError
-    >({
+    return (options.client ?? client).post<CreateItemResponses, CreateItemErrors, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/items/",
       ...options,
       headers: {
@@ -114,13 +99,8 @@ export class Items {
   public static deleteItem<ThrowOnError extends boolean = false>(
     options: Options<DeleteItemData, ThrowOnError>,
   ) {
-    return (options.client ?? client).delete<
-      DeleteItemResponses,
-      DeleteItemErrors,
-      ThrowOnError
-    >({
+    return (options.client ?? client).delete<DeleteItemResponses, DeleteItemErrors, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/items/{id}",
       ...options,
     });
@@ -134,13 +114,8 @@ export class Items {
   public static readItem<ThrowOnError extends boolean = false>(
     options: Options<ReadItemData, ThrowOnError>,
   ) {
-    return (options.client ?? client).get<
-      ReadItemResponses,
-      ReadItemErrors,
-      ThrowOnError
-    >({
+    return (options.client ?? client).get<ReadItemResponses, ReadItemErrors, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/items/{id}",
       ...options,
     });
@@ -154,13 +129,8 @@ export class Items {
   public static updateItem<ThrowOnError extends boolean = false>(
     options: Options<UpdateItemData, ThrowOnError>,
   ) {
-    return (options.client ?? client).put<
-      UpdateItemResponses,
-      UpdateItemErrors,
-      ThrowOnError
-    >({
+    return (options.client ?? client).put<UpdateItemResponses, UpdateItemErrors, ThrowOnError>({
       responseType: "json",
-      security: [{ scheme: "bearer", type: "http" }],
       url: "/api/v1/items/{id}",
       ...options,
       headers: {

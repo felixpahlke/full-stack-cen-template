@@ -17,9 +17,7 @@ const useAuth = () => {
   });
 
   const logout = () => {
-    window.location.assign(
-      "/oauth2/sign_out?rd=" + encodeURIComponent("/oauth2/sign_in"),
-    );
+    window.location.assign(`/oauth2/sign_out?rd=${encodeURIComponent("/oauth2/sign_in")}`);
   };
 
   if (error) {
