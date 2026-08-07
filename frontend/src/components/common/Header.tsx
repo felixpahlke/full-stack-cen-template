@@ -33,7 +33,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:w-[300px] w-[240px]">
-              <nav className="mt-6 flex flex-col space-y-4">
+              <nav className="mt-6 flex flex-col gap-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.title}
@@ -53,7 +53,7 @@ export function Header() {
             </SheetContent>
           </Sheet>
         ) : (
-          <Link to="/" className="mr-6 flex items-center space-x-2">
+          <Link to="/" className="mr-6 flex items-center gap-2">
             <span className="text-sm">
               IBM <span className="font-semibold">Client Engineering</span>
             </span>
@@ -62,7 +62,7 @@ export function Header() {
 
         <Separator orientation="vertical" className="md:block mr-2 hidden h-4" />
 
-        <nav className="md:flex hidden items-center space-x-8 pl-4 text-sm">
+        <nav className="md:flex hidden items-center gap-8 pl-4 text-sm">
           {navItems.map((item) => (
             <Link
               key={item.title}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -66,10 +67,13 @@ const AddItem = ({ isOpen, onClose }: AddItemProps) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Item</DialogTitle>
+          <DialogDescription className="sr-only">
+            Create an item by providing its title and optional description.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
             <FormField
               control={form.control}
               name="title"
