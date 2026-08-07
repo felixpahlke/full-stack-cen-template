@@ -1,219 +1,69 @@
-# Overview
+# Working conventions
 
-Project uses [create-cen-app](https://github.com/felixpahlke/create-cen-app):
+This branch is the shadcn/ui, local-authentication custom-UI variant of the template. Keep changes small,
+preserve its authentication and UI identity, and use the root npm command facade.
 
-- **Backend:** FastAPI, SQLModel, PostgreSQL, Alembic, UV package manager
-- **Frontend:** React 19, TypeScript, Vite, TanStack Router/Query
-- **Main Infrastructure:** Docker Compose, OAuth2 Proxy, OpenShift deployment
+## Development
 
-## Additional Skill Docs
-
-Feel free to update these or create new SKILLs as you learned something new, or worked through a hard problem, to make life for the next agent easier.
-
-- **`.agents/skills/cen-template-maintenance/SKILL.md`** - How to maintain this repository across flavor branches, propagate canonical changes from `local-auth`, and preserve flavor-specific behavior during merges.
-
-## Development with Docker
-
-### Preparing the environment
-
-Before starting the development environment, make sure:
-
-- that the Backend Python environment is installed. If `backend/.venv` does not exist, execute:
+Prerequisites are Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker-compatible
+runtime. Set up a fresh checkout exactly as documented:
 
 ```bash
-cd backend && uv sync
+npm ci
+npm ci --prefix frontend
+uv sync --project backend
+cp .env.example .env
+npm run dev
 ```
 
-- that the Python environment is selected. If not execute:
+`npm run dev` runs PostgreSQL/Adminer in Compose and Uvicorn/Vite natively. Use Ctrl-C; do not
+manually leave backing services running. Check container names against the current directory
+prefix before stopping anything. The supervisor supports Docker Desktop, Colima, native Linux,
+the Compose plugin, and standalone `docker-compose`.
+
+Supported root vocabulary: `dev`, `check`, `fix`, `test`, `build`, `verify`, `db:migrate`,
+`db:revision`, and `test:deploy`. Playwright and generation have dedicated commands documented
+in the component guides.
+
+## Backend
+
+- Tables belong in `backend/app/tables.py`; use SQLModel `table=True` and UUID primary keys.
+- API schemas belong in `backend/app/models.py`; keep create/update/public models distinct.
+- Database operations belong in `backend/app/crud.py`, with keyword-only arguments and types.
+- Routes belong in `backend/app/api/routes/`, use injected session/current user, declare response
+  models/status codes, and are registered in `backend/app/api/main.py`.
+- Settings and secrets belong in `backend/app/core/config.py`. Mirror every `.env` key in
+  `.env.example` and never hardcode a secret.
+- Schema changes require a new Alembic revision. Do not edit existing history. Use root `db:*`
+  commands while the local database is running.
+- `MIGRATE_ON_START` never disables exact-head checking. Treat a migration lock timeout or head
+  mismatch as a failed startup.
+- Define forward SQLModel relationships with quoted class names; do not enable postponed
+  annotations for that purpose.
+
+## Frontend
+
+- Use the existing shadcn/ui primitives and Tailwind CSS utilities; keep reusable primitives under
+  `frontend/src/components/ui`.
+- Routes live in `frontend/src/routes`; protected pages stay under `_layout` and export `Route`.
+- Use TanStack Query and the generated client for normal HTTP calls. Invalidate affected queries
+  after mutations.
+- Never edit `frontend/src/client` or `frontend/src/routeTree.gen.ts`; run
+  `npm run generate-client`.
+- Use npm only. Keep direct dependencies exact-pinned and update the npm lockfile deliberately.
+
+## Verification
+
+Use the smallest high-signal test set during development and finish with:
 
 ```bash
-source backend/.venv/bin/activate
+npm run verify
+npm run test:deploy
 ```
 
-- that the Frontend environment is installed. If `frontend/node_modules` does not exist, execture:
+Backend tests are hermetic Testcontainers tests. Playwright is a separate browser gate; use the
+container command in `frontend/README.md` when native browsers are unavailable. For schema or
+route work, also run `npm run generate-client` and ensure `npm run check:generated` stays clean.
 
-```bash
-cd frontend && npm install
-```
-
-- that THIS application is up and running. See section: [Checking if Application is Running](#Checking-if-Application-is-Running). If another application is running, please shut that down first, before starting THIS application
-
-### Developing the Application using Docker
-
-The application is developed using Docker Compose with hot-reload support.
-To start the application, run:
-
-```bash
-docker compose watch
-```
-
-To stop the application, run:
-
-```bash
-docker compose down
-```
-
-For restarting the application, run:
-
-```bash
-docker compose down
-docker compose watch
-```
-
-To check the logs of a specific container, e.g. the backend run:
-
-```bash
-docker compose logs backend
-```
-
-**IMPORTANT:** If the user doesn't use Docker Desktop but container runtimes such as colima all commands using `docker compose` must be replaced by `docker-compose`.
-
-### Checking if Application is Running
-
-To verify if THIS specific application (not a sibling project) is running, check Docker containers:
-
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
-
-**Important:** Container names are prefixed with the project directory name. For example:
-
-- If the project directory is `full-stack-cen-template`, containers will be named `full-stack-cen-template-backend-1`, `full-stack-cen-template-frontend-1`, etc.
-  Always verify the container name prefix matches the current project directory to ensure you're checking the correct application instance.
-
-# Backend Conventions/Rules:
-
-## Important Files:
-
-- **`backend/app/tables.py`** - SQLModel DB models (with `table=True`)
-- **`backend/app/models.py`** - Pydantic API schemas (Create, Update, Public models)
-- **`backend/app/crud.py`** - Database operations
-- **`backend/app/api/routes/`** - API endpoints (one file per resource)
-- **`backend/app/api/main.py`** - Router registration
-- **`backend/app/core/config.py`** - Contains static values and encloses environment variables
-
-## Database Models (`tables.py`):
-
-- Use `SQLModel` with `table=True`
-- Use UUID for primary keys
-
-## API Schemas (`models.py`):
-
-- Use `Pydantic SQLModel with table=false`
-- Create separate models for Create, Update, and Public
-- Public models include all fields returned to client
-
-## CRUD Operations (`crud.py`):
-
-- Keep ALL database logic here
-- Use keyword-only arguments (`*,`)
-- Use type hints
-- Handle session commit/refresh
-
-## API Routes (`api/routes/`):
-
-- Use dependency injection for `session` and `current_user`
-- Specify `response_model` and `status_code`
-- Call CRUD functions, don't write DB logic here
-- Register in `backend/app/api/main.py`
-
-## Secrets and Environment Variables (`core/config.py`)
-
-- All configuration and secrets are managed in `backend/app/core/config.py`
-- Uses Pydantic `BaseSettings` to load from `.env` file
-- Any key defined in `.env` MUST also exist in `.env.example`
-- Any key in `.env` MUST be defined as a field in the `Settings` class in `backend/app/core/config.py`
-- Type hints in `Settings` should match the value type in `.env`:
-- Never hardcode secrets in code - always use `settings` object
-
-## Database Migrations (Alembic)
-
-**Prerequisites:** Alembic commands require the database to be running. Before executing any Alembic commands. See section: [Checking if Application is Running](#Checking-if-Application-is-Running):
-
-1. Check if the application is running
-2. If not running, start it
-3. Verify the database container is healthy
-
-ALWAYS use Alembic for schema changes. Never modify database directly using following commands. BEFORE running the Alembic commands ALWAYS navigate to the backend and activate the venv by executing `cd backend && source .venv/bin/activate`:
-
-```bash
-alembic revision --autogenerate -m "Add column X to table Y"
-```
-
-if the revision was successfull, run the following command to apply all pending migrations:
-
-```bash
-alembic upgrade head
-```
-
-# Frontend Conventions/Rules:
-
-## Styling with Tailwind CSS
-
-The project uses **Tailwind CSS** for utility-based styling:
-
-### Best Practices
-
-- **ALWAYS** use Tailwind for styling
-- **DO** use Tailwind for layout and spacing utilities
-
-## File Structure
-
-- **`frontend/src/routes/`** - File-based routing (TanStack Router)
-- **`frontend/src/routes/_layout/`** - Protected routes (require auth)
-- **`frontend/src/components/common/`** - Shared components
-- **`frontend/src/components/[feature]/`** - Feature-specific components
-- **`frontend/src/client/`** - Auto-generated API client (DO NOT EDIT!)
-
-## Frontend Routing:
-
-- Protected routes go under `_layout/`
-- Use `createFileRoute` for route definition
-- Export as `Route`
-- `routeTree.gen.ts` is automatically created and updated and specifies the structure of the routes
-
-## Data Fetching using TanStack Query
-
-- Always use TanStack Query for all API calls
-- Use auto-generated client from `@/client`
-- Invalidate queries after mutations
-
-**IMPORTANT EXCEPTION:** For complex endpoints such as SSE, Websockets or other, you may use other technologies and not use the generated client or TanStack Query if they do not support the functionality correctly!
-
-# Essential Workflows
-
-## Adding a New Backend API Endpoint
-
-**Prerequisites:** Ensure the application (especially the database) is running before steps 7-9.
-
-1. Add model to `backend/app/tables.py`
-2. Add schemas to `backend/app/models.py` (Create, Update, Public)
-3. Add CRUD functions to `backend/app/crud.py`
-4. Create route file in `backend/app/api/routes/`
-5. Register router in `backend/app/api/main.py`
-6. **Ensure that THIS app is running:** See section: [Checking if Application is Running](#Checking-if-Application-is-Running)
-7. Create and apply the migration as mentioned in the section [Database Migrations (Alembic)](<#Database-Migrations-(Alembic)>): `cd backend && source .venv/bin/activate && alembic revision --autogenerate -m "message"`
-8. Afterwards, apply that migration: `cd backend && source .venv/bin/activate && alembic upgrade head`
-9. Regenerate client: `./scripts/generate-client.sh`. This updates `frontend/src/client/` - never edit these files manually.
-10. If the user requests dummy data to be able to see the changes create an endpoint in the `backend/app/api/routes/utils.py` files that generates random items for the newly created tables. Be sure to use the `CurrentUser` dependency if the objects require a User ID, because otherwise the user will not be able to see the data, as the read operations filter objects for the current user. Lastly, request the user to execute
-
-**IMPORTANT:** When defining SQLModel relationships in `tables.py`, use **string quotes** for forward references (classes defined later in the file). Example: If `TableA` references `TableB` which is defined below it, use `table_b: "TableB" = Relationship(...)`. Do NOT use `from __future__ import annotations` as it can cause issues with SQLAlchemy/SQLModel relationship resolution.
-
-## Adding a New Frontend Page
-
-1. Create file in `frontend/src/routes/_layout/pagename.tsx`
-2. Use `createFileRoute` and export as `Route`
-3. After adding a new page using Route, the `routeTree.gen.ts` file will be automatically updated after a certain amount of time
-4. Add the new page to the header, so that the user doesn't need to type the URL in the browser
-
-# Common Mistakes to Avoid
-
-- **DON'T** mix SQLModel and Pydantic models - use SQLModel for `tables.py`, Pydantic for `models.py`
-- **DON'T** modify database schema without Alembic migrations
-- **DON'T** write database logic in route handlers - use `crud.py`
-- **DON'T** manually edit `frontend/src/client/`, but regenerate the client which you also need to do after after any backend changes to the exposed routes by executing `./scripts/generate-client.sh` from the root directory
-- **DON'T** forget to activate venv before running Alembic or executing any scripts
-- **DON'T** run Alembic commands without ensuring the database is running first
-- **DON'T** mix database models with API schemas!
-- **DON'T** mix up other applications that are running with THIS one. Make sure to verify the prefix of the containers. See section: [Checking if Application is Running](#Checking-if-Application-is-Running)
-- **DON'T** forget that the API endpoints have a prefix which is defined in the `API_V1_STR` under `backend/app/core/config.py`
+The detailed maintenance workflow is in `.agents/skills/cen-template-maintenance/SKILL.md` and
+`.docs/maintenance.md`.

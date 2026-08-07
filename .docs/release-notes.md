@@ -1,41 +1,18 @@
-# Release Notes
+# Release notes — development modernization
 
-## Latest Changes
+Development now starts with `npm run dev`. Only PostgreSQL and Adminer run in Compose; FastAPI
+and Vite run natively with reload/HMR. The first-run sequence, root commands, port contract,
+shutdown behavior, migration ownership, hermetic tests, and Playwright container pattern are
+documented in [development.md](development.md).
 
-### Refactors
+Backend startup serializes migration and seeding, verifies the database is at exactly the
+Alembic heads bundled in the checkout, and refuses readiness on failure. Deployment scripts now
+mutate or delete only resources bearing both the template managed-by label and the current
+application instance label.
 
-- ♻️ init 1
+Production still uses separate backend and nginx frontend images. Real Code Engine and
+OpenShift smoke tests remain pending; the required maintainer checklist is included in both
+deployment guides.
 
-### Docs
-
-- 📝 init
-
-### Internal
-
-- 👷 init
-
-## 0.0.1
-
-### Highlights
-
-- init
-
-### Features
-
-- init
-
-### Refactors
-
-- ♻️ init
-
-### Upgrades
-
-- ⬆️ init
-
-### Docs
-
-- 💡 init
-
-### Internal
-
-- 👷 init
+Existing consumers should follow [migration-guide.md](migration-guide.md). The rollback point is
+`pre-modernization/local-auth-custom-ui`.
