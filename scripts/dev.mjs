@@ -48,8 +48,6 @@ try {
   await waitForHttp(Number(effectiveEnv.ADMINER_PORT), "Adminer");
   await waitForHttp(Number(effectiveEnv.DEX_PORT), "Dex", "/dex/.well-known/openid-configuration");
   await waitForHttp(Number(effectiveEnv.OAUTH2_PROXY_PORT), "oauth2-proxy", "/ping");
-  await required(npm, ["run", "db:migrate"], "migrations");
-
   watcher = startClientWatcher();
   const apiPort = effectiveEnv.API_PORT;
   const webPort = effectiveEnv.WEB_PORT;
