@@ -347,8 +347,13 @@ run_ce_success() {
     assert_absent "$STATE/secrets/mock-project-backend-config.env" OAUTH2_PROXY_CLIENT_SECRET
     assert_contains "$STATE/secrets/mock-project-backend-config.env" "CEN_FLAVOR=$FLAVOR"
     if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc 'docker image build' "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
-        assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
-        assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
+        if [[ "$OAUTH" == true ]]; then
+            assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
+            assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
+        else
+            assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
+            assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
+        fi
     else [[ $(grep -Fc 'docker image build' "$STATE/calls.log") == 1 ]] || fail 'expected one Code Engine image'; fi
     assert_contains "$PROJECT/.env.production" 'BACKEND_CORS_ORIGINS=https://admin.example.com'
     if [[ "$HAS_FRONTEND" == true && "$OAUTH" != true ]]; then assert_contains "$PROJECT/.env.production" 'mock-project-frontend.mockcluster.eu-de.codeengine.appdomain.cloud'; fi
@@ -488,7 +493,10 @@ run_oc_branch_ref_cases() {
 run_oc_webhook_cases() {
     prepare_case oc-webhook-failure
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_POST_FAIL=true ./scripts/oc-deploy.sh; then fail 'OpenShift ignored GitHub webhook POST failure'; fi
+    if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_POST_FAIL=true ./scripts/oc-deploy.sh; then
+        sed -n '1,220p' "$output" >&2; sed -n '1,260p' "$STATE/calls.log" >&2
+        fail 'OpenShift ignored GitHub webhook POST failure'
+    fi
     assert_contains "$output" 'GitHub webhook creation failed for backend (HTTP 500)'
     assert_absent "$output" 'Deployment completed successfully.'
 
