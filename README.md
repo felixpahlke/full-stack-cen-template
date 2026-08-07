@@ -1,174 +1,70 @@
-# Full Stack Client Engineering Template
+# Backend-only Client Engineering Template
 
-## Technology Stack and Features
+This flavor provides a FastAPI and PostgreSQL API with unowned item CRUD protected by
+an `X-API-Key` header. It has no frontend. The public health endpoint and FastAPI's
+generated Swagger/ReDoc pages are the browser-facing surface.
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
-  - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
-  - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-- 🚀 [React](https://react.dev) for the frontend.
-  - 💃 Using TypeScript, hooks, Vite, and other parts of a modern frontend stack.
-  - 🎨 [Carbon](https://carbondesignsystem.com/) & [Carboncn UI](https://www.carboncn.dev/) (optionally) for the frontend components.
-  - 🤖 An automatically generated frontend client.
-  - 🦇 Dark mode support.
-- 🐋 [Docker Compose](https://www.docker.com) & [colima](https://github.com/abiosoft/colima/) for development.
-- 🔒 Authentication via OAuth proxy with IdP (e.g. AppID) or in-app user management.
-- 🚢 Deployment instructions using OpenShift.
+## Technology
 
-_This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
+- FastAPI, SQLModel, PostgreSQL, and Alembic
+- API-key authentication for item routes
+- Docker Compose for PostgreSQL and Adminer during development
+- Native reload-enabled Uvicorn via the root npm development supervisor
+- OpenShift and Code Engine deployment scripts
 
-## Flavours
+This repository is based on
+[full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)
+and is one flavor of [create-cen-app](https://github.com/felixpahlke/create-cen-app).
 
-This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
+## Quick start
 
-| Branch                  | Auth                   | UI        | Pros             | Cons               |
-| ----------------------- | ---------------------- | --------- | ---------------- | ------------------ |
-| `oauth-proxy`           | OAuth proxy with IdP   | Carbon    | prod-friendly    | Needs AppID        |
-| `oauth-proxy-custom-ui` | OAuth proxy with IdP   | shadcn/ui | prod-friendly    | Needs AppID        |
-| `local-auth`            | In‑app user management | Carbon    | easy to start up | less prod-friendly |
-| `local-auth-custom-ui`  | In‑app user management | shadcn/ui | easy to start up | less prod-friendly |
-| `backend-only`          | API Key                | —         |
-| `backend-only-no-db`    | API Key                | —         |
-
-<br />
-
-> The custom-ui flavours are easily adaptable to look like any customers UI, so choose those if Carbon is not the right fit.
-
-> Prefer the `oauth-proxy` flavours, unless you have a specific reason to not use it.
-
-## Sample Applications & Tutorials
-
-Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
-
-- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
-- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
-
-## AI-Assisted Development
-
-This project includes an [AGENTS.md](./AGENTS.md) file that provides comprehensive guidelines for agentic AI assistants like [**Bob**](https://www.ibm.com/products/bob) to autonomously implement new features. The file contains:
-
-- 📋 Project structure and conventions
-- 🔧 Backend and frontend development rules
-- 🚀 Essential workflows for common tasks
-- ⚠️ Common mistakes to avoid
-
-These guidelines enable AI assistants to understand the codebase and its conventions which leads to more robust and consistent code.
-
-> **NOTE:** You can customize or delete the AGENTS.md file to influence the behavior of your coding assistant.
-
-## Screenshots
-
-### Dashboard
-
-![API docs](.docs/img/dashboard-landing.png)
-
-### Items
-
-![API docs](.docs/img/dashboard-items.png)
-
-### Dark Mode
-
-![API docs](.docs/img/dark-mode.png)
-
-### Interactive API Documentation
-
-![API docs](.docs/img/docs.png)
-
-### How to Use It
-
-#### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
+Prerequisites are Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker
+runtime with either `docker compose` or standalone `docker-compose`.
 
 ```bash
-npm create cen-app@latest
+cp .env.example .env
+npm ci
+uv sync --project backend
+npm run dev
 ```
 
-#### Or clone manually (commands may vary by flavour - check the specific branch):
+The supervisor starts PostgreSQL 12 and Adminer in Compose, applies migrations, and
+runs Uvicorn natively with reload. It does not seed users because this flavor has no
+user table.
 
-- Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
+- API: `http://localhost:8000`
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+- Adminer: `http://localhost:8080`
+
+Use the configured API key for item CRUD:
 
 ```bash
-git clone -b backend-only git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git my-full-stack
+curl -H 'X-API-Key: changethis12345678' http://localhost:8000/api/v1/items/
 ```
 
-- Enter into the new directory:
+The health check is public:
 
 ```bash
-cd my-full-stack
+curl http://localhost:8000/api/v1/utils/health-check/
 ```
 
-- Set the new origin to your new repository (copy from GitHub interface):
+See [development.md](./.docs/development.md) for the environment contract, shutdown
+behavior, tests, database commands, and troubleshooting. Backend-specific conventions
+are in [backend/README.md](./backend/README.md).
+
+## Quality
 
 ```bash
-git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
+npm run verify
 ```
 
-- Add the template repository as upstream to get future updates:
-
-```bash
-git remote add upstream git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git
-```
-
-- Rename the branch if your new repository should use a different branch name:
-
-```bash
-git branch -m my-template-branch
-```
-
-- Push the code to your new repository:
-
-```bash
-git push -u origin my-template-branch
-```
-
-### Update From the Original Template
-
-After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
-
-- Make sure you added the original repository as a remote, you can check it with:
-
-```bash
-git remote -v
-
-origin    git@github.ibm.com:my-username/my-full-stack.git (fetch)
-origin    git@github.ibm.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (push)
-```
-
-- Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
-
-```bash
-git pull --no-commit upstream backend-only
-```
-
-This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
-
-- If there are conflicts, solve them in your editor.
-
-- Once you are done, commit the changes:
-
-```bash
-git merge --continue
-```
-
-## Development
-
-General development docs: [development.md](./.docs/development.md).
+This runs script checks, Ruff lint and format checks across the backend, and hermetic
+backend tests. Tests start their own disposable PostgreSQL container and require no
+`.env` or running development Compose stack.
 
 ## Deployment
 
-OpenShift Deployment docs: [oc-deployment.md](./.docs/oc-deployment.md).
-
-Code Engine Deployment docs: [ce-deployment.md](./.docs/ce-deployment.md).
-
-## Backend Development
-
-Backend docs: [backend/README.md](./backend/README.md).
-
-## Frontend Development
-
-Frontend docs: [frontend/README.md](./frontend/README.md).
-
-## Release Notes
-
-Check the file [release-notes.md](./.docs/release-notes.md).
+- [OpenShift deployment](./.docs/oc-deployment.md)
+- [Code Engine deployment](./.docs/ce-deployment.md)
+- [Deployment script reference](./scripts/README.md)

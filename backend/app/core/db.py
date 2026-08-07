@@ -1,8 +1,18 @@
+from functools import lru_cache
+
+from sqlalchemy import Engine
 from sqlmodel import Session, create_engine
 
-from app.core.config import settings
+from app.core.config import get_settings
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+
+def create_db_engine(database_url: str) -> Engine:
+    return create_engine(database_url)
+
+
+@lru_cache
+def get_engine() -> Engine:
+    return create_db_engine(str(get_settings().SQLALCHEMY_DATABASE_URI))
 
 
 # make sure all SQLModel models are imported (app.tables) before initializing DB
