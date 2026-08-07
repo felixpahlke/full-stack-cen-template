@@ -1,11 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { AxiosError } from "axios";
-
-import { type UserUpdateMe, Users } from "../../client";
-import useAuth from "../../hooks/useAuth";
-import { handleError, emailPattern } from "../../utils";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -17,7 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Users, type UserUpdateMe } from "../../client";
+import useAuth from "../../hooks/useAuth";
+import { emailPattern, handleError } from "../../utils";
 
 interface FormValues {
   full_name: string;
@@ -76,10 +75,7 @@ const UserInformation = () => {
         <h3 className="mb-4 text-lg font-medium">User Information</h3>
         <Form {...form}>
           {editMode ? (
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6 py-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
               <FormField
                 control={form.control}
                 name="full_name"
@@ -115,20 +111,11 @@ const UserInformation = () => {
               <div className="flex space-x-2">
                 <Button
                   type="submit"
-                  disabled={
-                    isPending ||
-                    !form.formState.isValid ||
-                    !form.formState.isDirty
-                  }
+                  disabled={isPending || !form.formState.isValid || !form.formState.isDirty}
                 >
                   {isPending ? "Saving..." : "Save"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={isPending}
-                  type="button"
-                >
+                <Button variant="outline" onClick={onCancel} disabled={isPending} type="button">
                   Cancel
                 </Button>
               </div>
@@ -137,9 +124,7 @@ const UserInformation = () => {
             <div className="space-y-6 py-4">
               <div className="space-y-1">
                 <FormLabel>Full name</FormLabel>
-                <p
-                  className={`py-2 ${!currentUser?.full_name ? "text-muted-foreground" : ""}`}
-                >
+                <p className={`py-2 ${!currentUser?.full_name ? "text-muted-foreground" : ""}`}>
                   {currentUser?.full_name || "N/A"}
                 </p>
               </div>
@@ -148,11 +133,7 @@ const UserInformation = () => {
                 <p className="py-2">{currentUser?.email}</p>
               </div>
               <div>
-                <Button
-                  variant="outline"
-                  onClick={toggleEditMode}
-                  type="button"
-                >
+                <Button variant="outline" onClick={toggleEditMode} type="button">
                   Edit
                 </Button>
               </div>

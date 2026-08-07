@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-
+import { Logo } from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,11 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Logo } from "@/components/common/Logo";
+import { Link } from "@/components/ui/link";
 import type { BodyLoginLoginAccessToken as AccessToken } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
 import { emailPattern } from "../utils";
-import { Link } from "@/components/ui/link";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -87,21 +86,13 @@ function Login() {
                 <FormControl>
                   <Input placeholder="Password" type="password" {...field} />
                 </FormControl>
-                {error && (
-                  <p className="text-sm font-medium text-destructive">
-                    {error}
-                  </p>
-                )}
+                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={form.formState.isSubmitting}
-          >
+          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? "Loading..." : "Log In"}
           </Button>
 

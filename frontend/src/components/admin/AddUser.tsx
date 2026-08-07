@@ -1,17 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { type UserCreate, Users } from "../../client";
-import {
-  handleError,
-  emailPattern,
-  passwordRules,
-  confirmPasswordRules,
-  namePattern,
-} from "../../utils";
-
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +20,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { type UserCreate, Users } from "../../client";
+import {
+  confirmPasswordRules,
+  emailPattern,
+  handleError,
+  namePattern,
+  passwordRules,
+} from "../../utils";
 
 interface AddUserProps {
   isOpen: boolean;
@@ -105,11 +103,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="user@example.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="user@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,11 +140,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter password"
-                      {...field}
-                    />
+                    <Input type="password" placeholder="Enter password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,11 +155,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Confirm password"
-                      {...field}
-                    />
+                    <Input type="password" placeholder="Confirm password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,10 +169,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <FormLabel>Is superuser?</FormLabel>
                   </FormItem>
@@ -199,10 +182,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <FormLabel>Is active?</FormLabel>
                   </FormItem>

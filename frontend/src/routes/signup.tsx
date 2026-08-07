@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
-
+import { Logo } from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,16 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Logo } from "@/components/common/Logo";
+import { Link } from "@/components/ui/link";
 import type { UserRegister } from "../client";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
-import {
-  emailPattern,
-  passwordRules,
-  confirmPasswordRules,
-  namePattern,
-} from "../utils";
-import { Link } from "@/components/ui/link";
+import { confirmPasswordRules, emailPattern, namePattern, passwordRules } from "../utils";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -120,11 +114,7 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Repeat Password"
-                    type="password"
-                    {...field}
-                  />
+                  <Input placeholder="Repeat Password" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -139,17 +129,9 @@ function SignUp() {
               <FormItem>
                 <FormLabel>Access Password</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Access Password"
-                    type="password"
-                    {...field}
-                  />
+                  <Input placeholder="Access Password" type="password" {...field} />
                 </FormControl>
-                {error && (
-                  <p className="text-sm font-medium text-destructive">
-                    {error}
-                  </p>
-                )}
+                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
                 <FormMessage />
               </FormItem>
             )}

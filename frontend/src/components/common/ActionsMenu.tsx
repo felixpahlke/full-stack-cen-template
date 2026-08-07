@@ -1,11 +1,6 @@
-import { useState } from "react";
 import { Edit, MoreVertical, Trash } from "lucide-react";
-
-import type { ItemPublic, UserPublic } from "../../client";
-import EditUser from "../admin/EditUser";
-import EditItem from "../items/EditItem";
-import Delete from "./DeleteAlert";
-
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import type { ItemPublic, UserPublic } from "../../client";
+import EditUser from "../admin/EditUser";
+import EditItem from "../items/EditItem";
+import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;

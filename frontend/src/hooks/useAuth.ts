@@ -1,14 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-
 import { AxiosError } from "axios";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   type BodyLoginLoginAccessToken as AccessToken,
+  Login,
   type UserPublic,
   type UserRegister,
-  Login,
   Users,
 } from "../client";
 

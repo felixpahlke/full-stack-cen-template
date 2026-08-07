@@ -1,9 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  accessPassword,
-  firstSuperuser,
-  firstSuperuserPassword,
-} from "./config.ts";
+import { accessPassword, firstSuperuser, firstSuperuserPassword } from "./config.ts";
 import { randomEmail, randomPassword } from "./utils/random";
 import { logInUser, logOutUser, signUpNewUser } from "./utils/user";
 
@@ -117,9 +113,7 @@ test.describe("Edit user with invalid data", () => {
     await page.getByRole("button", { name: "Edit" }).click();
     await page.getByLabel("Full name").fill(updatedName);
     await page.getByRole("button", { name: "Cancel" }).first().click();
-    await expect(
-      page.getByLabel("My profile").getByText(fullName, { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByLabel("My profile").getByText(fullName, { exact: true })).toBeVisible();
   });
 
   test("Cancel edit action restores original email", async ({ page }) => {
@@ -139,9 +133,7 @@ test.describe("Edit user with invalid data", () => {
     await page.getByRole("button", { name: "Edit" }).click();
     await page.getByLabel("Email").fill(updatedEmail);
     await page.getByRole("button", { name: "Cancel" }).first().click();
-    await expect(
-      page.getByLabel("My profile").getByText(email, { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByLabel("My profile").getByText(email, { exact: true })).toBeVisible();
   });
 });
 
@@ -168,9 +160,7 @@ test.describe("Change password successfully", () => {
     await page.getByLabel("New Password").fill(NewPassword);
     await page.getByLabel("Confirm Password").fill(NewPassword);
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(
-      page.getByText("Password updated successfully."),
-    ).toBeVisible();
+    await expect(page.getByText("Password updated successfully.")).toBeVisible();
 
     await logOutUser(page);
 
@@ -199,14 +189,10 @@ test.describe("Change password with invalid data", () => {
     await page.getByLabel("Current Password").fill(password);
     await page.getByLabel("New Password").fill(weakPassword);
     await page.getByLabel("Confirm Password").fill(weakPassword);
-    await expect(
-      page.getByText("Password must be at least 8 characters"),
-    ).toBeVisible();
+    await expect(page.getByText("Password must be at least 8 characters")).toBeVisible();
   });
 
-  test("New password and confirmation password do not match", async ({
-    page,
-  }) => {
+  test("New password and confirmation password do not match", async ({ page }) => {
     const fullName = "Test User";
     const email = randomEmail();
     const password = randomPassword();
@@ -240,9 +226,7 @@ test("User can switch from light mode to dark mode", async ({ page }) => {
   await page.goto("/settings");
   await page.getByRole("tab", { name: "Appearance" }).click();
   await page.getByText("Dark Mode").click();
-  const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  );
+  const isDarkMode = await page.evaluate(() => document.documentElement.classList.contains("dark"));
   expect(isDarkMode).toBe(true);
 });
 
@@ -264,8 +248,6 @@ test("Selected mode is preserved across sessions", async ({ page }) => {
   await logOutUser(page);
 
   await logInUser(page, firstSuperuser, firstSuperuserPassword);
-  const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  );
+  const isDarkMode = await page.evaluate(() => document.documentElement.classList.contains("dark"));
   expect(isDarkMode).toBe(true);
 });

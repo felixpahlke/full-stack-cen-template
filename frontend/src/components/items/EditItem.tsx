@@ -1,10 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { type ItemPublic, type ItemUpdate, Items } from "../../client";
-import { handleError } from "../../utils";
-
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +19,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { type ItemPublic, Items, type ItemUpdate } from "../../client";
+import { handleError } from "../../utils";
 
 interface EditItemProps {
   item: ItemPublic;
@@ -46,8 +44,7 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
   });
 
   const { mutate: updateItem, isPending } = useMutation({
-    mutationFn: (data: ItemUpdate) =>
-      Items.updateItem({ path: { id: item.id }, body: data }),
+    mutationFn: (data: ItemUpdate) => Items.updateItem({ path: { id: item.id }, body: data }),
     onSuccess: () => {
       toast.success("Item updated successfully.");
       form.reset();
@@ -107,10 +104,7 @@ const EditItem = ({ item, isOpen, onClose }: EditItemProps) => {
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending || !form.formState.isValid}
-              >
+              <Button type="submit" disabled={isPending || !form.formState.isValid}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

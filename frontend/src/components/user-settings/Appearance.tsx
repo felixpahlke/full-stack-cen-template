@@ -1,8 +1,8 @@
+import { useTheme } from "@/components/theme/ThemeProvider";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 const Appearance = () => {
   const { theme, setTheme } = useTheme();
@@ -15,11 +15,7 @@ const Appearance = () => {
     <Card className="max-w-md">
       <CardContent className="pt-6">
         <h3 className="mb-4 text-lg font-medium">Appearance</h3>
-        <RadioGroup
-          className="mt-4 space-y-3"
-          value={theme}
-          onValueChange={handleThemeChange}
-        >
+        <RadioGroup className="mt-4 space-y-3" value={theme} onValueChange={handleThemeChange}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="light" id="light" />
             <Label htmlFor="light" className="flex items-center">

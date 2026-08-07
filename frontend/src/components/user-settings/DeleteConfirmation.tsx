@@ -1,10 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { Users } from "../../client";
-import useAuth from "../../hooks/useAuth";
-import { handleError } from "../../utils";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Users } from "../../client";
+import useAuth from "../../hooks/useAuth";
+import { handleError } from "../../utils";
 
 interface DeleteProps {
   isOpen: boolean;
@@ -54,20 +53,15 @@ const DeleteConfirmation = ({ isOpen, onClose }: DeleteProps) => {
         <DialogHeader>
           <DialogTitle>Confirmation Required</DialogTitle>
           <DialogDescription className="mb-4">
-            All your account data will be <strong>permanently deleted.</strong>{" "}
-            If you are sure, please click <strong>"Confirm"</strong> to proceed.
-            This action cannot be undone.
+            All your account data will be <strong>permanently deleted.</strong> If you are sure,
+            please click <strong>"Confirm"</strong> to proceed. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            disabled={isSubmitting}
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="destructive" disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>
             {isSubmitting ? "Deleting..." : "Confirm"}
           </Button>
         </DialogFooter>

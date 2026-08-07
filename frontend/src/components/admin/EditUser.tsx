@@ -1,17 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { type UserPublic, type UserUpdate, Users } from "../../client";
-import {
-  handleError,
-  emailPattern,
-  passwordRules,
-  confirmPasswordRules,
-  namePattern,
-} from "../../utils";
-
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +20,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
+import { type UserPublic, Users, type UserUpdate } from "../../client";
+import {
+  confirmPasswordRules,
+  emailPattern,
+  handleError,
+  namePattern,
+  passwordRules,
+} from "../../utils";
 
 interface EditUserProps {
   user: UserPublic;
@@ -62,8 +60,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
   });
 
   const { mutate: updateUser, isPending } = useMutation({
-    mutationFn: (data: UserUpdate) =>
-      Users.updateUser({ path: { user_id: user.id }, body: data }),
+    mutationFn: (data: UserUpdate) => Users.updateUser({ path: { user_id: user.id }, body: data }),
     onSuccess: () => {
       toast.success("User updated successfully.");
       form.reset();
@@ -175,10 +172,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <FormLabel>Is superuser?</FormLabel>
                   </FormItem>
@@ -191,10 +185,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <FormLabel>Is active?</FormLabel>
                   </FormItem>
@@ -206,10 +197,7 @@ const EditUser = ({ user, isOpen, onClose }: EditUserProps) => {
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending || !form.formState.isValid}
-              >
+              <Button type="submit" disabled={isPending || !form.formState.isValid}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

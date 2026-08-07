@@ -1,5 +1,5 @@
-import { useTheme } from "@/components/theme/ThemeProvider";
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -14,10 +14,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
         classNames: {
           description: "group-[.toast]:text-muted-foreground",
 
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
       richColors

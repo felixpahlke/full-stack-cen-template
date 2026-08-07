@@ -1,10 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
-
-import { type UserPublic, Users } from "../../client";
-import ActionsMenu from "../common/ActionsMenu";
-
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -13,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { type UserPublic, Users } from "../../client";
+import ActionsMenu from "../common/ActionsMenu";
 
 const PER_PAGE = 10;
 
@@ -34,8 +32,7 @@ export default function UsersTable() {
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
   const { page } = useSearch({ from: "/_layout/admin" });
   const navigate = useNavigate({ from: "/admin" });
-  const setPage = (newPage: number) =>
-    navigate({ search: () => ({ page: newPage }) });
+  const setPage = (newPage: number) => navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: users,
@@ -97,9 +94,7 @@ export default function UsersTable() {
                   </div>
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  {user.is_superuser ? "Superuser" : "User"}
-                </TableCell>
+                <TableCell>{user.is_superuser ? "Superuser" : "User"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div
@@ -111,11 +106,7 @@ export default function UsersTable() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <ActionsMenu
-                    type="User"
-                    value={user}
-                    disabled={currentUser?.id === user.id}
-                  />
+                  <ActionsMenu type="User" value={user} disabled={currentUser?.id === user.id} />
                 </TableCell>
               </TableRow>
             ))
@@ -123,11 +114,7 @@ export default function UsersTable() {
         </TableBody>
       </Table>
       <div className="mt-4 flex items-center justify-end gap-4">
-        <Button
-          variant="outline"
-          onClick={() => setPage(page - 1)}
-          disabled={!hasPreviousPage}
-        >
+        <Button variant="outline" onClick={() => setPage(page - 1)} disabled={!hasPreviousPage}>
           Previous
         </Button>
         <span>
