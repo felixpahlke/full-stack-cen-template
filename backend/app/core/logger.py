@@ -11,7 +11,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 
-from app.core.config import LogLevel
+from app.core.config import LogLevel, get_settings
 
 
 class UTCFormatter(logging.Formatter):
@@ -27,10 +27,10 @@ def setup_logging(log_level: LogLevel | str | None = None) -> None:
 
     Args:
         log_level: The logging level (LogLevel enum, or string like DEBUG, INFO, WARNING,
-            ERROR, CRITICAL). Defaults to INFO.
+            ERROR, CRITICAL). If omitted, use the environment-derived effective level.
     """
     if log_level is None:
-        log_level = LogLevel.INFO
+        log_level = get_settings().EFFECTIVE_LOG_LEVEL
 
     if isinstance(log_level, LogLevel):
         log_level_str = log_level.value

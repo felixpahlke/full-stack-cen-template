@@ -1,7 +1,8 @@
 # Migrating an existing local-auth-custom-ui checkout
 
-This release replaces the Compose-watch development loop with a root npm supervisor. Production
-Dockerfiles and the separate backend/frontend production images are unchanged.
+This release replaces the Compose-watch development loop with a root npm supervisor. The separate
+backend/frontend production images remain; the backend image now starts Uvicorn with the
+`app.main:create_app` factory so importing the module stays configuration-free.
 
 ## Upgrade
 
@@ -46,6 +47,46 @@ migration, exact-head verification, and initial-user seeding.
 Generated client publication is offline and atomic. Backend tests create disposable PostgreSQL
 containers rather than using the development database. Playwright may need the documented
 container pattern when native browsers are blocked.
+
+## Backend extension API compatibility
+
+Factory injection is the preferred API for new code:
+
+```python
+from app.core.config import get_settings
+from app.core.db import get_engine
+from app.main import create_app
+
+settings = get_settings()
+engine = get_engine()
+app = create_app(settings=settings, engine=engine)
+```
+
+Existing imports remain supported and resolve through those factories only when accessed:
+
+```python
+from app.core.config import settings
+from app.core.db import engine
+from app.main import app
+```
+
+The exported `app` is the actual configured `FastAPI` instance. Calls such as `app.include_router`,
+`app.add_middleware`, and `app.add_exception_handler`, as well as `app.routes` and `app.openapi()`,
+therefore operate on the served application. Importing `app.main` without requesting `app` does
+not construct settings, which keeps offline generation and pristine-checkout tools working.
+
+The injected helper arguments are optional compatibility extensions. Both the old and new forms
+work:
+
+```python
+# Existing calls
+token = create_access_token(subject, expires_delta)
+init_db(session)
+
+# Explicitly injected calls
+token = create_access_token(subject, expires_delta, settings.SECRET_KEY)
+init_db(session, settings)
+```
 
 ## Breaking changes
 

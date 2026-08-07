@@ -3,7 +3,7 @@ import warnings
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from pydantic import (
     AnyUrl,
@@ -136,3 +136,14 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
+
+
+if TYPE_CHECKING:
+    settings: Settings
+
+
+def __getattr__(name: str) -> Settings:
+    """Keep the historical settings import lazy and factory-backed."""
+    if name == "settings":
+        return get_settings()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -22,6 +22,11 @@ Uvicorn runs natively. See [the development guide](../.docs/development.md).
 Keep database work in `crud.py`, use keyword-only arguments and type hints, and keep routes thin.
 Every `.env` key must exist in `.env.example` and in the settings model. Do not hardcode secrets.
 
+Use `create_app`, `get_settings`, and `get_engine` for injected code. The historical module-level
+`app`, `settings`, and `engine` imports remain lazy compatibility exports. The production image
+serves the factory directly with Uvicorn; never introduce a wrapper application that delegates
+only ASGI calls because it breaks FastAPI introspection and extension registration.
+
 ## Migrations and startup
 
 After changing a table, keep the development database running and use:
@@ -47,3 +52,5 @@ npm run verify
 Tests are hermetic and use a disposable Testcontainers PostgreSQL instance. They do not require
 the development Compose stack or read the repository `.env`. See the development guide before
 using `TEST_DATABASE_URL`; unsafe database names are rejected by default.
+
+`npm run check` includes strict mypy, Ruff linting, and Ruff formatting checks for the backend.

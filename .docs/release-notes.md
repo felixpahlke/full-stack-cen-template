@@ -10,6 +10,11 @@ Alembic heads bundled in the checkout, and refuses readiness on failure. Deploym
 mutate or delete only resources bearing both the template managed-by label and the current
 application instance label.
 
+The backend image now runs `uvicorn app.main:create_app --factory`. The compatibility `app`,
+`settings`, and `engine` exports are lazy factory products rather than shells or eager globals, so
+existing extension code keeps working while module-only imports remain safe without `.env`.
+Strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
+
 Production still uses separate backend and nginx frontend images. Real Code Engine and
 OpenShift smoke tests remain pending; the required maintainer checklist is included in both
 deployment guides.

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Engine, make_url
 from sqlmodel import Session, create_engine, select
@@ -23,12 +24,23 @@ def get_engine() -> Engine:
     return create_db_engine(str(get_settings().SQLALCHEMY_DATABASE_URI))
 
 
+if TYPE_CHECKING:
+    engine: Engine
+
+
+def __getattr__(name: str) -> Engine:
+    """Keep the historical engine import lazy and factory-backed."""
+    if name == "engine":
+        return get_engine()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 # make sure all SQLModel models are imported (app.tables) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
 
-def init_db(session: Session, settings: Settings) -> None:
+def init_db(session: Session, settings: Settings | None = None) -> None:
     # Tables should be created with Alembic migrations
     # But if you don't want to use migrations, create
     # the tables un-commenting the next lines
@@ -37,13 +49,14 @@ def init_db(session: Session, settings: Settings) -> None:
     # This works because the models are already imported and registered from app.tables
     # SQLModel.metadata.create_all(session.get_bind())
 
+    app_settings = settings or get_settings()
     user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
+        select(User).where(User.email == app_settings.FIRST_SUPERUSER)
     ).first()
     if not user:
         user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
+            email=app_settings.FIRST_SUPERUSER,
+            password=app_settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,
         )
         user = crud.create_user(session=session, user_create=user_in)
