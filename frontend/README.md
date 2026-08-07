@@ -43,13 +43,15 @@ containerized pattern in a second terminal:
 docker run --rm --network host --ipc=host \
   -v "$PWD:/work" -w /work/frontend \
   -e PLAYWRIGHT_EXTERNAL_SERVER=true \
+  -e PLAYWRIGHT_CONTAINER=true \
   mcr.microsoft.com/playwright:v1.62.1-noble \
   npx playwright test
 ```
 
-The image version must match `@playwright/test` in `frontend/package-lock.json`. The config maps
-container `localhost` to the host application. The suite covers login/logout, protected routes, settings, signup, and light/dark/system theme
-persistence.
+The image version must match `@playwright/test` in `frontend/package-lock.json`.
+`PLAYWRIGHT_CONTAINER=true` maps container `localhost` to the host application; native runs do not
+apply that rewrite. The suite covers login/logout, protected routes, settings, signup, and
+light/dark/system theme persistence.
 
 ## Quality
 
@@ -61,4 +63,5 @@ npm --prefix frontend audit
 
 Tailwind CSS 4 is configured in CSS and through the Vite plugin. Shared UI primitives live
 under `src/components/ui`. Keep protected routes below `src/routes/_layout` and use the generated client with
-TanStack Query for ordinary API calls.
+TanStack Query for ordinary API calls. See [known lint coverage gaps](../.docs/lint-coverage.md)
+for the React Hooks rules that Biome cannot currently reproduce.

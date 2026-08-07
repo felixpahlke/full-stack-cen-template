@@ -15,6 +15,12 @@ The backend image now runs `uvicorn app.main:create_app --factory`. The compatib
 existing extension code keeps working while module-only imports remain safe without `.env`.
 Strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
 
+Frontend compatibility is restored: `ThemeProvider` accepts `defaultTheme`, retains deprecated
+`activeTheme` beside `resolvedTheme`, and applies both `light` and `dark` DOM classes. The
+container-only Playwright hostname rewrite is now explicitly gated by
+`PLAYWRIGHT_CONTAINER=true`. Biome covers the stable equivalents of the former ESLint rules;
+the remaining React Hooks gaps are documented in [lint-coverage.md](lint-coverage.md).
+
 Production still uses separate backend and nginx frontend images. Real Code Engine and
 OpenShift smoke tests remain pending; the required maintainer checklist is included in both
 deployment guides.

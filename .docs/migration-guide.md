@@ -48,6 +48,21 @@ Generated client publication is offline and atomic. Backend tests create disposa
 containers rather than using the development database. Playwright may need the documented
 container pattern when native browsers are blocked.
 
+## Frontend extension compatibility
+
+`ThemeProvider` again accepts `defaultTheme`. Its `resolvedTheme` field is the preferred name;
+the previous `activeTheme` context field remains as a deprecated alias. The provider now applies
+an explicit `light` class as well as `dark`, restoring the DOM contract used by custom styles.
+
+Containerized Playwright runs must set `PLAYWRIGHT_CONTAINER=true`; only that flow rewrites
+`localhost` to `host.docker.internal`. Native browser runs no longer receive the container-only
+resolver rule.
+
+Biome now enforces the available equivalents for the previous ESLint rules, and a small
+repository script provides full `@ts-` directive coverage. The React Hooks rules Biome cannot
+currently reproduce are listed in [lint-coverage.md](lint-coverage.md); the project no longer
+claims exact ESLint parity.
+
 ## Backend extension API compatibility
 
 Factory injection is the preferred API for new code:

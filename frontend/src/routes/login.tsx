@@ -32,7 +32,7 @@ interface FormValues {
   password: string;
 }
 
-function Login() {
+export function Login() {
   const { loginMutation, error, resetError } = useAuth();
   const form = useForm<FormValues>({
     defaultValues: {
