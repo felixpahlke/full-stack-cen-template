@@ -1,7 +1,8 @@
 # Migrating an existing oauth-proxy checkout
 
 This release replaces the Compose application-process loop with native Uvicorn/Vite supervised by
-`npm run dev`. Production Dockerfiles and the separate backend/frontend/proxy artifacts remain.
+`npm run dev`. The separate backend/frontend/proxy artifacts remain; the backend image now starts
+Uvicorn with the `app.main:create_app` factory.
 
 ```bash
 npm ci
@@ -16,6 +17,27 @@ Existing `.env` files must gain native ports, Dex test-user settings,
 `MIGRATION_LOCK_TIMEOUT_SECONDS`. Marker proxy secrets are intentionally unusable and are replaced
 with strong per-checkout values on first local startup. Do not copy a seam credential between
 checkouts.
+
+## Backend extension API compatibility
+
+New extension code should prefer the injectable factories:
+
+```python
+from app.core.config import get_settings
+from app.core.db import get_engine
+from app.main import create_app
+
+settings = get_settings()
+engine = get_engine()
+app = create_app(settings=settings, engine=engine)
+```
+
+Existing `from app.core.config import settings`, `from app.core.db import engine`, and
+`from app.main import app` statements remain supported as lazy compatibility exports. The exported
+`app` is the actual configured `FastAPI` instance, so router inclusion, middleware, exception
+handlers, route inspection, and OpenAPI customization operate on the served application. Importing
+`app.main` without requesting `app` still constructs no settings. Both `init_db(session)` and the
+injected `init_db(session, settings)` form remain accepted.
 
 ## Adopting an old OpenShift deployment
 

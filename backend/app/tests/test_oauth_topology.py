@@ -1,8 +1,11 @@
 import re
 from pathlib import Path
+from typing import cast
+
+from fastapi.routing import APIRoute
 
 from app.api.routes import utils
-from app.core.config import REPO_ROOT
+from app.core.config import REPO_ROOT, Settings
 from app.main import create_app
 
 
@@ -14,7 +17,8 @@ def test_api_route_contract_is_exact() -> None:
         for method in operations
         if method in {"get", "post", "put", "delete", "patch"}
     }
-    health = utils.router.routes[0]
+    health = cast(APIRoute, utils.router.routes[0])
+    assert health.methods is not None
     routes.update((method, f"/api/v1/utils{health.path}") for method in health.methods)
     assert routes == {
         ("GET", "/api/v1/users/me"),
@@ -63,10 +67,8 @@ def test_compose_has_only_backing_auth_services_and_a_digest_pinned_proxy() -> N
     assert "lokal-token-printer" not in text
 
 
-def _code_settings():
-    from app.core.config import Settings
-
-    return Settings(
+def _code_settings() -> Settings:
+    return Settings(  # type: ignore[call-arg]
         _env_file=None,
         PROJECT_NAME="route contract",
         POSTGRES_SERVER="localhost",

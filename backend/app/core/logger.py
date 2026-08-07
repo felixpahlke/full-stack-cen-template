@@ -2,7 +2,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 
-from app.core.config import LogLevel
+from app.core.config import LogLevel, get_settings
 
 
 class UTCFormatter(logging.Formatter):
@@ -12,7 +12,7 @@ class UTCFormatter(logging.Formatter):
 
 def setup_logging(log_level: LogLevel | str | None = None) -> None:
     if log_level is None:
-        log_level = LogLevel.INFO
+        log_level = get_settings().EFFECTIVE_LOG_LEVEL
     log_level_str = log_level.value if isinstance(log_level, LogLevel) else log_level
     numeric_level = getattr(logging, log_level_str.upper(), logging.INFO)
     formatter = UTCFormatter(

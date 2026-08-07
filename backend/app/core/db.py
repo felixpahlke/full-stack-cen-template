@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Engine, make_url
 from sqlmodel import Session, create_engine
@@ -20,6 +21,17 @@ def get_engine() -> Engine:
     return create_db_engine(str(get_settings().SQLALCHEMY_DATABASE_URI))
 
 
-def init_db(session: Session, settings: Settings) -> None:
+if TYPE_CHECKING:
+    engine: Engine
+
+
+def __getattr__(name: str) -> Engine:
+    """Keep the historical engine import lazy and factory-backed."""
+    if name == "engine":
+        return get_engine()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def init_db(session: Session, settings: Settings | None = None) -> None:
     # OIDC principals are request-scoped; this flavor has no local user table to seed.
     del session, settings
