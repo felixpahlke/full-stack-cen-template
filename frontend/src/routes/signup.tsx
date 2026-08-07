@@ -22,7 +22,7 @@ interface UserRegisterForm extends UserRegister {
   confirm_password: string;
 }
 
-export function SignUp() {
+function SignUp() {
   const { signUpMutation } = useAuth();
   const form = useForm({
     mode: "onBlur",

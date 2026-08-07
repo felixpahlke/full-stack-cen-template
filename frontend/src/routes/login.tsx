@@ -18,7 +18,7 @@ export const Route = createFileRoute("/login")({
   },
 });
 
-export function Login() {
+function Login() {
   const { loginMutation, error, resetError } = useAuth();
   const form = useForm({
     mode: "onBlur",

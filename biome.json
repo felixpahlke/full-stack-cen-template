@@ -56,6 +56,10 @@
   },
   "overrides": [
     {
+      "includes": ["frontend/src/routes/**"],
+      "linter": { "rules": { "style": { "useComponentExportOnlyModules": "off" } } }
+    },
+    {
       "includes": ["frontend/src/client/**"],
       "linter": { "enabled": false },
       "assist": { "enabled": false }
