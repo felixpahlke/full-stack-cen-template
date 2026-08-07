@@ -1,0 +1,25 @@
+issuer: http://localhost:{{ .Env.DEX_PORT }}/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+
+staticClients:
+  - id: {{ .Env.OAUTH2_PROXY_CLIENT_ID }}
+    secret: {{ .Env.OAUTH2_PROXY_CLIENT_SECRET }}
+    redirectURIs:
+      - http://localhost:{{ .Env.OAUTH2_PROXY_PORT }}/oauth2/callback
+    name: Full Stack CEN Template (dev)
+
+oauth2:
+  skipApprovalScreen: true
+
+enablePasswordDB: true
+
+staticPasswords:
+  - email: "{{ .Env.DEX_TEST_USER_EMAIL }}"
+    username: "{{ .Env.DEX_TEST_USER_USERNAME }}"
+    userID: "{{ .Env.DEX_TEST_USER_ID }}"
+    hash: "{{ .Env.DEX_TEST_USER_PASSWORD_HASH }}"
