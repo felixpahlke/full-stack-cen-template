@@ -1,5 +1,5 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class HelloWorld(SQLModel):
+class HelloWorld(BaseModel):
     message: str
