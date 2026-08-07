@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_layout/items")({
   validateSearch: (search) => itemsSearchSchema.parse(search),
 });
 
-export function Items() {
+function Items() {
   return (
     <div className="w-full">
       <h1 className="py-2 text-center text-2xl font-bold md:text-left">Items Management</h1>
