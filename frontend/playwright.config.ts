@@ -11,6 +11,7 @@ try {
 const proxyPort = process.env.OAUTH2_PROXY_PORT || "4180";
 const proxyUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${proxyPort}`;
 const externalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "true";
+const containerized = process.env.PLAYWRIGHT_CONTAINER === "true";
 
 export default defineConfig({
   testDir: "./tests",
@@ -22,9 +23,9 @@ export default defineConfig({
   use: {
     baseURL: proxyUrl,
     trace: "on-first-retry",
-    launchOptions: {
-      args: ["--host-resolver-rules=MAP localhost host.docker.internal"],
-    },
+    launchOptions: containerized
+      ? { args: ["--host-resolver-rules=MAP localhost host.docker.internal"] }
+      : undefined,
   },
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },

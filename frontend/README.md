@@ -33,7 +33,17 @@ npm run test:e2e:container
 ```
 
 The wrapper derives the exact Playwright image version from the lockfile, mounts the checkout,
-and traverses Dex, oauth2-proxy, secure cookies, logout, and protected pages. A direct Vite or
-backend-only browser test is not an acceptable OAuth check.
+sets `PLAYWRIGHT_CONTAINER=true`, and traverses Dex, oauth2-proxy, secure cookies, logout, and
+protected pages. Only container mode maps `localhost` to `host.docker.internal`; native runs do
+not rewrite the hostname. A direct Vite or backend-only browser test is not an acceptable OAuth
+check.
+
+## CarbonCN scaffolding
+
+`components.json` configures the live [CarbonCN](https://www.carboncn.dev/) CLI for the Tailwind 4
+CSS-first foundation. Run `npx carboncn add <component>` from `frontend`; generated source belongs
+under `src/components/carboncn`. See that directory's README before adding a component.
 
 Run `npm run check`, `npm run build`, and `npm --prefix frontend audit` for frontend quality.
+Biome covers the available ESLint equivalents; the remaining React Hooks 7 gaps are listed in
+[the lint coverage note](../.docs/lint-coverage.md).

@@ -1,7 +1,7 @@
 import { BrightnessContrast, Light, Moon } from "@carbon/icons-react";
 import { Button, Menu, MenuItemRadioGroup } from "@carbon/react";
 import { useRef, useState } from "react";
-import { type Theme, useTheme } from "../theme/ThemeProvider";
+import { useTheme } from "../theme/ThemeProvider";
 
 interface ThemeSwitcherProps {
   displayAs?: "dropdown" | "sidenav";
@@ -53,8 +53,9 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
 
   const handleThemeChange = (selectedItem: string) => {
     const index = themeItems.indexOf(selectedItem);
-    if (index !== -1) {
-      setTheme(themeValues[index] as Theme);
+    const selectedTheme = themeValues[index];
+    if (selectedTheme === "light" || selectedTheme === "dark" || selectedTheme === "system") {
+      setTheme(selectedTheme);
     }
     setIsOpen(false);
   };
@@ -94,8 +95,9 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
               label="Theme"
               items={themeItems}
               selectedItem={getSelectedThemeLabel()}
-              // @ts-expect-error
-              onChange={(item) => handleThemeChange(item)}
+              onChange={(item) => {
+                if (typeof item === "string") handleThemeChange(item);
+              }}
             />
           </Menu>
         )}
@@ -103,5 +105,3 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
     </>
   );
 }
-
-export default ThemeSwitcher;

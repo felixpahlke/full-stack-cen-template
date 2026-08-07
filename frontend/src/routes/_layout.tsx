@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_layout")({
   component: Layout,
 });
 
-function Layout() {
+export function Layout() {
   const { isLoading } = useAuth();
 
   return (

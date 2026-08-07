@@ -13,7 +13,7 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 import useAuth from "../../hooks/useAuth";
-import ThemeSwitcher from "./ThemeSwitcher";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import UserMenu from "./UserMenu";
 
 export function Header() {

@@ -12,6 +12,13 @@ The backend image now runs `uvicorn app.main:create_app --factory`. The compatib
 `settings`, and `engine` exports are lazy factory products rather than shells or eager globals, and
 strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
 
+Frontend compatibility is restored: `ThemeProvider` accepts `defaultTheme`, keeps deprecated
+`actualTheme` beside `resolvedTheme`, and migrates the old `carbon-theme` preference. CarbonCN
+scaffolding is restored for Tailwind 4. The intentional Carbon palette change to `g10`/`g90` is
+documented, and the container-only Playwright resolver is now explicitly gated. Biome covers its
+stable ESLint equivalents; remaining React Hooks gaps are documented in
+[lint-coverage.md](lint-coverage.md).
+
 Deployment now uses strict two-label ownership, exact secret recreation, project-private OAuth
 application workloads in Code Engine, and ready-before-switch staged OpenShift ingress. Real
 cluster smoke testing is still pending; both deployment guides include the required checklist.

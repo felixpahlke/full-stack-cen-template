@@ -22,6 +22,8 @@ const result = spawnSync(
     "/work/frontend",
     "-e",
     "PLAYWRIGHT_EXTERNAL_SERVER=true",
+    "-e",
+    "PLAYWRIGHT_CONTAINER=true",
     image,
     "npx",
     "playwright",

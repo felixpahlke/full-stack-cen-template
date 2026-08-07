@@ -50,6 +50,19 @@ test("light, dark, and system Carbon themes switch and persist", async ({ page }
     .toBe("system");
 });
 
+test("legacy Carbon preference migrates to the current storage key", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("vite-ui-theme");
+    localStorage.setItem("carbon-theme", "dark");
+  });
+
+  await page.goto("/");
+
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme"))).toBe("dark");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("carbon-theme"))).toBeNull();
+});
+
 test("selected Carbon theme survives proxy sign-out and Dex sign-in", async ({ page }) => {
   await page.goto("/");
   await selectTheme(page, "Dark Mode");
