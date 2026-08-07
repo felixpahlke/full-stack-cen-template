@@ -12,6 +12,7 @@ trap cleanup_deploy_tmp_files EXIT
 
 ENV_FILE="$PROJECT_ROOT/.env.production"
 SHOW_ENV_VALUES=false
+# The sourced CE proxy pin is quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561.
 # OAuth secrets store OAUTH2_PROXY_BASIC_AUTH_PASSWORD via --from-env-file only.
 
 parse_arguments() {
