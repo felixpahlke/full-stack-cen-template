@@ -7,6 +7,7 @@ import { defineConfig, loadEnv } from "vite";
 export default defineConfig(({ mode }) => {
   const root = path.resolve(import.meta.dirname, "..");
   const env = loadEnv(mode, root, "");
+  const apiPort = env.API_PORT || "8000";
 
   return {
     envDir: root,
@@ -28,6 +29,7 @@ export default defineConfig(({ mode }) => {
       allowedHosts: ["host.docker.internal"],
       port: Number(env.WEB_PORT) || 5173,
       strictPort: true,
+      proxy: { "/api": `http://127.0.0.1:${apiPort}` },
       watch: {
         usePolling: true,
         interval: 300,
