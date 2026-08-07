@@ -1,41 +1,60 @@
-import { expect, test } from "@playwright/test";
-import { playwrightTestUserEmail, playwrightTestUserPassword } from "./config";
+import { expect, type Page, test } from "@playwright/test";
 import { logInUser, logOutUser } from "./utils/user";
 
-test("User can switch from light mode to dark mode", async ({ page }) => {
+async function selectTheme(page: Page, theme: "Light Mode" | "Dark Mode" | "System") {
+  await page.getByRole("button", { name: "Theme Switcher" }).click();
+  await page.getByText(theme, { exact: true }).click();
+}
+
+async function expectCarbonTheme(page: Page, theme: "g10" | "g90") {
+  const root = page.locator("html");
+  await expect(root).toHaveClass(new RegExp(`cds--${theme}`));
+  await expect(root).not.toHaveClass(new RegExp(`cds--${theme === "g10" ? "g90" : "g10"}`));
+}
+
+test("light, dark, and system Carbon themes switch and persist", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
   await page.getByText("Welcome back, nice to see you again!").waitFor();
-  await page.getByLabel("Theme Switcher").click();
-  await page.getByText("Dark Mode", { exact: true }).click();
-  const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g100"),
-  );
-  expect(isDarkMode).toBe(true);
+
+  await selectTheme(page, "Dark Mode");
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g90");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme"))).toBe("dark");
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g90");
+
+  await selectTheme(page, "Light Mode");
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g10");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme"))).toBe("light");
+
+  await page.emulateMedia({ colorScheme: "dark" });
+  await selectTheme(page, "System");
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g90");
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme")))
+    .toBe("system");
+
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g10");
+
+  await page.reload();
+  await expectCarbonTheme(page, "g10");
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme")))
+    .toBe("system");
 });
 
-test("User can switch from dark mode to light mode", async ({ page }) => {
+test("selected Carbon theme survives proxy sign-out and Dex sign-in", async ({ page }) => {
   await page.goto("/");
-  await page.getByText("Welcome back, nice to see you again!").waitFor();
-  await page.getByLabel("Theme Switcher").click();
-  await page.getByText("Light Mode", { exact: true }).click();
-  const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--white"),
-  );
-  expect(isLightMode).toBe(true);
-});
-
-test("Selected mode is preserved across sessions", async ({ page }) => {
-  await page.goto("/");
-  await page.getByText("Welcome back, nice to see you again!").waitFor();
-  await page.getByLabel("Theme Switcher").click();
-  await page.getByText("Dark Mode", { exact: true }).click();
-
+  await selectTheme(page, "Dark Mode");
   await logOutUser(page);
-
-  await logInUser(page, playwrightTestUserEmail, playwrightTestUserPassword);
-
-  const isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("cds--g100"),
-  );
-  expect(isDarkMode).toBe(true);
+  await logInUser(page);
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expectCarbonTheme(page, "g90");
 });

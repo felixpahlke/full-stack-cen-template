@@ -1,21 +1,19 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import dotenv from "dotenv";
+import process from "node:process";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, "../../.env") });
-
-const { PLAYWRIGHT_TEST_USER_EMAIL, PLAYWRIGHT_TEST_USER_PASSWORD } = process.env;
-
-if (typeof PLAYWRIGHT_TEST_USER_EMAIL !== "string") {
-  throw new Error("Environment variable PLAYWRIGHT_TEST_USER_EMAIL is undefined");
+try {
+  process.loadEnvFile(path.resolve(import.meta.dirname, "../../.env"));
+} catch {
+  throw new Error("Missing root .env. Copy .env.example to .env and run npm run dev once.");
 }
 
-if (typeof PLAYWRIGHT_TEST_USER_PASSWORD !== "string") {
-  throw new Error("Environment variable PLAYWRIGHT_TEST_USER_PASSWORD is undefined");
+function required(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing ${name} in the root .env contract.`);
+  return value;
 }
 
-export const playwrightTestUserEmail = PLAYWRIGHT_TEST_USER_EMAIL as string;
-export const playwrightTestUserPassword = PLAYWRIGHT_TEST_USER_PASSWORD as string;
+export const dexTestUserEmail = required("DEX_TEST_USER_EMAIL");
+export const dexTestUserPassword = required("DEX_TEST_USER_PASSWORD");
+export const proxyPort = required("OAUTH2_PROXY_PORT");
+export const proxyUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${proxyPort}`;
