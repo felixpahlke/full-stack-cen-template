@@ -594,7 +594,6 @@ The script uses a structured print system with:
 - **Phase headers** for clear progress tracking
 - **Deployment summary** with all important URLs and information
 
-See [`PRINT_SYSTEM.md`](PRINT_SYSTEM.md) for detailed documentation.
 
 ## Best Practices
 
