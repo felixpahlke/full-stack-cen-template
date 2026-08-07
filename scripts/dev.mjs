@@ -11,6 +11,7 @@ import {
   serializeComposeCommand,
   withComposeArgs,
 } from "./compose-command.mjs";
+import { detectContainerRuntime, probeViteUpstream } from "./container-runtime.mjs";
 import { buildEffectiveEnvironment } from "./dev-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -21,6 +22,7 @@ const children = new Set();
 
 let composeStarted = false;
 let composeCommand;
+let containerRuntime;
 let effectiveEnv;
 let fastComposeStop;
 let lastSignalAt = 0;
@@ -52,13 +54,6 @@ try {
   const apiPort = effectiveEnv.API_PORT;
   const webPort = effectiveEnv.WEB_PORT;
   effectiveEnv.VITE_API_URL = "";
-
-  console.log(
-    `\nDevelopment ready: browser http://localhost:${effectiveEnv.OAUTH2_PROXY_PORT}, ` +
-      `API http://127.0.0.1:${apiPort}, Vite http://localhost:${webPort}, ` +
-      `Dex http://localhost:${effectiveEnv.DEX_PORT}/dex, ` +
-      `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
-  );
 
   const servers = [
     run(
@@ -99,6 +94,25 @@ try {
       { processGroup: true },
     ),
   ];
+
+  await waitForHttp(Number(webPort), "Vite");
+  probeViteUpstream({
+    runtime: containerRuntime,
+    port: Number(webPort),
+    cwd: root,
+    env: effectiveEnv,
+  });
+  console.log(
+    `[health] Vite upstream is reachable from a ${containerRuntime.displayName} container at ` +
+      `${containerRuntime.upstreamHost}:${webPort}`,
+  );
+
+  console.log(
+    `\nDevelopment ready: browser http://localhost:${effectiveEnv.OAUTH2_PROXY_PORT}, ` +
+      `API http://127.0.0.1:${apiPort}, Vite http://localhost:${webPort}, ` +
+      `Dex http://localhost:${effectiveEnv.DEX_PORT}/dex, ` +
+      `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
+  );
 
   const first = await Promise.race(servers);
   exitCode = first.code ?? signalExitCodes[first.signal] ?? 1;
@@ -141,10 +155,15 @@ function checkEnvironment() {
     environment,
   );
 
-  const docker = spawnSync("docker", ["info"], { env: environment, stdio: "ignore" });
-  if (docker.status !== 0) {
-    fail("Docker is not running. Start Docker Desktop or your Docker-compatible runtime.");
-  }
+  containerRuntime = detectContainerRuntime({ cwd: root, env: environment });
+  environment.DEV_CONTAINER_RUNTIME = containerRuntime.id;
+  environment.DEV_PROXY_UPSTREAM_HOST = containerRuntime.upstreamHost;
+  environment.DEV_PROXY_EXTRA_HOST_MAPPING =
+    containerRuntime.extraHosts[0] ?? "dev-proxy-noop.invalid:127.0.0.1";
+  console.log(
+    `[runtime] Detected ${containerRuntime.displayName}; proxy upstream host ` +
+      `${containerRuntime.upstreamHost}`,
+  );
 
   const venvPython =
     process.platform === "win32"

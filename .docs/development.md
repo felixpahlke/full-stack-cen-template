@@ -31,7 +31,17 @@ Vite is `http://localhost:5173`, and Adminer is `http://localhost:8080`.
 Press Ctrl-C once for graceful native-process shutdown followed by `compose down`.
 A second Ctrl-C accelerates cleanup. The PostgreSQL named volume is preserved.
 The runner detects both `docker compose` and standalone `docker-compose` (including
-Colima setups) and maps `host.docker.internal` through `host-gateway`.
+Colima setups). It detects the daemon runtime before Compose starts and selects the
+container-to-host path without overriding runtime-native DNS:
+
+- Docker Desktop uses `host.docker.internal` with Docker Desktop's native mapping.
+- Colima uses `host.lima.internal` with Colima/Lima's native mapping and no
+  override for that hostname.
+- Native Linux Docker uses `host.docker.internal` plus an explicit `host-gateway`
+  mapping.
+
+After Vite starts, the runner performs an HTTP probe from a container to the selected
+host and stops with a runtime- and hostname-specific error if that path is broken.
 
 ## Authentication boundary
 

@@ -59,7 +59,7 @@ services:
       - --redeem-url=http://dex:5556/dex/token
       - --oidc-jwks-url=http://dex:5556/dex/keys
       - --redirect-url=http://localhost:${OAUTH2_PROXY_PORT:-4180}/oauth2/callback
-      - --upstream=http://host.docker.internal:${WEB_PORT:-5173}
+      - --upstream=http://${DEV_PROXY_UPSTREAM_HOST:-host.docker.internal}:${WEB_PORT:-5173}
       - --email-domain=*
       - --cookie-name=_oauth2_proxy
       - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
@@ -78,7 +78,7 @@ services:
     depends_on:
       - dex
     extra_hosts:
-      - host.docker.internal:host-gateway
+      - "${DEV_PROXY_EXTRA_HOST_MAPPING:-dev-proxy-noop.invalid:127.0.0.1}"
     ports:
       - "${OAUTH2_PROXY_PORT:-4180}:4180"
 

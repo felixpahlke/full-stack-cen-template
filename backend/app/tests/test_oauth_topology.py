@@ -49,7 +49,9 @@ def test_compose_has_only_backing_auth_services_and_a_digest_pinned_proxy() -> N
     assert "--insecure-oidc-skip-nonce=false" in services_text
     assert "--code-challenge-method=S256" in services_text
     assert "--pass-authorization-header=false" in services_text
-    assert "host.docker.internal:host-gateway" in services_text
+    assert "--upstream=http://${DEV_PROXY_UPSTREAM_HOST" in services_text
+    assert "${DEV_PROXY_EXTRA_HOST_MAPPING" in services_text
+    assert "- host.docker.internal:host-gateway" not in services_text
     assert "lokal-token-printer" not in text
 
 
