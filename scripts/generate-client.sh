@@ -1,13 +1,7 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-set -e
-set -x
+set -euo pipefail
 
-cd backend
-uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
-cd ..
-node frontend/modify-openapi-operationids.js
-mv openapi.json frontend/
-cd frontend
-npm run generate-client
-npx prettier --write ./src/client
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+exec npm run generate-client

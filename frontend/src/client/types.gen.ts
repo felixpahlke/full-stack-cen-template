@@ -290,6 +290,16 @@ export type ValidationError = {
    * Error Type
    */
   type: string;
+  /**
+   * Input
+   */
+  input?: unknown;
+  /**
+   * Context
+   */
+  ctx?: {
+    [key: string]: unknown;
+  };
 };
 
 export type LoginAccessTokenData = {
@@ -306,8 +316,7 @@ export type LoginAccessTokenErrors = {
   422: HttpValidationError;
 };
 
-export type LoginAccessTokenError =
-  LoginAccessTokenErrors[keyof LoginAccessTokenErrors];
+export type LoginAccessTokenError = LoginAccessTokenErrors[keyof LoginAccessTokenErrors];
 
 export type LoginAccessTokenResponses = {
   /**
@@ -316,8 +325,7 @@ export type LoginAccessTokenResponses = {
   200: Token;
 };
 
-export type LoginAccessTokenResponse =
-  LoginAccessTokenResponses[keyof LoginAccessTokenResponses];
+export type LoginAccessTokenResponse = LoginAccessTokenResponses[keyof LoginAccessTokenResponses];
 
 export type TestTokenData = {
   body?: never;
@@ -408,8 +416,7 @@ export type DeleteUserMeResponses = {
   200: Message;
 };
 
-export type DeleteUserMeResponse =
-  DeleteUserMeResponses[keyof DeleteUserMeResponses];
+export type DeleteUserMeResponse = DeleteUserMeResponses[keyof DeleteUserMeResponses];
 
 export type ReadUserMeData = {
   body?: never;
@@ -450,8 +457,7 @@ export type UpdateUserMeResponses = {
   200: UserPublic;
 };
 
-export type UpdateUserMeResponse =
-  UpdateUserMeResponses[keyof UpdateUserMeResponses];
+export type UpdateUserMeResponse = UpdateUserMeResponses[keyof UpdateUserMeResponses];
 
 export type UpdatePasswordMeData = {
   body: UpdatePassword;
@@ -467,8 +473,7 @@ export type UpdatePasswordMeErrors = {
   422: HttpValidationError;
 };
 
-export type UpdatePasswordMeError =
-  UpdatePasswordMeErrors[keyof UpdatePasswordMeErrors];
+export type UpdatePasswordMeError = UpdatePasswordMeErrors[keyof UpdatePasswordMeErrors];
 
 export type UpdatePasswordMeResponses = {
   /**
@@ -477,8 +482,7 @@ export type UpdatePasswordMeResponses = {
   200: Message;
 };
 
-export type UpdatePasswordMeResponse =
-  UpdatePasswordMeResponses[keyof UpdatePasswordMeResponses];
+export type UpdatePasswordMeResponse = UpdatePasswordMeResponses[keyof UpdatePasswordMeResponses];
 
 export type RegisterUserData = {
   body: UserRegister;
@@ -503,8 +507,7 @@ export type RegisterUserResponses = {
   200: UserPublic;
 };
 
-export type RegisterUserResponse =
-  RegisterUserResponses[keyof RegisterUserResponses];
+export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserResponses];
 
 export type DeleteUserData = {
   body?: never;
@@ -564,8 +567,7 @@ export type ReadUserByIdResponses = {
   200: UserPublic;
 };
 
-export type ReadUserByIdResponse =
-  ReadUserByIdResponses[keyof ReadUserByIdResponses];
+export type ReadUserByIdResponse = ReadUserByIdResponses[keyof ReadUserByIdResponses];
 
 export type UpdateUserData = {
   body: UserUpdate;
