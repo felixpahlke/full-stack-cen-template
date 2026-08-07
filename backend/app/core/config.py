@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     ENVIRONMENT: Environment = Environment.LOCAL
     LOG_LEVEL: LogLevel | None = None
+    MIGRATE_ON_START: bool = True
+    MIGRATION_LOCK_TIMEOUT_SECONDS: float = 60
 
     API_PORT: int = 8000
     WEB_PORT: int = 5173

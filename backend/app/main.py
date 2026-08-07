@@ -14,6 +14,7 @@ from app.api.main import api_router
 from app.core.config import Settings, get_settings
 from app.core.db import create_db_engine, get_engine
 from app.core.logger import get_logger, setup_logging
+from app.startup import initialize_database
 
 logger = get_logger(__name__)
 
@@ -33,6 +34,11 @@ def create_app(
         logger.info("Starting %s application", app_settings.PROJECT_NAME)
         logger.info("Environment: %s", app_settings.ENVIRONMENT)
         logger.info("API version: %s", app_settings.API_V1_STR)
+        try:
+            initialize_database(app_settings, engine or get_engine())
+        except Exception:
+            logger.exception("Database startup failed")
+            raise
         yield
         logger.info("Shutting down %s application", app_settings.PROJECT_NAME)
 
