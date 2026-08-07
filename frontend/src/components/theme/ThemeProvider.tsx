@@ -1,94 +1,59 @@
-import { Theme as CarbonThemeProvider } from "@carbon/react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { Theme as CarbonTheme } from "@carbon/react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
-const LIGHT_THEME: CarbonTheme = "white";
-const DARK_THEME: CarbonTheme = "g100";
+export type Theme = "dark" | "light" | "system";
 
-type CarbonTheme = "g10" | "g90" | "g100" | "white";
-export type Theme = "light" | "dark" | "system";
-
-type ThemeProviderProps = {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-};
-
-type ThemeProviderState = {
+type ThemeContextValue = {
   theme: Theme;
-  actualTheme: "light" | "dark";
+  resolvedTheme: "dark" | "light";
   setTheme: (theme: Theme) => void;
 };
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  actualTheme: "light",
-  setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+const prefersDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
-  storageKey = "carbon-theme",
-  ...props
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+  storageKey = "vite-ui-theme",
+}: {
+  children: ReactNode;
+  storageKey?: string;
+}) {
+  const [theme, setThemeState] = useState<Theme>(
+    () => (localStorage.getItem(storageKey) as Theme | null) ?? "system",
   );
-  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");
+  const [systemDark, setSystemDark] = useState(prefersDark);
 
   useEffect(() => {
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => setSystemDark(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
-      setActualTheme(systemTheme);
-      return;
-    }
-
-    setActualTheme(theme);
-  }, [theme]);
+  const resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
 
   useEffect(() => {
-    document.documentElement.classList.remove(
-      "cds--white",
-      "cds--g10",
-      "cds--g90",
-      "cds--g100",
-      "dark",
-    );
+    const root = document.documentElement;
+    root.classList.toggle("dark", resolvedTheme === "dark");
+    root.classList.toggle("cds--g90", resolvedTheme === "dark");
+    root.classList.toggle("cds--g10", resolvedTheme === "light");
+  }, [resolvedTheme]);
 
-    const carbonTheme = actualTheme === "dark" ? DARK_THEME : LIGHT_THEME;
-    document.documentElement.classList.add(`cds--${carbonTheme}`);
-    if (actualTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    }
-  }, [actualTheme]);
-
-  const value = {
-    theme,
-    actualTheme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
-    },
+  const setTheme = (next: Theme) => {
+    localStorage.setItem(storageKey, next);
+    setThemeState(next);
   };
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
-      <CarbonThemeProvider theme={actualTheme === "dark" ? DARK_THEME : LIGHT_THEME}>
-        {children}
-      </CarbonThemeProvider>
-    </ThemeProviderContext.Provider>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+      <CarbonTheme theme={resolvedTheme === "dark" ? "g90" : "g10"}>{children}</CarbonTheme>
+    </ThemeContext.Provider>
   );
 }
 
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
-
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme must be used within ThemeProvider");
   return context;
-};
+}
