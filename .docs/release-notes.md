@@ -5,6 +5,11 @@ Uvicorn; the root command facade handles checks, tests, deploy mocks, and the op
 build. Obsolete database, Compose, and token-printer residue has been removed without changing the
 public health or API-key example routes.
 
+The backend image now runs `uvicorn app.main:create_app --factory`. Compatibility `app` and
+`settings` exports are lazy factory products rather than shells or eager globals. Canonical checks
+now include strict mypy, and backend tests once again print a coverage report and generate HTML
+coverage output.
+
 Deployment uses strict two-label ownership, fail-closed collisions, and topology absence checks.
 Real cluster smoke tests remain pending; both deployment guides include the complete checklist.
 

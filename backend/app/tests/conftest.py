@@ -11,7 +11,7 @@ TEST_API_KEY = "test-api-key"
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    return Settings(
+    return Settings(  # type: ignore[call-arg]
         _env_file=None,
         PROJECT_NAME="Test API",
         API_KEY=TEST_API_KEY,

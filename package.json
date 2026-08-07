@@ -8,11 +8,13 @@
   },
   "scripts": {
     "build": "docker build -f backend/Dockerfile backend",
-    "check": "biome check scripts/*.mjs && uv run --project backend ruff check backend && uv run --project backend ruff format --check backend",
+    "check": "biome check scripts/*.mjs && npm run typecheck:backend && uv run --project backend ruff check backend && uv run --project backend ruff format --check backend",
     "dev": "node scripts/dev.mjs",
     "fix": "biome check --write scripts/*.mjs && uv run --project backend ruff check --fix backend && uv run --project backend ruff format backend",
-    "test": "node --test scripts/*.test.mjs && npm run test:deploy && uv run --project backend pytest backend/app/tests backend/tests",
+    "test": "node --test scripts/*.test.mjs && npm run test:deploy && npm run test:backend",
+    "test:backend": "cd backend && ./scripts/test.sh",
     "test:deploy": "bash scripts/deploy-tests/run.sh",
+    "typecheck:backend": "uv run --project backend mypy --config-file backend/pyproject.toml backend/app",
     "verify": "npm run check && npm run test"
   },
   "devDependencies": {

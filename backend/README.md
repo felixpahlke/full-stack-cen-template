@@ -12,3 +12,7 @@ database engine, Alembic tree, persistence dependencies, user accounts, or beare
 Install with `uv sync --project backend`, run with root `npm run dev`, and verify with
 `npm run verify`. Do not add database settings or migration commands unless intentionally moving
 to a different branch/product shape.
+
+Use `create_app` and `get_settings` for injected code. Historical module-level `app` and `settings`
+imports remain lazy compatibility exports; this flavor intentionally has no engine. Verification
+includes strict mypy, Ruff, and coverage reporting, with HTML output under `backend/htmlcov`.
