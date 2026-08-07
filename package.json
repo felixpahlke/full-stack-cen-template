@@ -12,7 +12,8 @@
     "db:revision": "uv run --project backend alembic -c backend/alembic.ini revision --autogenerate",
     "dev": "node scripts/dev.mjs",
     "fix": "biome check --write scripts/*.mjs && uv run --project backend ruff check --fix backend && uv run --project backend ruff format backend",
-    "test": "uv run --project backend pytest backend/app/tests backend/tests",
+    "test": "npm run test:deploy && uv run --project backend pytest backend/app/tests backend/tests",
+    "test:deploy": "bash scripts/deploy-tests/run.sh",
     "verify": "npm run check && npm run test"
   },
   "devDependencies": {

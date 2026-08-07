@@ -1,706 +1,333 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+set +x
 
-export LANG=en_US.UTF-8
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+# shellcheck source=lib/00-common.sh
+source "$SCRIPT_DIR/lib/00-common.sh"
+trap cleanup_deploy_tmp_files EXIT
 
-### ------------------------ PRELIMINARIES ------------------------ ###
-set -e
+ENV_FILE="$PROJECT_ROOT/.env.production"
+SHOW_ENV_VALUES=false
+OAUTH2_PROXY_IMAGE='quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
+# OAuth secrets store OAUTH2_PROXY_BASIC_AUTH_PASSWORD via --from-env-file only.
 
-# Define colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-TEAL='\033[0;36m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-print_status() { echo -e "${TEAL}==>     $1${NC}"; }
-print_success() { echo -e "${GREEN}==>     $1${NC}"; }
-print_error() { echo -e "${RED}==>     $1${NC}"; }
-print_warning() { echo -e "${YELLOW}==>     $1${NC}"; }
-print_section() {
-    echo ""
-    echo -e "${TEAL}========================================${NC}"
-    echo -e "${TEAL}  $1${NC}"
-    echo -e "${TEAL}========================================${NC}"
-}
-
-print_section "PRE-CHECKS"
-
-# Load environment variables
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env.production"
-
-if [ ! -f "$ENV_FILE" ]; then
-    print_error ".env.production file not found at $ENV_FILE"
-    print_error "Please create it from .env.production.tpl first"
-    exit 1
-fi
-
-source "$ENV_FILE"
-
-# Validate _CE_PROJECT_NAME length
-if [ ${#_CE_PROJECT_NAME} -gt 20 ]; then
-    print_error "_CE_PROJECT_NAME must be 20 characters or less (current: ${#_CE_PROJECT_NAME})"
-    print_error "This is because derived names (like namespace) must be <= 30 chars."
-    exit 1
-fi
-
-# Set defaults for optional variables (can be overridden in .env.production)
-_CE_FRONTEND_IMAGE_NAME="${_CE_FRONTEND_IMAGE_NAME:-frontend}"
-_CE_FRONTEND_APPLICATION_NAME="${_CE_FRONTEND_APPLICATION_NAME:-${_CE_PROJECT_NAME}-frontend}"
-_CE_BACKEND_IMAGE_NAME="${_CE_BACKEND_IMAGE_NAME:-backend}"
-_CE_BACKEND_ENV_SECRET_NAME="${_CE_BACKEND_ENV_SECRET_NAME:-${_CE_PROJECT_NAME}-backend-config}"
-_CE_BACKEND_APPLICATION_NAME="${_CE_BACKEND_APPLICATION_NAME:-${_CE_PROJECT_NAME}-backend}"
-_CR_REGISTRY_SECRET_NAME="${_CR_REGISTRY_SECRET_NAME:-${_CE_PROJECT_NAME}-registry-secret}"
-_CR_NAMESPACE="${_CR_NAMESPACE:-${_CE_PROJECT_NAME}-namespace}"
-
-# Validate _CEN_FLAVOR
-if [ -z "${_CEN_FLAVOR}" ]; then
-    print_error "_CEN_FLAVOR is missing in .env.production"
-    print_error "Please set it to one of: local-auth, backend-only, oauth-proxy, backend-only-no-db, local-auth-custom-ui, oauth-proxy-custom-ui"
-    exit 1
-fi
-
-print_status "Deployment Identity: ${_CEN_FLAVOR}"
-
-# Determine if frontend should be deployed
-if [[ "${_CEN_FLAVOR}" == "backend-only" || "${_CEN_FLAVOR}" == "backend-only-no-db" ]]; then
-    DEPLOY_FRONTEND=false
-    print_status "Backend-only deployment - frontend will be skipped"
-else
-    DEPLOY_FRONTEND=true
-fi
-
-# Initialize required variables with common ones
-REQUIRED_VARS=(
-    "_IBM_CLOUD_RESOURCE_GROUP" "_IBM_CLOUD_REGION" "_IBM_CLOUD_ACCOUNT_NAME"
-    "_CE_PROJECT_NAME" "_CR_REGISTRY"
-)
-
-# Add database variables if NOT backend-only-no-db
-if [[ "${_CEN_FLAVOR}" != "backend-only-no-db" ]]; then
-    REQUIRED_VARS+=("POSTGRES_SERVER" "POSTGRES_PORT" "POSTGRES_DB" "POSTGRES_USER" "POSTGRES_PASSWORD")
-fi
-
-# OAuth Configuration
-if [[ "${_CEN_FLAVOR}" == "oauth-proxy" || "${_CEN_FLAVOR}" == "oauth-proxy-custom-ui" ]]; then
-    REQUIRED_VARS+=("OAUTH2_PROXY_COOKIE_SECRET" "OAUTH2_PROXY_CLIENT_ID" "OAUTH2_PROXY_CLIENT_SECRET" "OAUTH2_PROXY_OIDC_ISSUER_URL")
-    OAUTH_ENABLED=true
-else
-    OAUTH_ENABLED=false
-fi
-
-print_status "Validating required environment variables..."
-MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-    if [ -z "${!var}" ]; then
-        MISSING_VARS+=("$var")
-    fi
-done
-
-if [ ${#MISSING_VARS[@]} -gt 0 ]; then
-    print_error "Missing required environment variables:"
-    for var in "${MISSING_VARS[@]}"; do
-        print_error "  - $var"
+parse_arguments() {
+    while (($#)); do
+        case "$1" in
+            -h|--help) printf 'Usage: %s [--env-file PATH] [--show-env-values] [--dry-run]\n' "$0"; exit 0 ;;
+            --env-file) ENV_FILE=${2:?}; shift 2 ;;
+            --show-env-values) SHOW_ENV_VALUES=true; shift ;;
+            --dry-run) DEPLOY_DRY_RUN=true; shift ;;
+            *) print_error "unknown option: $1"; exit 2 ;;
+        esac
     done
-    exit 1
-fi
-print_success "All required environment variables are set"
+}
 
-check_nginx_config() {
-    # Skip nginx check for backend-only deployments
-    if [ "$DEPLOY_FRONTEND" = false ]; then
-        print_status "Skipping nginx configuration check (backend-only deployment)"
-        return
-    fi
-    
-    print_status "Checking nginx configuration..."
-    NGINX_CONF="$SCRIPT_DIR/../frontend/nginx.conf"
-    
-    if [ -f "$NGINX_CONF" ]; then
-        # Check if "location /api" is active (not commented out)
-        if grep -E "^\s*location /api" "$NGINX_CONF" | grep -vE "^\s*#" > /dev/null; then
-            print_error "Found active 'location /api' block in frontend/nginx.conf"
-            print_error "Please comment out or remove the 'location /api' block for CE deployments."
-            exit 1
-        fi
-        print_success "nginx.conf check passed"
-    else
-        print_warning "nginx.conf not found at $NGINX_CONF - skipping check"
+ce_resource_exists() { kubectl get "$1" "$2" >/dev/null 2>&1; }
+
+ce_resource_is_owned() {
+    local kind=$1 name=$2 managed instance
+    managed=$(kubectl get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)
+    instance=$(kubectl get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/instance}' 2>/dev/null || true)
+    resource_is_owned_by_this_deployment "$managed" "$instance"
+}
+
+ensure_ce_resource_owned_or_absent() {
+    local kind=$1 name=$2 display=${3:-$1}
+    if ce_resource_exists "$kind" "$name" && ! ce_resource_is_owned "$kind" "$name"; then
+        warn_unowned_collision "$display" "$name"
+        return 1
     fi
 }
 
-check_nginx_config
-
-# Global array to store VITE build arguments (populated during pre-check, reused during deployment)
-VITE_BUILD_ARGS=()
-
-check_vite_vars_in_dockerfile() {
-    # Skip check for backend-only deployments
-    if [ "$DEPLOY_FRONTEND" = false ]; then
-        print_status "Skipping VITE variables check (backend-only deployment)"
-        return
-    fi
-    
-    print_status "Checking VITE variables in frontend/Dockerfile..."
-    DOCKERFILE="$SCRIPT_DIR/../frontend/Dockerfile"
-    
-    if [ ! -f "$DOCKERFILE" ]; then
-        print_error "frontend/Dockerfile not found at $DOCKERFILE"
-        exit 1
-    fi
-    
-    # Extract all VITE_* variables from .env.production and build VITE_BUILD_ARGS
-    VITE_VARS=()
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines
-        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
-        line=$(echo "$line" | tr -d '\r' | xargs)
-        if [[ $line == VITE_* ]]; then
-            # Extract variable name (before =)
-            var_name=$(echo "$line" | cut -d'=' -f1)
-            VITE_VARS+=("$var_name")
-            # Build the build args array for later use (will be updated with BACKEND_URL later)
-            if [[ $line == VITE_API_URL=* ]]; then
-                # Placeholder - will be replaced with actual BACKEND_URL during deployment
-                VITE_BUILD_ARGS+=("--build-arg=VITE_API_URL=PLACEHOLDER")
-            else
-                VITE_BUILD_ARGS+=("--build-arg=$line")
-            fi
-        fi
-    done < "$ENV_FILE"
-    
-    if [ ${#VITE_VARS[@]} -eq 0 ]; then
-        print_success "No VITE variables found in .env.production - check passed"
-        return
-    fi
-    
-    print_status "Found ${#VITE_VARS[@]} VITE variable(s) in .env.production"
-    
-    # Check each VITE variable exists as ARG in Dockerfile
-    MISSING_ARGS=()
-    for var in "${VITE_VARS[@]}"; do
-        # Check if ARG exists in Dockerfile (case-insensitive search for ARG)
-        if ! grep -qE "^[[:space:]]*ARG[[:space:]]+${var}" "$DOCKERFILE"; then
-            MISSING_ARGS+=("$var")
-        fi
-    done
-    
-    if [ ${#MISSING_ARGS[@]} -gt 0 ]; then
-        print_error "The following VITE variables are in .env.production but missing as ARG in frontend/Dockerfile:"
-        for var in "${MISSING_ARGS[@]}"; do
-            print_error "  - $var"
-        done
-        echo ""
-        print_error "The application won't work as expected without these variables."
-        print_error "Please add the missing ARG declarations to frontend/Dockerfile, for example:"
-        echo ""
-        for var in "${MISSING_ARGS[@]}"; do
-            print_status "  ARG ${var}=\${${var}}"
-        done
-        echo ""
-        exit 1
-    fi
-    
-    print_success "All VITE variables are properly defined in frontend/Dockerfile"
+label_ce_resource() {
+    run kubectl label "$1" "$2" "$CEN_MANAGED_BY_LABEL" "$CEN_INSTANCE_KEY=$APP_NAME" --overwrite
 }
 
-check_vite_vars_in_dockerfile
+delete_owned_ce_resource() {
+    local kind=$1 name=$2 display=${3:-$1}
+    ce_resource_exists "$kind" "$name" || { print_status "$display/$name is absent; nothing to delete"; return 0; }
+    if ! ce_resource_is_owned "$kind" "$name"; then warn_unowned_collision "$display" "$name"; return 0; fi
+    print_warning "Deleting owned $display/$name"
+    case "$kind" in
+        services.serving.knative.dev) run ibmcloud ce application delete --name "$name" --force ;;
+        secret) run ibmcloud ce secret delete --name "$name" --force >&2 ;;
+    esac
+}
 
-### ------------------------ IBM CLOUD SETUP ------------------------ ###
-print_section "IBM CLOUD SETUP"
+check_code_engine_preconditions() {
+    need_command ibmcloud; need_command kubectl; need_command docker
+    if ! ibmcloud plugin show container-registry >/dev/null 2>&1; then run ibmcloud plugin install -f container-registry; fi
+    if ! ibmcloud plugin show code-engine >/dev/null 2>&1; then run ibmcloud plugin install -f code-engine; fi
+    ibmcloud account show >/dev/null 2>&1 || { print_error "log in with 'ibmcloud login --sso'"; return 1; }
+    if [[ -n "${_IBM_CLOUD_ACCOUNT_NAME:-}" ]]; then
+        local current_account
+        current_account=$(ibmcloud account show | awk -F': ' '/Account Name:/ {print $2; exit}')
+        [[ -z "$current_account" || "$current_account" == "$_IBM_CLOUD_ACCOUNT_NAME" ]] || {
+            print_error "IBM Cloud account mismatch: '$current_account' != '$_IBM_CLOUD_ACCOUNT_NAME'"
+            return 1
+        }
+    fi
+}
 
-# Check and install required plugins
-print_status "Checking for required IBM Cloud plugins..."
-# Check for container-registry plugin
-if ! ibmcloud plugin show container-registry &>/dev/null; then
-    print_status "Installing container-registry plugin..."
-    ibmcloud plugin install -f container-registry || { print_error "Failed to install container-registry plugin"; exit 1; }
-else
-    print_success "container-registry plugin is installed"
-fi
-
-# Check for code-engine plugin
-if ! ibmcloud plugin show code-engine &>/dev/null; then
-    print_status "Installing code-engine plugin..."
-    ibmcloud plugin install -f code-engine || { print_error "Failed to install code-engine plugin"; exit 1; }
-else
-    print_success "code-engine plugin is installed"
-fi
-
-# Check IBM Cloud login
-print_status "Checking IBM Cloud login status..."
-if ibmcloud account show &>/dev/null; then
-    print_success "Already logged in to IBM Cloud"
-    
-    # Check if logged in to the correct account
-    current_account=$(ibmcloud account show | grep "Account Name:" | awk -F': ' '{print $2}' | xargs)
-    expected_account=$(echo "${_IBM_CLOUD_ACCOUNT_NAME}" | xargs)
-    
-    if [[ "$current_account" == "$expected_account" ]]; then
-        print_success "Logged in to the correct account: ${_IBM_CLOUD_ACCOUNT_NAME}"
+target_code_engine_project() {
+    run ibmcloud target -g "$_IBM_CLOUD_RESOURCE_GROUP"
+    run ibmcloud target -r "$_IBM_CLOUD_REGION"
+    if ibmcloud ce project get --name "$_CE_PROJECT_NAME" >/dev/null 2>&1; then
+        run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     else
-        print_error "Logged in to wrong account: $current_account"
-        print_status "Logging in to the correct account: ${_IBM_CLOUD_ACCOUNT_NAME}..."
-        ibmcloud logout
-        ibmcloud login -sso || { print_error "Failed to login to IBM Cloud"; exit 1; }
+        if [[ "$OAUTH_ENABLED" == true ]]; then
+            print_error "OAuth deployment requires an existing readable Code Engine project '$_CE_PROJECT_NAME' so visibility narrowing can be the first cloud mutation"
+            return 1
+        fi
+        run ibmcloud ce project create --name "$_CE_PROJECT_NAME"
+        run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     fi
-else
-    print_error "Not logged in. Logging in to IBM Cloud..."
-    ibmcloud login -sso || { print_error "Failed to login to IBM Cloud"; exit 1; }
-fi
+    CE_SUBDOMAIN=$(ibmcloud ce project current | awk '/Subdomain:/ {print $2; exit}')
+    [[ -n "$CE_SUBDOMAIN" ]] || { print_error 'could not read Code Engine project subdomain'; return 1; }
+    CLUSTER_ID=${CE_SUBDOMAIN#*.}
+    CLUSTER_ID=${CLUSTER_ID%%.*}
+}
 
-# Set resource group and region
-print_status "Setting resource group and region from .env.production..."
-ibmcloud target -g ${_IBM_CLOUD_RESOURCE_GROUP} || { print_error "Failed to select resource group"; exit 1; } 
-ibmcloud target -r ${_IBM_CLOUD_REGION} || { print_error "Failed to select region"; exit 1; }
+visibility_not_found() {
+    local output=$1 name=$2
+    printf '%s\n' "$output" | grep -Eiq "(application ['\"]?${name}['\"]? (was )?not found|application ['\"]?${name}['\"]? does not exist|resource_not_found)"
+}
 
-### ------------------------ CONTAINER REGISTRY SETUP ------------------------ ###
-print_section "CONTAINER REGISTRY SETUP"
-
-# Login to Container Registry
-print_status "Logging in to Container Registry..."
-ibmcloud cr login || { print_error "Failed to login to Container Registry"; exit 1; }
-
-# Check if namespace exists, create if not
-print_status "Checking if Container Registry namespace '${_CR_NAMESPACE}' exists..."
-if ibmcloud cr namespace-list | grep -q "^${_CR_NAMESPACE}$"; then
-    print_success "Container Registry namespace '${_CR_NAMESPACE}' already exists"
-else
-    print_status "Creating Container Registry namespace '${_CR_NAMESPACE}'..."
-    ibmcloud cr namespace-add ${_CR_NAMESPACE} || { print_error "Failed to create namespace"; exit 1; }
-    print_success "Container Registry namespace '${_CR_NAMESPACE}' created successfully!"
-fi
-
-### ------------------------ CODE ENGINE PROJECT SETUP ------------------------ ###
-print_section "CODE ENGINE PROJECT SETUP"
-
-# Check if Code Engine project exists, create if not
-print_status "Checking if Code Engine project '${_CE_PROJECT_NAME}' exists..."
-if ibmcloud ce project get -n ${_CE_PROJECT_NAME} &>/dev/null; then
-    print_success "Code Engine project '${_CE_PROJECT_NAME}' already exists"
-    print_status "Selecting Code Engine project..."
-    ibmcloud ce project select -n ${_CE_PROJECT_NAME} --kubecfg || { print_error "Failed to select CE project"; exit 1; }
-else
-    print_status "Creating Code Engine project '${_CE_PROJECT_NAME}'..."
-    ibmcloud ce project create -n ${_CE_PROJECT_NAME} || { print_error "Failed to create CE project"; exit 1; }
-    print_success "Code Engine project '${_CE_PROJECT_NAME}' created successfully!"
-
-    # Wait for project to be ready
-    print_status "Waiting for project to be ready..."
-    sleep 10
-    print_status "Selecting Code Engine project..."
-    ibmcloud ce project select -n ${_CE_PROJECT_NAME} --kubecfg || { print_error "Failed to select CE project"; exit 1; }
-fi
-
-# Get the project subdomain and extract cluster ID
-print_status "Fetching Code Engine project subdomain..."
-CE_SUBDOMAIN=$(ibmcloud ce project current | grep "Subdomain:" | awk '{print $2}')
-if [ -z "$CE_SUBDOMAIN" ]; then
-    print_error "Failed to get Code Engine project subdomain"
-    exit 1
-fi
-print_success "Code Engine subdomain: $CE_SUBDOMAIN"
-
-# Extract cluster ID from subdomain
-# Subdomain format: <project-name>.<cluster-id>
-# We need to get the cluster ID to construct proper URLs
-print_status "Extracting cluster identifier from subdomain..."
-CLUSTER_ID=$(echo "$CE_SUBDOMAIN" | cut -d'.' -f2)
-if [ -z "$CLUSTER_ID" ]; then
-    print_error "Failed to extract cluster ID from subdomain"
-    exit 1
-fi
-print_success "Extracted Cluster ID: $CLUSTER_ID"
-
-### ------------------------ REGISTRY SECRET SETUP ------------------------ ###
-print_section "REGISTRY SECRET SETUP"
-
-# Check if registry secret exists, create if not
-print_status "Checking if registry secret '${_CR_REGISTRY_SECRET_NAME}' exists..."
-if ibmcloud ce registry get --name ${_CR_REGISTRY_SECRET_NAME} &>/dev/null; then
-    print_success "Registry secret '${_CR_REGISTRY_SECRET_NAME}' already exists"
-else
-    print_status "Creating registry secret '${_CR_REGISTRY_SECRET_NAME}'..."
-    
-    # Check if IAM API key is provided
-    if [ -z "${_IAM_API_KEY}" ]; then
-        print_error "IAM API key (_IAM_API_KEY) is required to create registry secret"
-        print_error "Please add it to your .env.production file"
-        exit 1
+reconcile_one_oauth_visibility() {
+    local name=$1 inspection output command_status
+    set +e
+    inspection=$(kubectl get services.serving.knative.dev "$name" -o name 2>&1)
+    command_status=$?
+    set -e
+    if ((command_status == 0)); then
+        ce_resource_is_owned services.serving.knative.dev "$name" || { warn_unowned_collision application "$name"; return 1; }
+    elif ! printf '%s\n' "$inspection" | grep -Eiq '(notfound|not found)'; then
+        print_error "could not inspect ownership of application/$name before visibility mutation"
+        [[ -z "$inspection" ]] || printf '%s\n' "$inspection" >&2
+        return 1
     fi
-    ibmcloud ce registry create \
-        --name ${_CR_REGISTRY_SECRET_NAME} \
-        --server ${_CR_REGISTRY} \
-        --username iamapikey \
-        --password ${_IAM_API_KEY} || { print_error "Failed to create registry secret"; exit 1; }
-    print_success "Registry secret '${_CR_REGISTRY_SECRET_NAME}' created successfully!"
-fi
+    print_status "Failing closed: attempting project visibility for application/$name before registry, build, secret, or cleanup mutations."
+    set +e
+    output=$(ibmcloud ce application update --name "$name" --visibility project 2>&1)
+    command_status=$?
+    set -e
+    ((command_status == 0)) && return 0
+    visibility_not_found "$output" "$name" && { print_status "application/$name is confirmed absent"; return 0; }
+    print_error "could not prove application/$name absent or make it project-only"
+    [[ -z "$output" ]] || printf '%s\n' "$output" >&2
+    return 1
+}
 
-# Check if OAuth2 Proxy should be deployed
-if [ "$OAUTH_ENABLED" = true ]; then
-    print_success "OAuth2 Proxy flavor detected - will deploy with OAuth protection"
-else
-    print_status "OAuth2 Proxy not enabled for flavor '${_CEN_FLAVOR}'"
-fi
+reconcile_oauth_visibility() {
+    [[ "$OAUTH_ENABLED" == true ]] || return 0
+    reconcile_one_oauth_visibility "$_CE_BACKEND_APPLICATION_NAME"
+    reconcile_one_oauth_visibility "$_CE_FRONTEND_APPLICATION_NAME"
+}
 
-### ------------------------ OAUTH2 PROXY DEPLOYMENT (IF ENABLED) ------------------------ ###
-deploy_oauth_proxy() {
-    if [ "$OAUTH_ENABLED" = true ]; then
-        print_section "DEPLOYING OAUTH2 PROXY"
-        
-        # Construct OAuth proxy URL
+preflight_ce_collisions() {
+    ensure_ce_resource_owned_or_absent services.serving.knative.dev "$_CE_BACKEND_APPLICATION_NAME" application
+    ensure_ce_resource_owned_or_absent secret "$_CE_BACKEND_ENV_SECRET_NAME"
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        ensure_ce_resource_owned_or_absent services.serving.knative.dev "$_CE_FRONTEND_APPLICATION_NAME" application
+    fi
+    if [[ "$OAUTH_ENABLED" == true ]]; then
+        ensure_ce_resource_owned_or_absent services.serving.knative.dev oauth-proxy application
+        ensure_ce_resource_owned_or_absent secret oauth-proxy-secret
+    fi
+    if ce_resource_exists secret "$_CR_REGISTRY_SECRET_NAME"; then
+        ce_resource_is_owned secret "$_CR_REGISTRY_SECRET_NAME" || { warn_unowned_collision registry-secret "$_CR_REGISTRY_SECRET_NAME"; return 1; }
+    fi
+}
+
+target_registry() {
+    run ibmcloud cr login
+    if ! ibmcloud cr namespace-list | awk '{for(i=1;i<=NF;i++)print $i}' | grep -Fxq "$_CR_NAMESPACE"; then
+        run ibmcloud cr namespace-add "$_CR_NAMESPACE"
+    fi
+}
+
+ensure_registry_secret() {
+    local key_file
+    if ibmcloud ce registry get --name "$_CR_REGISTRY_SECRET_NAME" >/dev/null 2>&1; then
+        if ! ce_resource_exists secret "$_CR_REGISTRY_SECRET_NAME" || ! ce_resource_is_owned secret "$_CR_REGISTRY_SECRET_NAME"; then
+            warn_unowned_collision registry-secret "$_CR_REGISTRY_SECRET_NAME"
+            return 1
+        fi
+        print_warning "Deleting owned registry-secret/$_CR_REGISTRY_SECRET_NAME before exact recreation"
+        ibmcloud ce registry delete --name "$_CR_REGISTRY_SECRET_NAME" --force >&2
+    elif ce_resource_exists secret "$_CR_REGISTRY_SECRET_NAME"; then
+        warn_unowned_collision secret "$_CR_REGISTRY_SECRET_NAME"
+        return 1
+    fi
+    [[ -n "${_IAM_API_KEY:-}" ]] || { print_error '_IAM_API_KEY is required for the Code Engine registry secret'; return 1; }
+    make_temp_file key_file
+    printf '%s' "$_IAM_API_KEY" > "$key_file"
+    ibmcloud ce registry create --name "$_CR_REGISTRY_SECRET_NAME" --server "$_CR_REGISTRY" \
+        --username iamapikey --password-from-file "$key_file" >&2
+    label_ce_resource secret "$_CR_REGISTRY_SECRET_NAME"
+}
+
+sync_ce_env_secret() {
+    local name=$1 env_file=$2
+    ensure_ce_resource_owned_or_absent secret "$name"
+    if ce_resource_exists secret "$name"; then delete_owned_ce_resource secret "$name"; fi
+    ibmcloud ce secret create --name "$name" --from-env-file "$env_file" >&2
+    label_ce_resource secret "$name"
+}
+
+ensure_backend_secret() {
+    local backend_env
+    make_temp_file backend_env
+    write_application_env_file "$backend_env"
+    sync_ce_env_secret "$_CE_BACKEND_ENV_SECRET_NAME" "$backend_env"
+}
+
+build_and_push_images() {
+    local backend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_BACKEND_IMAGE_NAME:latest"
+    run docker image build --platform linux/amd64 -t "$backend_image" --load "$PROJECT_ROOT/backend"
+    run docker image push "$backend_image"
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        local frontend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_FRONTEND_IMAGE_NAME:latest" line name value
+        local build_args=()
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            [[ "$line" =~ ^(VITE_[A-Za-z0-9_]+)=(.*)$ ]] || continue
+            name=${BASH_REMATCH[1]}; value=${!name-}
+            [[ "$name" != VITE_API_URL ]] || value=$BACKEND_URL
+            build_args+=("--build-arg=$name=$value")
+        done < "$ENV_FILE"
+        run docker image build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
+            --build-arg "NODE_ENV=${NODE_ENV:-production}" --load "$PROJECT_ROOT/frontend"
+        run docker image push "$frontend_image"
+    fi
+}
+
+ensure_ce_application() {
+    local name=$1 image=$2 port=$3 secret_name=${4:-} visibility=public action=create
+    [[ "$OAUTH_ENABLED" != true ]] || visibility=project
+    if ce_resource_exists services.serving.knative.dev "$name"; then
+        ce_resource_is_owned services.serving.knative.dev "$name" || { warn_unowned_collision application "$name"; return 1; }
+        action=update
+    fi
+    local arguments=(application "$action" --name "$name" --image "$image" --registry-secret "$_CR_REGISTRY_SECRET_NAME" \
+        --port "http1:$port" --visibility "$visibility" --min-scale 1 --max-scale 4 --scale-down-delay 600)
+    [[ -z "$secret_name" ]] || arguments+=(--env-from-secret "$secret_name")
+    if [[ "$name" == "$_CE_BACKEND_APPLICATION_NAME" ]]; then
+        arguments+=(--cpu 1 --memory 4G --ephemeral-storage 1.5G \
+            --probe-live type=http --probe-live path=/api/v1/utils/health-check/ --probe-live port=8000 \
+            --probe-ready type=http --probe-ready path=/api/v1/utils/health-check/ --probe-ready port=8000)
+    else
+        arguments+=(--cpu 0.5 --memory 1G --probe-live type=http --probe-live path=/healthz --probe-live port=8080 \
+            --probe-ready type=http --probe-ready path=/healthz --probe-ready port=8080)
+    fi
+    run ibmcloud ce "${arguments[@]}"
+    label_ce_resource services.serving.knative.dev "$name"
+}
+
+ce_application_url() {
+    local output
+    output=$(ibmcloud ce application get --name "$1" --output url 2>/dev/null || true)
+    printf '%s\n' "$output" | grep -Eo 'https?://[^[:space:]]+' | head -n1 | sed 's/,$//' || true
+}
+
+ensure_oauth_proxy() {
+    [[ "$OAUTH_ENABLED" == true ]] || return 0
+    local name=oauth-proxy public_url oauth_env action=create
+    public_url=$(ce_application_url "$name")
+    [[ -n "$public_url" ]] || public_url="https://oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
+    make_temp_file oauth_env
+    write_oauth_env_file "$oauth_env" "$public_url"
+    sync_ce_env_secret oauth-proxy-secret "$oauth_env"
+    if ce_resource_exists services.serving.knative.dev "$name"; then
+        ce_resource_is_owned services.serving.knative.dev "$name" || { warn_unowned_collision application "$name"; return 1; }
+        action=update
+    fi
+    local args=(application "$action" --name "$name" --image "$OAUTH2_PROXY_IMAGE" --port http1:4180 \
+        --env-from-secret oauth-proxy-secret --visibility public --min-scale 1 --max-scale 2 --cpu 0.25 --memory 0.5G \
+        --argument=--provider=oidc --argument=--email-domain=* --argument=--http-address=:4180 \
+        --argument=--pass-basic-auth=true --argument=--pass-user-headers=true \
+        --argument=--pass-authorization-header=false --argument=--set-authorization-header=false \
+        --argument=--skip-auth-strip-headers=true --argument=--cookie-secure=true \
+        --argument=--cookie-httponly=true --argument=--cookie-samesite=lax \
+        --argument=--insecure-oidc-allow-unverified-email=true --argument=--pass-host-header=false \
+        --argument=--skip-provider-button=true --argument=--upstream-timeout=300s \
+        "--argument=--upstream=http://$_CE_FRONTEND_APPLICATION_NAME.$CE_SUBDOMAIN.svc.cluster.local/" \
+        "--argument=--upstream=http://$_CE_BACKEND_APPLICATION_NAME.$CE_SUBDOMAIN.svc.cluster.local/api/" \
+        "--argument=--upstream=http://$_CE_BACKEND_APPLICATION_NAME.$CE_SUBDOMAIN.svc.cluster.local/static/")
+    run ibmcloud ce "${args[@]}"
+    label_ce_resource services.serving.knative.dev "$name"
+    add_deployment_output oauth_proxy_url "${public_url#https://}"
+}
+
+reconcile_obsolete_ce_resources() {
+    if [[ "$HAS_FRONTEND" != true ]]; then delete_owned_ce_resource services.serving.knative.dev "$_CE_FRONTEND_APPLICATION_NAME" application; fi
+    if [[ "$OAUTH_ENABLED" != true ]]; then
+        delete_owned_ce_resource services.serving.knative.dev oauth-proxy application
+        delete_owned_ce_resource secret oauth-proxy-secret
+    fi
+}
+
+set_deployment_urls() {
+    if [[ "$OAUTH_ENABLED" == true ]]; then
         OAUTH_PROXY_URL="https://oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-        
-        # Create or update OAuth proxy secrets
-        if ! ibmcloud ce secret get --name oauth-proxy-secret &>/dev/null; then
-            print_status "Creating OAuth proxy secrets..."
-            ibmcloud ce secret create --name oauth-proxy-secret \
-                --from-literal=OAUTH2_PROXY_COOKIE_DOMAIN=oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud \
-                --from-literal=OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET} \
-                --from-literal=OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID} \
-                --from-literal=OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET} \
-                --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=${OAUTH2_PROXY_OIDC_ISSUER_URL} \
-                --from-literal=OAUTH2_PROXY_REDIRECT_URL=${OAUTH_PROXY_URL}/oauth2/callback || { print_error "Failed to create OAuth secrets"; exit 1; }
-        else
-            print_status "Updating OAuth proxy secrets..."
-            ibmcloud ce secret update --name oauth-proxy-secret \
-                --from-literal=OAUTH2_PROXY_COOKIE_DOMAIN=oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud \
-                --from-literal=OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET} \
-                --from-literal=OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID} \
-                --from-literal=OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET} \
-                --from-literal=OAUTH2_PROXY_OIDC_ISSUER_URL=${OAUTH2_PROXY_OIDC_ISSUER_URL} \
-                --from-literal=OAUTH2_PROXY_REDIRECT_URL=${OAUTH_PROXY_URL}/oauth2/callback || { print_error "Failed to update OAuth secrets"; exit 1; }
-        fi
-        
-        # Deploy or update OAuth proxy application
-        if ibmcloud ce application get --name oauth-proxy &>/dev/null; then
-            print_status "Updating OAuth proxy application..."
-            ibmcloud ce application update \
-                --name oauth-proxy \
-                --env-from-secret oauth-proxy-secret \
-                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to update OAuth proxy"; exit 1; }
-        else
-            print_status "Creating OAuth proxy application..."
-            ibmcloud ce application create \
-                --name oauth-proxy \
-                --image quay.io/oauth2-proxy/oauth2-proxy:latest \
-                --port http1:4180 --cpu 0.25 --memory 0.5G \
-                --min-scale 1 --max-scale 2 --scale-down-delay 600 \
-                --env-from-secret oauth-proxy-secret \
-                --probe-live initial-delay=10 --probe-live type=http --probe-live path=/ping --probe-live port=4180 \
-                --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/ping --probe-ready port=4180 \
-                --argument="--provider=oidc" \
-                --argument="--email-domain=*" \
-                --argument="--http-address=:4180" \
-                --argument="--pass-authorization-header=true" \
-                --argument="--insecure-oidc-allow-unverified-email=true" \
-                --argument="--pass-host-header=false" \
-                --argument="--skip-provider-button=true" \
-                --argument="--upstream-timeout=300s" \
-                --argument="--upstream=http://${_CE_FRONTEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/" \
-                --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/api/" \
-                --argument="--upstream=http://${_CE_BACKEND_APPLICATION_NAME}.${CE_SUBDOMAIN}.svc.cluster.local/static/" || { print_error "Failed to create OAuth proxy"; exit 1; }
-        fi
-        print_success "OAuth proxy deployed successfully!"
-        
-        # Set URLs to use OAuth proxy
-        BACKEND_URL="${OAUTH_PROXY_URL}"
-        FRONTEND_URL="${OAUTH_PROXY_URL}"
-        OAUTH_REDIRECT_URL="${OAUTH_PROXY_URL}/oauth2/callback"
+        BACKEND_URL=$OAUTH_PROXY_URL; FRONTEND_URL=$OAUTH_PROXY_URL
     else
-        # Construct direct application URLs (no OAuth)
         BACKEND_URL="https://${_CE_BACKEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-        if [ "$DEPLOY_FRONTEND" = true ]; then
-            FRONTEND_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-        else
-            FRONTEND_URL="No frontend deployed"
-        fi
+        FRONTEND_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
     fi
-    
-    print_success "Constructed URLs:"
-    print_status "  Backend URL:  $BACKEND_URL"
-    print_status "  Frontend URL: $FRONTEND_URL"
-    if [ "$OAUTH_ENABLED" = true ]; then
-        print_status "  OAuth Redirect URL: $OAUTH_REDIRECT_URL"
-    fi
+    if [[ "$HAS_FRONTEND" == true ]]; then BACKEND_CORS_ORIGINS=$FRONTEND_URL; else BACKEND_CORS_ORIGINS='*'; fi
+    if [[ "$OAUTH_ENABLED" == true ]]; then OAUTH2_PROXY_WELL_KNOWN_URL="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}/.well-known/openid-configuration"; fi
 }
 
-### ------------------------ UPDATE ENV FILE ------------------------ ###
-update_env_file() {
-    print_section "UPDATING ENVIRONMENT FILE"
-    
-    print_status "Updating environment variables in .env.production..."
-    
-    # Create a temporary file
-    TEMP_FILE="${ENV_FILE}.tmp"
-    
-    # Update or add the required variables
-    VITE_API_URL_UPDATED=false
-    BACKEND_CORS_UPDATED=false
-    OAUTH_REDIRECT_UPDATED=false
-    
-    while IFS= read -r line || [ -n "$line" ]; do
-        line=$(echo "$line" | tr -d '\r')
-        if [[ $line == VITE_API_URL=* ]] && [ "$DEPLOY_FRONTEND" = true ]; then
-            echo "VITE_API_URL=\"${BACKEND_URL}\""
-            VITE_API_URL_UPDATED=true
-        elif [[ $line == BACKEND_CORS_ORIGINS=* ]]; then
-            if [ "$DEPLOY_FRONTEND" = true ]; then
-                echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
-            else
-                echo "BACKEND_CORS_ORIGINS=\"*\""
-            fi
-            BACKEND_CORS_UPDATED=true
-        elif [[ $line == OAUTH2_PROXY_REDIRECT_URL=* ]] && [ "$OAUTH_ENABLED" = true ]; then
-            echo "OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\""
-            OAUTH_REDIRECT_UPDATED=true
-        else
-            echo "$line"
-        fi
-    done < "$ENV_FILE" > "$TEMP_FILE"
-    
-    # Add variables if they weren't found in the file
-    if [ "$DEPLOY_FRONTEND" = true ]; then
-        if [ "$VITE_API_URL_UPDATED" = false ]; then
-            echo "VITE_API_URL=\"${BACKEND_URL}\"" >> "$TEMP_FILE"
-        fi
-    fi
-    if [ "$BACKEND_CORS_UPDATED" = false ]; then
-        if [ "$DEPLOY_FRONTEND" = true ]; then
-            echo "BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\"" >> "$TEMP_FILE"
-        else
-            echo "BACKEND_CORS_ORIGINS=\"*\"" >> "$TEMP_FILE"
-        fi
-    fi
-    if [ "$OAUTH_ENABLED" = true ]; then
-        if [ "$OAUTH_REDIRECT_UPDATED" = false ]; then
-            echo "OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\"" >> "$TEMP_FILE"
-        fi
-        
-        # Infer OAUTH2_PROXY_WELL_KNOWN_URL if not present
-        if ! grep -q "OAUTH2_PROXY_WELL_KNOWN_URL=" "$ENV_FILE"; then
-             # Remove trailing slash from issuer url if present
-            clean_issuer_url="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}"
-            well_known_url="${clean_issuer_url}/.well-known/openid-configuration"
-            echo "OAUTH2_PROXY_WELL_KNOWN_URL=\"${well_known_url}\"" >> "$TEMP_FILE"
-            print_status "  OAUTH2_PROXY_WELL_KNOWN_URL=\"${well_known_url}\" (inferred)"
-        fi
-    fi
-    
-    # Replace original file with updated one
-    mv "$TEMP_FILE" "$ENV_FILE"
-    
-    print_success "Updated .env.production with deployment URLs"
-    if [ "$DEPLOY_FRONTEND" = true ]; then
-        print_status "  VITE_API_URL=\"${BACKEND_URL}\""
-        print_status "  BACKEND_CORS_ORIGINS=\"${FRONTEND_URL}\""
-    else
-        print_status "  BACKEND_CORS_ORIGINS=\"*\" (backend-only mode)"
-    fi
-    if [ "$OAUTH_ENABLED" = true ]; then
-        print_status "  OAUTH2_PROXY_REDIRECT_URL=\"${OAUTH_REDIRECT_URL}\""
-    fi
+dry_run_plan() {
+    print_status "Branch deployment identity: $CEN_DEPLOY_FLAVOR"
+    if [[ "$HAS_FRONTEND" == true ]]; then print_status 'Images: backend + nginx frontend'; else print_status 'Images: backend only'; fi
+    print_status "Ownership: $(cen_ownership_labels)"
+    [[ "$OAUTH_ENABLED" != true ]] || quote_command ibmcloud ce application update --name "$_CE_BACKEND_APPLICATION_NAME" --visibility project
 }
 
-### ------------------------ DEPLOYMENT FUNCTION ------------------------ ###
-deploy_applications() {
-    print_section "DEPLOYING APPLICATIONS"
-    
-    ### FRONTEND ###
-    if [ "$DEPLOY_FRONTEND" = true ]; then
-        print_status "Building frontend image..."
-        
-        # Update VITE_API_URL in the pre-built VITE_BUILD_ARGS array with actual BACKEND_URL
-        for i in "${!VITE_BUILD_ARGS[@]}"; do
-            if [[ "${VITE_BUILD_ARGS[$i]}" == "--build-arg=VITE_API_URL="* ]]; then
-                VITE_BUILD_ARGS[$i]="--build-arg=VITE_API_URL=${BACKEND_URL}"
-                break
-            fi
-        done
-        
-        print_status "Using ${#VITE_BUILD_ARGS[@]} VITE build arguments"
-        print_status "Building image: ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest"
-        
-        docker image build --platform linux/amd64 \
-            -t ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-            "${VITE_BUILD_ARGS[@]}" \
-            --build-arg NODE_ENV=${NODE_ENV:-production} \
-            --load \
-            ./frontend || { print_error "Failed to build frontend image"; exit 1; }
-        
-        print_status "Pushing frontend image..."
-        docker image push ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest || { print_error "Failed to push frontend image"; exit 1; }
-        
-        if ibmcloud ce application get --name ${_CE_FRONTEND_APPLICATION_NAME} &>/dev/null; then
-            print_status "Updating frontend application..."
-            ibmcloud ce application update \
-                --name ${_CE_FRONTEND_APPLICATION_NAME} \
-                --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to update frontend"; exit 1; }
-        else
-            print_status "Creating frontend application..."
-            # Frontend is cluster-local when OAuth is enabled, public otherwise
-            if [ "$OAUTH_ENABLED" = true ]; then
-                CLUSTER_LOCAL_FLAG="--cluster-local"
-            else
-                CLUSTER_LOCAL_FLAG=""
-            fi
-            
-            ibmcloud ce application create \
-                --name ${_CE_FRONTEND_APPLICATION_NAME} \
-                --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_FRONTEND_IMAGE_NAME}:latest \
-                --registry-secret ${_CR_REGISTRY_SECRET_NAME} \
-                --port http1:8080 \
-                $CLUSTER_LOCAL_FLAG \
-                --probe-live initial-delay=10 --probe-live type=http --probe-live path=/healthz --probe-live port=8080 \
-                --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/healthz --probe-ready port=8080 \
-                --cpu 0.5 --memory 1G \
-                --min-scale 1 --max-scale 2 --scale-down-delay 600 || { print_error "Failed to create frontend"; exit 1; }
-        fi
-        print_success "Frontend deployed successfully!"
-    else
-        print_status "Skipping frontend deployment (backend-only mode)"
-    fi
-    
-    ### BACKEND ###
-    print_status "Building backend image..."
-    docker image build --platform linux/amd64 \
-        -t ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_BACKEND_IMAGE_NAME}:latest \
-        --load \
-        ./backend || { print_error "Failed to build backend image"; exit 1; }
-    
-    print_status "Pushing backend image..."
-    docker image push ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_BACKEND_IMAGE_NAME}:latest || { print_error "Failed to push backend image"; exit 1; }
-    
-    # Update backend secrets with new CORS origins
-    SECRET_NAME="${_CE_BACKEND_ENV_SECRET_NAME}"
-    FROM_LITERALS=()
-    while IFS= read -r line; do
-        # Skip comments and empty lines early to avoid xargs quote parsing issues
-        if [[ "$line" =~ ^[[:space:]]*# || -z "${line// }" ]]; then continue; fi
-        line=$(echo "$line" | xargs)
-        [[ $line == _* ]] && continue
-        FROM_LITERALS+=(--from-literal "$line")
-    done < "$ENV_FILE"
-    
-    if ibmcloud ce secret get --name "$SECRET_NAME" &>/dev/null; then
-        print_status "Removing existing backend secrets to ensure strict sync..."
-        ibmcloud ce secret delete --name "$SECRET_NAME" --force || { print_error "Failed to delete existing secrets"; exit 1; }
-    fi
+main() {
+    parse_arguments "$@"
+    load_branch_flavor
+    enable_mock_mode
+    load_env_file "$ENV_FILE" "$SHOW_ENV_VALUES"
+    validate_mock_commands
+    resolve_app_name "${_APP_NAME:-${_CE_PROJECT_NAME:-cen-app}}"
+    validate_runtime_env
+    : "${_IBM_CLOUD_RESOURCE_GROUP:?}" "${_IBM_CLOUD_REGION:?}" "${_CE_PROJECT_NAME:?}" "${_CR_REGISTRY:?}"
+    _CE_FRONTEND_IMAGE_NAME=${_CE_FRONTEND_IMAGE_NAME:-frontend}
+    _CE_FRONTEND_APPLICATION_NAME=${_CE_FRONTEND_APPLICATION_NAME:-"${_CE_PROJECT_NAME}-frontend"}
+    _CE_BACKEND_IMAGE_NAME=${_CE_BACKEND_IMAGE_NAME:-backend}
+    _CE_BACKEND_ENV_SECRET_NAME=${_CE_BACKEND_ENV_SECRET_NAME:-"${_CE_PROJECT_NAME}-backend-config"}
+    _CE_BACKEND_APPLICATION_NAME=${_CE_BACKEND_APPLICATION_NAME:-"${_CE_PROJECT_NAME}-backend"}
+    _CR_REGISTRY_SECRET_NAME=${_CR_REGISTRY_SECRET_NAME:-"${_CE_PROJECT_NAME}-registry-secret"}
+    _CR_NAMESPACE=${_CR_NAMESPACE:-"${_CE_PROJECT_NAME}-namespace"}
 
-    print_status "Creating backend secrets..."
-    ibmcloud ce secret create --name "$SECRET_NAME" "${FROM_LITERALS[@]}" || { print_error "Failed to create secrets"; exit 1; }
-    
-    if ibmcloud ce application get --name "${_CE_BACKEND_APPLICATION_NAME}" &>/dev/null; then
-        print_status "Updating backend application..."
-        ibmcloud ce application update \
-            --name "${_CE_BACKEND_APPLICATION_NAME}" \
-            --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_BACKEND_IMAGE_NAME}:latest \
-            --min-scale 1 --max-scale 2 --scale-down-delay 600 \
-            --probe-live initial-delay=10 --probe-live type=http --probe-live path=/api/v1/utils/health-check/ --probe-live port=8000 \
-            --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/api/v1/utils/health-check/ --probe-ready port=8000 \
-            --ephemeral-storage 1.5G || { print_error "Failed to update backend"; exit 1; }
-        
-        print_success "Backend application updated successfully!"
-    else
-        print_status "Creating backend application..."
-        # Backend is cluster-local when OAuth is enabled, public otherwise
-        if [ "$OAUTH_ENABLED" = true ]; then
-            CLUSTER_LOCAL_FLAG="--cluster-local"
-        else
-            CLUSTER_LOCAL_FLAG=""
-        fi
-        
-        ibmcloud ce application create \
-            --name ${_CE_BACKEND_APPLICATION_NAME} \
-            --image ${_CR_REGISTRY}/${_CR_NAMESPACE}/${_CE_BACKEND_IMAGE_NAME}:latest \
-            --registry-secret ${_CR_REGISTRY_SECRET_NAME} \
-            --port http1:8000 \
-            $CLUSTER_LOCAL_FLAG \
-            --probe-live initial-delay=10 --probe-live type=http --probe-live path=/api/v1/utils/health-check/ --probe-live port=8000 \
-            --probe-ready initial-delay=10 --probe-ready type=http --probe-ready path=/api/v1/utils/health-check/ --probe-ready port=8000 \
-            --cpu 1 --memory 4G --ephemeral-storage 1.5G \
-            --min-scale 1 --max-scale 4 --scale-down-delay 600 \
-            --env-from-secret ${_CE_BACKEND_ENV_SECRET_NAME} || { print_error "Failed to create backend"; exit 1; }
-        
-        print_success "Backend application created successfully!"
+    print_section_header 'Code Engine deployment'
+    if [[ "$DEPLOY_DRY_RUN" == true ]]; then dry_run_plan; return 0; fi
+    check_code_engine_preconditions
+    confirm_target 'Code Engine deployment' "$_CE_PROJECT_NAME"
+    target_code_engine_project
+    reconcile_oauth_visibility
+    preflight_ce_collisions
+    set_deployment_urls
+    if [[ "$HAS_DATABASE" == true && "$POSTGRES_SERVER" == postgresql ]]; then
+        print_error 'Code Engine requires an external POSTGRES_SERVER'
+        return 1
     fi
+    target_registry
+    ensure_registry_secret
+    build_and_push_images
+    ensure_backend_secret
+    ensure_ce_application "$_CE_BACKEND_APPLICATION_NAME" "$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_BACKEND_IMAGE_NAME:latest" 8000 "$_CE_BACKEND_ENV_SECRET_NAME"
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        ensure_ce_application "$_CE_FRONTEND_APPLICATION_NAME" "$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_FRONTEND_IMAGE_NAME:latest" 8080
+    fi
+    ensure_oauth_proxy
+    reconcile_obsolete_ce_resources
+    print_deployment_summary
 }
 
-### ------------------------ MAIN DEPLOYMENT LOGIC ------------------------ ###
-# Step 1: Deploy OAuth proxy (if enabled) and construct URLs
-deploy_oauth_proxy
-
-# Step 2: Update .env.production file with correct URLs
-update_env_file
-
-# Step 3: Reload environment variables with updated URLs
-source "$ENV_FILE"
-
-# Step 4: Deploy backend and frontend with correct API URL
-deploy_applications
-
-### ------------------------ FINAL OUTPUT ------------------------ ###
-print_section "DEPLOYMENT COMPLETE"
-
-echo ""
-print_success "🎉 Deployment completed successfully!"
-echo ""
-
-print_section "APPLICATION URLS"
-echo ""
-
-if [ "$DEPLOY_FRONTEND" = false ]; then
-    print_success "Backend API URL (Backend-Only Mode):"
-    print_status "  ${BACKEND_URL}"
-    echo ""
-elif [ "$OAUTH_ENABLED" = true ]; then
-    print_success "Main Application (OAuth Protected):"
-    print_status "  ${OAUTH_PROXY_URL}"
-    echo ""
-    
-    # Get direct application URLs for debugging
-    BACKEND_DIRECT_URL="https://${_CE_BACKEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-    FRONTEND_DIRECT_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
-    
-    print_status "Direct Access URLs (for debugging):"
-    print_status "  Backend API:  ${BACKEND_DIRECT_URL}"
-    print_status "  Frontend:     ${FRONTEND_DIRECT_URL}"
-    echo ""
-    print_warning "Note: Direct URLs bypass OAuth authentication. Use the main application URL for normal access."
-else
-    print_success "Frontend URL:"
-    print_status "  ${FRONTEND_URL}"
-    echo ""
-    print_success "Backend API URL:"
-    print_status "  ${BACKEND_URL}"
-    echo ""
-    print_warning "Note: OAuth2 Proxy is not configured. Application is publicly accessible."
-fi
-
-echo ""
-print_success "✅ .env.production file has been automatically updated with deployment URLs"
-
-print_section "INFRASTRUCTURE DETAILS"
-print_status "  Resource Group:       ${_IBM_CLOUD_RESOURCE_GROUP}"
-print_status "  Region:               ${_IBM_CLOUD_REGION}"
-print_status "  Code Engine Project:  ${_CE_PROJECT_NAME}"
-print_status "  Project Subdomain:    ${CE_SUBDOMAIN}"
-print_status "  Cluster ID:           ${CLUSTER_ID}"
-print_status "  Container Registry:   ${_CR_REGISTRY}/${_CR_NAMESPACE}"
-print_status "  Deployment Mode:      ${_CEN_FLAVOR}"
-if [ "$OAUTH_ENABLED" = true ]; then
-    print_status "  OAuth2 Proxy:         Enabled"
-else
-    print_status "  OAuth2 Proxy:         Disabled"
-fi
-echo ""
-
-if [ "$DEPLOY_FRONTEND" = false ]; then
-    print_success "✅ You can now access your backend API at: ${BACKEND_URL}"
-elif [ "$OAUTH_ENABLED" = true ]; then
-    print_success "✅ You can now access your application at: ${OAUTH_PROXY_URL}"
-else
-    print_success "✅ You can now access your application at: ${FRONTEND_URL}"
-fi
-echo ""
+main "$@"
