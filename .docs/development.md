@@ -21,8 +21,8 @@ unsafe remote databases, or occupied ports before starting services.
 
 ## Topology, ports, and environment
 
-Compose starts PostgreSQL, Adminer, Dex, and oauth2-proxy. Uvicorn and Vite run natively with
-reload/HMR. The backend is loopback-only; browsers must use the proxy.
+Compose starts PostgreSQL, Adminer, oauth2-proxy, and—by default—Dex. Uvicorn and Vite run
+natively with reload/HMR. The backend is loopback-only; browsers must use the proxy.
 
 | Key | Default | URL/service |
 | --- | ---: | --- |
@@ -48,6 +48,27 @@ Dex is a local-only test IdP pinned as
 `dexidp/dex:v2.45.1-distroless@sha256:8bfd667b384c2a2555c355c58c167e11127d2ea1a3711f1c246e4d7c5528eb2a`.
 oauth2-proxy is pinned as
 `quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561`.
+
+### Bundled Dex or an external IdP
+
+Leaving `OAUTH2_PROXY_OIDC_ISSUER_URL` blank uses the bundled Dex fixture with no additional
+configuration. To use a corporate issuer instead, set these existing local-development keys in
+`.env`:
+
+```dotenv
+OAUTH2_PROXY_CLIENT_ID=your-client-id
+OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
+OAUTH2_PROXY_OIDC_ISSUER_URL=https://idp.example/oidc
+OAUTH2_PROXY_REDIRECT_URL=http://localhost:4180/oauth2/callback
+OAUTH2_PROXY_WELL_KNOWN_URL=https://idp.example/oidc/.well-known/openid-configuration
+OAUTH2_PROXY_COOKIE_DOMAIN=localhost
+```
+
+Only the issuer is required; redirect defaults to the local proxy callback, discovery defaults to
+`<issuer>/.well-known/openid-configuration`, and cookie domain remains host-only when blank. The
+supervisor validates the discovery document and passes its authorization, token, and JWKS
+endpoints to the pinned proxy. With an external issuer, Dex is neither started nor assigned a
+local port. Register the exact redirect URL with the IdP.
 
 ## Authentication and logout
 

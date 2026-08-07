@@ -28,6 +28,11 @@ proxy ingress; owned direct Routes are removed only after the switch. The privat
 `OAUTH2_PROXY_UPSTREAM_PASSWORD` is generated when absent or set to the documented generation
 marker; arbitrary placeholders and weak values are refused.
 
+Local development resolves the optional external-issuer contract before Compose starts. Blank
+`OAUTH2_PROXY_OIDC_ISSUER_URL` selects Dex; otherwise
+`scripts/oidc-environment.mjs` loads the configured well-known document and supplies the current
+oauth2-proxy endpoint flags. This is development-only and does not change deployment scripts.
+
 Blank OpenShift branch filters resolve to `oauth-proxy-custom-ui`, are printed, and must exist
 remotely before BuildConfig creation. `--adopt-legacy-resources` verifies and prints a legacy set,
 then requires `adopt <PROJECT_NAME>/<APP_NAME>` before applying both ownership labels. Webhooks
