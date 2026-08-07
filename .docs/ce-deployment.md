@@ -15,13 +15,19 @@ cp .env.production.example .env.production
 ```
 
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, `BACKEND_CORS_ORIGINS`, and all five
-`POSTGRES_*` values. Code Engine requires `_APP_NAME`, `_IAM_API_KEY`,
-`_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and `_CR_REGISTRY`;
-account name and registry namespace are optional constraints. Keep migrate-on-start enabled and
-set its lock timeout: each replica must verify exact bundled Alembic heads before readiness.
+`POSTGRES_*` values. Code Engine requires `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`,
+`_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and `_CR_REGISTRY`; account name and registry namespace
+are optional constraints. `_IAM_API_KEY` is required to create or rotate the registry secret; an
+existing correctly owned secret can be reused without it. Keep migrate-on-start enabled and set
+its lock timeout: each replica must verify exact bundled Alembic heads before readiness.
 
 The deployer builds only the backend image and asserts that no frontend resources are created.
 It requires exact target confirmation.
+
+The generated backend URL and configured `BACKEND_CORS_ORIGINS` are persisted without introducing
+`*`, and the final summary always prints the backend URL. Fresh projects are polled until readable
+before selection. Default image names remain application-scoped intentionally. `--show-env-values`
+is terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
@@ -43,8 +49,8 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
    registry/build/secret failure.
 4. Fresh OAuth applications are private from creation and reachable by the public proxy through
    project-local DNS.
-5. Separate backend/frontend image builds, instance-scoped tags, registry-secret recreation, and
-   registry permissions work end to end.
+5. Separate images, instance-scoped tags, owned registry-secret reuse/rotation, and permissions
+   work end to end.
 6. OpenShift direct-to-OAuth conversion keeps the old path until proxy readiness, then switches
    ingress and removes owned direct paths.
 7. Weighted `alternateBackends`, numeric ports, and primary-Route alternate clearing match the
@@ -62,6 +68,8 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
     proxy/backend seam work end to end.
 14. Backend-only branches create no frontend resources; the no-database branch preserves any
     existing PVC for recovery.
+15. The summary prints the backend URL, configured CORS is preserved without implicit `*`, and a
+    fresh project is selected only after readiness.
 
 OAuth/frontend items are cross-branch release checks; this topology proves the absence half of
 item 14.

@@ -16,4 +16,14 @@ rechecks labels immediately before deletion, preserves the PostgreSQL PVC during
 convergence, and removes no frontend resources because this branch creates none. Secrets use
 mode-0600 files and never command arguments.
 
+Blank branch filters resolve to `backend-only` and must exist remotely before BuildConfig creation.
+Legacy resources can be labeled only with `--adopt-legacy-resources`, matching fingerprints, and
+the separate `adopt <PROJECT_NAME>/<APP_NAME>` phrase. PostgreSQL drift stops before secret
+replacement. OpenShift reconciles webhook RBAC, fails webhook API errors, and skips registry
+readiness only for missing read permissions.
+
+Code Engine persists CORS without adding `*`, reports the backend URL, waits for fresh-project
+readiness, and reuses an owned registry secret without `_IAM_API_KEY`. App-scoped image names are
+intentional. `--show-env-values` is terminal-only.
+
 See [Code Engine](../.docs/ce-deployment.md) and [OpenShift](../.docs/oc-deployment.md).
