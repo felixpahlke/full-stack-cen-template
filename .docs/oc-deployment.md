@@ -19,9 +19,41 @@ settings are intentionally absent. The script requires exact target confirmation
 topology override.
 
 A blank branch filter resolves to `backend-only-no-db`, is printed, and must resolve through the
-deploy key before the backend BuildConfig is created. The deployer owns the
-`system:unauthenticated` → `system:webhook` RoleBinding; webhook API failures are fatal and
-tokenless usable URLs are terminal-only.
+deploy key before the backend BuildConfig is created.
+
+The deployer owns the `webhook-access-unauthenticated` RoleBinding from
+`system:unauthenticated` to `system:webhook`. Creating it requires permission both to create a
+RoleBinding in the project and to bind the `system:webhook` ClusterRole. Project-scoped users on
+managed clusters may need a cluster administrator to apply it:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webhook-access-unauthenticated
+  labels:
+    app.kubernetes.io/managed-by: cen-template
+    app.kubernetes.io/instance: <APP_NAME>
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:webhook
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:unauthenticated
+```
+
+Apply that manifest with `oc -n <PROJECT_NAME> apply -f rolebinding.yaml`. This deliberately lets
+unauthenticated GitHub POST requests reach OpenShift build webhooks; the random secret embedded in
+each BuildConfig webhook URL is what authenticates and protects the trigger. If the deployer lacks
+the required RBAC permission, application deployment continues but the summary reports webhooks as
+inactive and prints the credential-bearing URLs only on the interactive terminal. Until an
+administrator creates the binding, GitHub pushes do not trigger builds. Other RoleBinding apply
+errors and GitHub API failures remain fatal. Without a GitHub token, usable credential-bearing
+webhook URLs are likewise terminal-only.
 
 ## Ownership and cleanup
 
