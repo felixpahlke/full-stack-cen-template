@@ -30,4 +30,4 @@ jobs:
           uv sync --project backend --frozen
       - run: npm run check
       - run: npm run test
-      - run: docker build -f backend/Dockerfile backend
+      - run: npm run build
