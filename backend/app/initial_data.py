@@ -2,15 +2,16 @@ import logging
 
 from sqlmodel import Session
 
-from app.core.db import engine, init_db
+from app.core.config import get_settings
+from app.core.db import get_engine, init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def init() -> None:
-    with Session(engine) as session:
-        init_db(session)
+    with Session(get_engine()) as session:
+        init_db(session, get_settings())
 
 
 def main() -> None:
