@@ -26,9 +26,28 @@ is_oauth_enabled() {
 # OAuth Secret Management
 #############################################
 
+OAUTH2_PROXY_IMAGE="quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561"
+
+ensure_oauth_upstream_password() {
+    local value="${OAUTH2_PROXY_UPSTREAM_PASSWORD:-}"
+    local first_character="${value:0:1}"
+    if [[ -z "$value" || "$value" == "generate-on-first-dev-run" || "$value" == "replace-me" || "$value" =~ ^\<.*\>$ ]]; then
+        OAUTH2_PROXY_UPSTREAM_PASSWORD=$(openssl rand -hex 32)
+        export OAUTH2_PROXY_UPSTREAM_PASSWORD
+        print_success "Generated private OAuth proxy/backend seam credential" "oauth"
+    elif [[ ${#value} -lt 32 || -z "${value//$first_character/}" ]]; then
+        print_error "OAUTH2_PROXY_UPSTREAM_PASSWORD must be a non-placeholder random value of at least 32 characters. Run npm run dev to generate local values." "oauth"
+        return 1
+    fi
+}
+
 # Function to create OAuth2 Proxy secret
 create_oauth_proxy_secret() {
     local secret_name="$APP_NAME-oauth-proxy-secret"
+    local secret_file
+    local status=0
+
+    ensure_oauth_upstream_password || return 1
     
     # NOTE: We cannot derive the redirect URL or cookie domain from the oauth-proxy route yet
     # because that route hasn't been created. The deployment flow is:
@@ -80,15 +99,21 @@ create_oauth_proxy_secret() {
         oc delete secret "$secret_name"
     fi
     
-    # Create secret with OAuth variables
-    # Note: redirect-url and cookiedomain are derived from oauth_url
-    oc create secret generic "$secret_name" \
-        --from-literal=cookiedomain="$derived_cookie_domain" \
-        --from-literal=cookiesecret="$OAUTH2_PROXY_COOKIE_SECRET" \
-        --from-literal=clientid="$OAUTH2_PROXY_CLIENT_ID" \
-        --from-literal=clientsecret="$OAUTH2_PROXY_CLIENT_SECRET" \
-        --from-literal=oidc-issuer-url="$OAUTH2_PROXY_OIDC_ISSUER_URL" \
-        --from-literal=redirect-url="$derived_redirect_url"
+    # Use a protected file so credential values never appear in process arguments.
+    secret_file=$(mktemp "${TMPDIR:-/tmp}/cen-oauth-secret.XXXXXX") || return 1
+    chmod 600 "$secret_file"
+    {
+        printf 'OAUTH2_PROXY_COOKIE_DOMAIN=%s\n' "$derived_cookie_domain"
+        printf 'OAUTH2_PROXY_COOKIE_SECRET=%s\n' "$OAUTH2_PROXY_COOKIE_SECRET"
+        printf 'OAUTH2_PROXY_CLIENT_ID=%s\n' "$OAUTH2_PROXY_CLIENT_ID"
+        printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$OAUTH2_PROXY_CLIENT_SECRET"
+        printf 'OAUTH2_PROXY_OIDC_ISSUER_URL=%s\n' "$OAUTH2_PROXY_OIDC_ISSUER_URL"
+        printf 'OAUTH2_PROXY_REDIRECT_URL=%s\n' "$derived_redirect_url"
+        printf 'OAUTH2_PROXY_BASIC_AUTH_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD"
+    } > "$secret_file"
+    oc create secret generic "$secret_name" --from-env-file="$secret_file" || status=$?
+    rm -f "$secret_file"
+    [[ "$status" -eq 0 ]] || return "$status"
     
     print_success "OAuth2 Proxy secret created: $secret_name" "oauth"
     
@@ -109,15 +134,11 @@ create_oauth_proxy_secret() {
 deploy_oauth_proxy() {
     print_status "Deploying OAuth2 Proxy..." "oauth"
     
-    # Check if deployment already exists
     if resource_exists "deployment" "oauth-proxy"; then
-        print_status "OAuth2 Proxy deployment already exists, triggering rollout restart..." "oauth"
-        oc rollout restart deployment/oauth-proxy
-        oc rollout status deployment/oauth-proxy --timeout=300s
-        return 0
+        print_status "Updating OAuth2 Proxy deployment..." "oauth"
+    else
+        print_status "Creating OAuth2 Proxy deployment..." "oauth"
     fi
-    
-    print_status "Creating new OAuth2 Proxy deployment..." "oauth"
     
     # Create deployment
     cat << EOF | oc apply -f -
@@ -141,44 +162,23 @@ spec:
     spec:
       containers:
         - name: oauth-proxy
-          image: quay.io/oauth2-proxy/oauth2-proxy:latest
-          env:
-            - name: OAUTH2_PROXY_COOKIE_DOMAIN
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: cookiedomain
-            - name: OAUTH2_PROXY_COOKIE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: cookiesecret
-            - name: OAUTH2_PROXY_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: clientid
-            - name: OAUTH2_PROXY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: clientsecret
-            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: oidc-issuer-url
-            - name: OAUTH2_PROXY_REDIRECT_URL
-              valueFrom:
-                secretKeyRef:
-                  name: ${APP_NAME}-oauth-proxy-secret
-                  key: redirect-url
+          image: ${OAUTH2_PROXY_IMAGE}
+          envFrom:
+            - secretRef:
+                name: ${APP_NAME}-oauth-proxy-secret
           ports:
             - containerPort: 4180
               protocol: TCP
           args:
             - "--provider=oidc"
-            - "--pass-authorization-header"
+            - "--pass-basic-auth=true"
+            - "--pass-user-headers=true"
+            - "--pass-authorization-header=false"
+            - "--set-authorization-header=false"
+            - "--skip-auth-strip-headers=true"
+            - "--cookie-secure=true"
+            - "--cookie-httponly=true"
+            - "--cookie-samesite=lax"
             - "--insecure-oidc-allow-unverified-email"
             - "--upstream=http://backend:8000/api/"
             - "--upstream=http://frontend:8080/"
@@ -198,8 +198,9 @@ spec:
             initialDelaySeconds: 2
             periodSeconds: 30
 EOF
-    
-    print_success "OAuth2 Proxy deployment created" "oauth"
+
+    oc rollout status deployment/oauth-proxy --timeout=300s
+    print_success "OAuth2 Proxy deployment is ready" "oauth"
     return 0
 }
 
@@ -293,7 +294,7 @@ update_backend_with_oauth_url() {
     local clean_issuer_url="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}"
     local well_known_url="${OAUTH2_PROXY_WELL_KNOWN_URL:-${clean_issuer_url}/.well-known/openid-configuration}"
 
-    # Export it so build_secret_literals picks it up if the key exists in .env
+    # Export it so the backend secret writer includes the derived value.
     export OAUTH2_PROXY_WELL_KNOWN_URL="$well_known_url"
     
     # Recreate the app environment secret with updated values
@@ -303,20 +304,7 @@ update_backend_with_oauth_url() {
     # Delete the existing secret
     oc delete secret "$secret_name"
     
-    # Recreate the secret with all values including OAuth URL
-    local secret_literals=$(build_secret_literals)
-    local secret_cmd="oc create secret generic $secret_name"
-    secret_cmd+="$secret_literals"
-
-    # Add OAUTH2_PROXY_WELL_KNOWN_URL if it was not included by build_secret_literals
-    # (build_secret_literals only includes keys that exist in the .env file)
-    if [[ "$secret_literals" != *"OAUTH2_PROXY_WELL_KNOWN_URL="* ]]; then
-         secret_cmd+=" --from-literal=OAUTH2_PROXY_WELL_KNOWN_URL=\"$well_known_url\""
-         print_status "Added derived OAUTH2_PROXY_WELL_KNOWN_URL to backend environment" "oauth"
-    fi
-    
-    # Execute the command
-    eval "$secret_cmd"
+    create_backend_env_secret "$secret_name"
     
     print_success "Backend environment updated with OAuth proxy URL: https://$oauth_url" "oauth"
     

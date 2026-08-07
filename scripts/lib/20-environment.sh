@@ -314,7 +314,11 @@ load_env_file() {
             
             # Display variable only if show_values flag is true
             if [[ "$show_values" == "true" ]]; then
-                print_status "Loaded $var_name=$var_value" "environment"
+                if [[ "$var_name" =~ (PASSWORD|SECRET|TOKEN|API_KEY) ]]; then
+                    print_status "Loaded $var_name=[REDACTED]" "environment"
+                else
+                    print_status "Loaded $var_name=$var_value" "environment"
+                fi
             fi
         fi
     done < "$env_file"

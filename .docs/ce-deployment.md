@@ -172,6 +172,10 @@ OAUTH2_PROXY_CLIENT_ID=your-client-id
 OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
 OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
 
+# Private proxy/backend seam. The example marker or a missing value is generated
+# by the deployment script and stored in both Code Engine secrets.
+OAUTH2_PROXY_UPSTREAM_PASSWORD=<generate-a-random-upstream-password>
+
 # Optional: Well-Known URL (Auto-generated if missing)
 # Defaults to: ${OAUTH2_PROXY_OIDC_ISSUER_URL}/.well-known/openid-configuration
 # OAUTH2_PROXY_WELL_KNOWN_URL=https://your-oidc-provider.com/.well-known/openid-configuration
@@ -181,6 +185,7 @@ OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
 > **Behavior:**
 > - **All variables set:** OAuth2 Proxy is deployed and protects the application. Nginx and Backend are set to internal (cluster-local) access only.
 > - **Any variable missing:** OAuth2 Proxy is skipped. Application is publicly accessible.
+> - **Proxy/backend seam:** The deployed proxy uses a digest-pinned v7.15.3 image, secure cookies, stripped client auth headers, and Basic upstream authentication. Secret values are passed through protected temporary files rather than command arguments.
 
 ---
 

@@ -123,6 +123,7 @@ The following table lists all environment variables that can be configured in `.
 | `OAUTH2_PROXY_CLIENT_SECRET`       | OAuth2 client secret from OIDC provider          | No\*                | -                | Obtained from your OIDC provider. \*Required if any OAuth variable is set                                                                                                 |
 | `OAUTH2_PROXY_OIDC_ISSUER_URL`     | OIDC issuer URL (oAuthServerUrl in AppId)        | No\*                | -                | Base URL of your OIDC provider. \*Required if any OAuth variable is set                                                                                                   |
 | `OAUTH2_PROXY_WELL_KNOWN_URL`      | OIDC well-known configuration URL                | No                  | -                | Auto-discovered from `OIDC_ISSUER_URL` if not provided                                                                                                                    |
+| `OAUTH2_PROXY_UPSTREAM_PASSWORD`   | Private proxy-to-backend credential              | No                  | generated        | A 32+ character random value. Missing/example markers are replaced during OAuth deployment and stored in both platform secrets without being printed.                     |
 
 **Notes:**
 
@@ -209,7 +210,12 @@ OAUTH2_PROXY_CLIENT_ID=your-client-id
 OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
 OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
 OAUTH2_PROXY_REDIRECT_URL=https://your-app.example.com/oauth2/callback
+OAUTH2_PROXY_UPSTREAM_PASSWORD=<generate-a-random-upstream-password>
 ```
+
+OAuth deployments pin oauth2-proxy v7.15.3 by digest, issue secure HttpOnly
+SameSite=Lax cookies, replace client authentication headers, and authenticate backend
+upstreams with the private generated Basic credential.
 
 #### Frontend Environment Variables
 

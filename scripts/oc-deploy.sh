@@ -191,6 +191,7 @@ main() {
     # Pre-configure OAuth to avoid backend restarts
     if [[ "${DEPLOY_OAUTH:-false}" == "true" ]]; then
         print_status "OAuth2 Proxy is enabled. Pre-configuring secrets to avoid backend restarts..."
+        ensure_oauth_upstream_password || exit 1
         # Order matters: we need the route first to get the URL for the secret
         create_oauth_proxy_service || exit 1
         create_oauth_proxy_route || exit 1
