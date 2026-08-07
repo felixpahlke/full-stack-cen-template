@@ -39,6 +39,16 @@ handlers, route inspection, and OpenAPI customization operate on the served appl
 `app.main` without requesting `app` still constructs no settings. Both `init_db(session)` and the
 injected `init_db(session, settings)` form remain accepted.
 
+## Frontend extension compatibility
+
+`ThemeProvider` again accepts `defaultTheme`. Its `resolvedTheme` field is preferred; the previous
+`activeTheme` field remains as a deprecated alias. The provider again applies an explicit
+`light` DOM class as well as `dark`, restoring the contract used by custom styles.
+
+Native Playwright runs no longer rewrite `localhost`. Container runs use
+`PLAYWRIGHT_CONTAINER=true` through the provided wrapper. Biome now enables the available ESLint
+equivalents; [known React Hooks coverage gaps](lint-coverage.md) are documented explicitly.
+
 ## Adopting an old OpenShift deployment
 
 Back up PostgreSQL, then run `./scripts/oc-deploy.sh --adopt-legacy-resources` against the existing

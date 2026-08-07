@@ -6,6 +6,14 @@ type ThemeContextValue = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   resolvedTheme: "dark" | "light";
+  /** @deprecated Use resolvedTheme. */
+  activeTheme: "dark" | "light";
+};
+
+type ThemeProviderProps = {
+  children: ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -14,13 +22,11 @@ const prefersDark = () => window.matchMedia("(prefers-color-scheme: dark)").matc
 
 export function ThemeProvider({
   children,
+  defaultTheme = "system",
   storageKey = "vite-ui-theme",
-}: {
-  children: ReactNode;
-  storageKey?: string;
-}) {
+}: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme | null) ?? "system",
+    () => (localStorage.getItem(storageKey) as Theme | null) ?? defaultTheme,
   );
   const [systemDark, setSystemDark] = useState(prefersDark);
 
@@ -34,7 +40,9 @@ export function ThemeProvider({
   const resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    const root = document.documentElement;
+    root.classList.toggle("dark", resolvedTheme === "dark");
+    root.classList.toggle("light", resolvedTheme === "light");
   }, [resolvedTheme]);
 
   const setTheme = (next: Theme) => {
@@ -43,7 +51,7 @@ export function ThemeProvider({
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, activeTheme: resolvedTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

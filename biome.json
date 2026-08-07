@@ -16,8 +16,56 @@
     "rules": {
       "a11y": { "noSvgWithoutTitle": "off", "useButtonType": "off" },
       "complexity": { "noUselessFragments": "off" },
-      "suspicious": { "noExplicitAny": "off", "noUnknownAtRules": "off" },
-      "style": { "noNonNullAssertion": "off" }
+      "correctness": {
+        "noNestedComponentDefinitions": "error",
+        "noReactPropAssignments": "error"
+      },
+      "nursery": { "noComponentHookFactories": "error" },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noUnknownAtRules": "off",
+        "noTsIgnore": "error",
+        "noUnusedExpressions": "error"
+      },
+      "style": {
+        "noCommonJs": "error",
+        "noNamespace": "error",
+        "noNonNullAssertion": "off",
+        "useAsConstAssertion": "error",
+        "useComponentExportOnlyModules": {
+          "level": "error",
+          "options": {
+            "allowConstantExport": true,
+            "allowExportNames": [
+              "Route",
+              "Dialog",
+              "DialogClose",
+              "DialogPortal",
+              "DialogTrigger",
+              "DropdownMenu",
+              "DropdownMenuGroup",
+              "DropdownMenuPortal",
+              "DropdownMenuRadioGroup",
+              "DropdownMenuSub",
+              "DropdownMenuTrigger",
+              "Form",
+              "Sheet",
+              "SheetClose",
+              "SheetPortal",
+              "SheetTrigger",
+              "Tabs",
+              "Tooltip",
+              "TooltipProvider",
+              "TooltipTrigger",
+              "badgeVariants",
+              "buttonVariants",
+              "toast",
+              "useFormField",
+              "useTheme"
+            ]
+          }
+        }
+      }
     }
   },
   "css": {

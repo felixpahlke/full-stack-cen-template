@@ -11,6 +11,7 @@ test("light, dark, and system themes follow the selected policy", async ({ page 
   await page.goto("/");
   await selectTheme(page, "Dark");
   await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(page.locator("html")).not.toHaveClass(/light/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme"))).toBe("dark");
 
   await page.reload();
@@ -18,6 +19,7 @@ test("light, dark, and system themes follow the selected policy", async ({ page 
 
   await selectTheme(page, "Light");
   await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expect(page.locator("html")).toHaveClass(/light/);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("vite-ui-theme"))).toBe("light");
 
   await page.emulateMedia({ colorScheme: "dark" });
@@ -29,6 +31,7 @@ test("light, dark, and system themes follow the selected policy", async ({ page 
 
   await page.emulateMedia({ colorScheme: "light" });
   await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expect(page.locator("html")).toHaveClass(/light/);
 
   await page.reload();
   await expect(page.locator("html")).not.toHaveClass(/dark/);

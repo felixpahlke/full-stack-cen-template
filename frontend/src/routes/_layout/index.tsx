@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
 });
 
-function Dashboard() {
+export function Dashboard() {
   const { user: currentUser } = useAuth();
 
   return (
