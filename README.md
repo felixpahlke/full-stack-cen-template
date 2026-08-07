@@ -153,7 +153,28 @@ git merge --continue
 
 ## Development
 
-General development docs: [development.md](./.docs/development.md).
+### Quick start
+
+Prerequisites are Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker
+runtime with Docker Compose. Bootstrap a fresh checkout with these four commands:
+
+```bash
+cp .env.example .env
+npm ci
+npm --prefix frontend ci
+uv sync --project backend
+```
+
+Then start the development stack:
+
+```bash
+npm run dev
+```
+
+This starts PostgreSQL 12 and Adminer in Compose, applies migrations, seeds the
+initial superuser, and runs reload-enabled Uvicorn and strict-port Vite natively.
+Backend API changes regenerate the frontend client automatically. See
+[development.md](./.docs/development.md) for ports, logs, tests, and troubleshooting.
 
 ## Deployment
 

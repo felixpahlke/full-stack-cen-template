@@ -12,13 +12,16 @@
     "check:generated": "node scripts/check-generated.mjs",
     "db:migrate": "uv run --project backend alembic -c backend/alembic.ini upgrade head",
     "db:revision": "uv run --project backend alembic -c backend/alembic.ini revision --autogenerate",
+    "dev": "node scripts/dev.mjs",
     "fix": "biome check --write . && uv run --project backend ruff check --fix backend && uv run --project backend ruff format backend",
     "format:backend:check": "uv run --project backend ruff format --check backend",
     "generate-client": "node scripts/generate-client.mjs",
     "lint:backend": "uv run --project backend ruff check backend",
+    "test": "npm run test:backend",
     "test:backend": "uv run --project backend pytest backend/app/tests",
+    "test:e2e": "npm --prefix frontend exec playwright test",
     "typecheck": "npm --prefix frontend run typecheck",
-    "verify": "npm run check && npm run test:backend && npm run build"
+    "verify": "npm run check && npm run test && npm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.4"
