@@ -1,14 +1,24 @@
 import subprocess
 import sys
-from pathlib import Path
+from collections.abc import Awaitable, Callable
 
+import pytest
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.testclient import TestClient
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
+import app.core.config as config_module
+import app.core.db as db_module
+import app.main as main_module
 from app.core.config import API_V1_STR, ENV_FILE, REPO_ROOT, Settings
 from app.core.db import create_db_engine, get_engine
 from app.main import create_app
 
 
 def factory_settings(**overrides: object) -> Settings:
-    values = {
+    values: dict[str, object] = {
         "PROJECT_NAME": "Factory test",
         "POSTGRES_SERVER": "unused",
         "POSTGRES_USER": "unused",
@@ -16,12 +26,12 @@ def factory_settings(**overrides: object) -> Settings:
         "FIRST_SUPERUSER_PASSWORD": "factory-test-password",
     }
     values.update(overrides)
-    return Settings(_env_file=None, **values)  # type: ignore[arg-type]
+    return Settings(_env_file=None, **values)  # type: ignore[call-arg,arg-type]
 
 
 def test_env_file_is_anchored_to_repo_root() -> None:
     assert ENV_FILE == REPO_ROOT / ".env"
-    assert Path(Settings.model_config["env_file"]) == ENV_FILE
+    assert Settings.model_config["env_file"] == ENV_FILE
 
 
 def test_factories_accept_injected_settings_and_database_url() -> None:
@@ -81,3 +91,78 @@ def test_importing_app_main_needs_no_environment() -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_exported_app_is_the_real_customizable_application(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = factory_settings()
+    monkeypatch.setattr(main_module, "get_settings", lambda: settings)
+    monkeypatch.delattr(main_module, "app", raising=False)
+    namespace: dict[str, object] = {}
+
+    exec("from app.main import app", namespace)
+    app = namespace["app"]
+
+    assert type(app) is FastAPI
+    assert app.openapi()["paths"]
+
+    router = APIRouter()
+
+    @router.get("/extension")
+    def extension_route() -> dict[str, bool]:
+        return {"included": True}
+
+    class ExtensionError(Exception):
+        pass
+
+    @router.get("/extension-error")
+    def extension_error() -> None:
+        raise ExtensionError
+
+    async def add_extension_header(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        response = await call_next(request)
+        response.headers["x-extension-middleware"] = "active"
+        return response
+
+    async def handle_extension_error(
+        _request: Request, _error: Exception
+    ) -> JSONResponse:
+        return JSONResponse({"handled": True}, status_code=418)
+
+    app.include_router(router)
+    app.add_middleware(BaseHTTPMiddleware, dispatch=add_extension_header)
+    app.add_exception_handler(ExtensionError, handle_extension_error)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/extension")
+    assert response.json() == {"included": True}
+    assert response.headers["x-extension-middleware"] == "active"
+    app.openapi_schema = None
+    assert "/extension" in app.openapi()["paths"]
+
+    error_response = client.get("/extension-error")
+    assert error_response.status_code == 418
+    assert error_response.json() == {"handled": True}
+
+
+def test_legacy_settings_and_engine_imports_use_factories(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = factory_settings()
+    engine = create_db_engine("sqlite://")
+    monkeypatch.setattr(config_module, "get_settings", lambda: settings)
+    monkeypatch.setattr(db_module, "get_engine", lambda: engine)
+    namespace: dict[str, object] = {}
+
+    exec(
+        "from app.core.config import settings\nfrom app.core.db import engine",
+        namespace,
+    )
+
+    assert namespace["settings"] is settings
+    assert namespace["engine"] is engine
+    engine.dispose()

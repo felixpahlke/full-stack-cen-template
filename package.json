@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "npm --prefix frontend run build",
-    "check": "npm run check:generated && npm run typecheck && biome check . && npm run lint:backend && npm run format:backend:check",
+    "check": "npm run check:generated && npm run typecheck && biome check . && npm run typecheck:backend && npm run lint:backend && npm run format:backend:check",
     "check:generated": "node scripts/check-generated.mjs",
     "db:migrate": "uv run --project backend alembic -c backend/alembic.ini upgrade head",
     "db:revision": "uv run --project backend alembic -c backend/alembic.ini revision --autogenerate",
@@ -23,6 +23,7 @@
     "test:e2e": "npm exec --prefix frontend -- playwright test --config frontend/playwright.config.ts",
     "test:scripts": "node --test scripts/*.test.mjs",
     "typecheck": "npm --prefix frontend run typecheck",
+    "typecheck:backend": "uv run --project backend mypy --config-file backend/pyproject.toml backend/app",
     "verify": "npm run check && npm run test && npm run build"
   },
   "devDependencies": {
