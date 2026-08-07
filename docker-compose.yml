@@ -53,12 +53,12 @@ services:
       - --provider=oidc
       - --client-id=${OAUTH2_PROXY_CLIENT_ID}
       - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
-      - --oidc-issuer-url=http://localhost:${DEX_PORT:-5556}/dex
-      - --skip-oidc-discovery
-      - --login-url=http://localhost:${DEX_PORT:-5556}/dex/auth
-      - --redeem-url=http://dex:5556/dex/token
-      - --oidc-jwks-url=http://dex:5556/dex/keys
-      - --redirect-url=http://localhost:${OAUTH2_PROXY_PORT:-4180}/oauth2/callback
+      - --oidc-issuer-url=${DEV_OIDC_ISSUER_URL}
+      - --skip-oidc-discovery=${DEV_OIDC_SKIP_DISCOVERY}
+      - --login-url=${DEV_OIDC_LOGIN_URL}
+      - --redeem-url=${DEV_OIDC_REDEEM_URL}
+      - --oidc-jwks-url=${DEV_OIDC_JWKS_URL}
+      - --redirect-url=${DEV_OIDC_REDIRECT_URL}
       - --upstream=http://${DEV_PROXY_UPSTREAM_HOST:-host.docker.internal}:${WEB_PORT:-5173}
       - --email-domain=*
       - --cookie-name=_oauth2_proxy
@@ -75,8 +75,8 @@ services:
       - --code-challenge-method=S256
       - --skip-provider-button=true
       - --approval-prompt=auto
-    depends_on:
-      - dex
+    environment:
+      OAUTH2_PROXY_COOKIE_DOMAINS: ${DEV_OIDC_COOKIE_DOMAIN:-}
     extra_hosts:
       - "${DEV_PROXY_EXTRA_HOST_MAPPING:-dev-proxy-noop.invalid:127.0.0.1}"
     ports:

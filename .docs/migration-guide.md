@@ -18,6 +18,12 @@ Existing `.env` files must gain native ports, Dex test-user settings,
 with strong per-checkout values on first local startup. Do not copy a seam credential between
 checkouts.
 
+The previous local external-IdP keys are supported again. Leave
+`OAUTH2_PROXY_OIDC_ISSUER_URL` blank for bundled Dex, or set it with
+`OAUTH2_PROXY_REDIRECT_URL`, `OAUTH2_PROXY_WELL_KNOWN_URL`, and
+`OAUTH2_PROXY_COOKIE_DOMAIN` as needed for AppID, Keycloak, or another issuer. Existing `.env`
+files therefore work without editing Compose; see [development.md](development.md).
+
 ## Backend extension API compatibility
 
 New extension code should prefer the injectable factories:

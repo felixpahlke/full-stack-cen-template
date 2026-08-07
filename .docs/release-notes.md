@@ -8,6 +8,11 @@ Migrations serialize during backend startup and exact bundled heads are required
 Tests are hermetic; OAuth Playwright traverses the real issuer/proxy path and has a lockfile-matched
 container wrapper.
 
+Bundled Dex remains the zero-configuration issuer, while local external OIDC development is
+restored through `OAUTH2_PROXY_OIDC_ISSUER_URL`, `OAUTH2_PROXY_REDIRECT_URL`,
+`OAUTH2_PROXY_WELL_KNOWN_URL`, and `OAUTH2_PROXY_COOKIE_DOMAIN`. The supervisor validates and
+honors those values without Compose edits and does not start Dex for an external issuer.
+
 The backend image now runs `uvicorn app.main:create_app --factory`. The compatibility `app`,
 `settings`, and `engine` exports are lazy factory products rather than shells or eager globals, and
 strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.

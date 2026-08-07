@@ -13,6 +13,7 @@ import {
 } from "./compose-command.mjs";
 import { detectContainerRuntime, probeViteUpstream } from "./container-runtime.mjs";
 import { buildEffectiveEnvironment } from "./dev-environment.mjs";
+import { configureOidcEnvironment } from "./oidc-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
@@ -37,16 +38,25 @@ for (const signal of Object.keys(signalExitCodes)) {
 let exitCode = 0;
 
 try {
-  effectiveEnv = checkEnvironment();
+  effectiveEnv = await configureOidcEnvironment(checkEnvironment());
   composeCommand = detectComposeCommand({ cwd: root, env: effectiveEnv });
   effectiveEnv.DEV_COMPOSE_COMMAND = serializeComposeCommand(composeCommand);
   await required(process.execPath, ["scripts/check-ports.mjs"], "ports");
 
   composeStarted = true;
-  await requiredCompose(["up", "-d", "--wait", "db", "adminer", "dex", "oauth2-proxy"], "compose");
+  const composeServices = ["db", "adminer"];
+  if (effectiveEnv.DEV_OIDC_USES_DEX === "true") composeServices.push("dex");
+  composeServices.push("oauth2-proxy");
+  await requiredCompose(["up", "-d", "--wait", ...composeServices], "compose");
   await waitForTcp(Number(effectiveEnv.DB_PORT), "PostgreSQL");
   await waitForHttp(Number(effectiveEnv.ADMINER_PORT), "Adminer");
-  await waitForHttp(Number(effectiveEnv.DEX_PORT), "Dex", "/dex/.well-known/openid-configuration");
+  if (effectiveEnv.DEV_OIDC_USES_DEX === "true") {
+    await waitForHttp(
+      Number(effectiveEnv.DEX_PORT),
+      "Dex",
+      "/dex/.well-known/openid-configuration",
+    );
+  }
   await waitForHttp(Number(effectiveEnv.OAUTH2_PROXY_PORT), "oauth2-proxy", "/ping");
   watcher = startClientWatcher();
   const apiPort = effectiveEnv.API_PORT;
@@ -108,7 +118,7 @@ try {
   console.log(
     `\nDevelopment ready: browser http://localhost:${effectiveEnv.OAUTH2_PROXY_PORT}, ` +
       `API http://127.0.0.1:${apiPort}, Vite http://localhost:${webPort}, ` +
-      `Dex http://localhost:${effectiveEnv.DEX_PORT}/dex, ` +
+      `issuer ${effectiveEnv.DEV_OIDC_ISSUER_URL}, ` +
       `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
   );
 

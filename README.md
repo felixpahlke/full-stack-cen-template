@@ -28,6 +28,12 @@ starts PostgreSQL/Adminer/Dex/oauth2-proxy in Compose, and starts Uvicorn/Vite n
 stops native children and removes development containers; worst case is about 12 seconds. A
 second Ctrl-C escalates immediately. Database data is preserved.
 
+Dex is the zero-configuration default. For AppID, Keycloak, or another external OIDC provider,
+set `OAUTH2_PROXY_OIDC_ISSUER_URL` and its client credentials in `.env`; the optional redirect,
+well-known, and cookie-domain keys are documented in
+[the development guide](.docs/development.md#bundled-dex-or-an-external-idp). No Compose edit is
+required.
+
 ## Root commands
 
 | Command | Purpose |
