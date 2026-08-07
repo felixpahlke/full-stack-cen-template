@@ -12,13 +12,6 @@ export default defineConfig({
       autoCodeSplitting: true,
     }),
   ],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        silenceDeprecations: ["mixed-decls"],
-      },
-    },
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
