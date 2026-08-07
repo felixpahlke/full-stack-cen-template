@@ -13,8 +13,8 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 import useAuth from "../../hooks/useAuth";
-import UserMenu from "./UserMenu";
 import ThemeSwitcher from "./ThemeSwitcher";
+import UserMenu from "./UserMenu";
 
 export function Header() {
   const { logout } = useAuth();
@@ -38,10 +38,7 @@ export function Header() {
             />
 
             <HeaderName href="/">Client Engineering</HeaderName>
-            <HeaderNavigation
-              aria-label="IBM Client Engineering"
-              className="hidden lg:flex"
-            >
+            <HeaderNavigation aria-label="IBM Client Engineering" className="hidden lg:flex">
               {navItems.map((item) => (
                 <HeaderMenuItem as={Link} key={item.title} to={item.path}>
                   {item.title}

@@ -29,8 +29,8 @@ const LayoutItemsRoute = LayoutItemsRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/items': typeof LayoutItemsRoute
   '/': typeof LayoutIndexRoute
+  '/items': typeof LayoutItemsRoute
 }
 export interface FileRoutesByTo {
   '/items': typeof LayoutItemsRoute
@@ -44,7 +44,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/items' | '/'
+  fullPaths: '/' | '/items'
   fileRoutesByTo: FileRoutesByTo
   to: '/items' | '/'
   id: '__root__' | '/_layout' | '/_layout/items' | '/_layout/'
@@ -59,7 +59,7 @@ declare module '@tanstack/react-router' {
     '/_layout': {
       id: '/_layout'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }

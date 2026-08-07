@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
+import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
+import { useState } from "react";
 
 import type { ItemPublic } from "../../client";
 import EditItem from "../items/EditItem";
@@ -12,13 +12,18 @@ interface ActionsMenuProps {
   disabled?: boolean;
 }
 
-const ActionsMenu = ({ type, value }: ActionsMenuProps) => {
+const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   return (
     <>
-      <OverflowMenu size="sm" flipped aria-label="Actions menu">
+      <OverflowMenu
+        size="sm"
+        flipped
+        disabled={disabled}
+        iconDescription={`Actions for ${value.title}`}
+      >
         <OverflowMenuItem
           itemText={
             <div className="flex items-center gap-2">

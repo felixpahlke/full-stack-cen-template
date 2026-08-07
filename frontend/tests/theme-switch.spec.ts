@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { playwrightTestUserPassword } from "./config";
-import { logInUser } from "./utils/user";
-import { logOutUser } from "./utils/user";
-import { playwrightTestUserEmail } from "./config";
+import { playwrightTestUserEmail, playwrightTestUserPassword } from "./config";
+import { logInUser, logOutUser } from "./utils/user";
 
 test("User can switch from light mode to dark mode", async ({ page }) => {
   await page.goto("/");

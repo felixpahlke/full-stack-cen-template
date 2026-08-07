@@ -1,4 +1,5 @@
 import {
+  Button,
   DataTable,
   Table,
   TableBody,
@@ -6,7 +7,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Button,
 } from "@carbon/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -33,8 +33,7 @@ export default function ItemsTable() {
   const queryClient = useQueryClient();
   const navigate = useNavigate({ from: "/items" });
   const { page } = useSearch({ from: "/_layout/items" });
-  const setPage = (newPage: number) =>
-    navigate({ search: () => ({ page: newPage }) });
+  const setPage = (newPage: number) => navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: items,
@@ -66,9 +65,7 @@ export default function ItemsTable() {
       id: item.id,
       title: <div className="max-w-[150px] truncate">{item.title}</div>,
       description: (
-        <div
-          className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}
-        >
+        <div className={`max-w-[150px] truncate ${!item.description ? "text-gray-500" : ""}`}>
           {item.description || "N/A"}
         </div>
       ),
@@ -83,10 +80,7 @@ export default function ItemsTable() {
             <TableHead>
               <TableRow>
                 {headers.map((header) => (
-                  <TableHeader
-                    {...getHeaderProps({ header, isSortable: false })}
-                    key={header.key}
-                  >
+                  <TableHeader {...getHeaderProps({ header, isSortable: false })} key={header.key}>
                     {header.header}
                   </TableHeader>
                 ))}
@@ -115,19 +109,11 @@ export default function ItemsTable() {
         )}
       </DataTable>
       <div className="mt-4 flex items-center justify-end gap-4">
-        <Button
-          kind="secondary"
-          onClick={() => setPage(page - 1)}
-          disabled={!hasPreviousPage}
-        >
+        <Button kind="secondary" onClick={() => setPage(page - 1)} disabled={!hasPreviousPage}>
           Previous
         </Button>
         <span>Page {page}</span>
-        <Button
-          kind="primary"
-          disabled={!hasNextPage}
-          onClick={() => setPage(page + 1)}
-        >
+        <Button kind="primary" disabled={!hasNextPage} onClick={() => setPage(page + 1)}>
           Next
         </Button>
       </div>

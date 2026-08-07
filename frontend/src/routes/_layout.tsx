@@ -1,8 +1,7 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
-
+import { Loading } from "@carbon/react";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { Header } from "../components/common/Header";
 import useAuth from "../hooks/useAuth";
-import { Loading } from "@carbon/react";
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,

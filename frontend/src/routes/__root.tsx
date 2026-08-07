@@ -1,4 +1,4 @@
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import React, { Suspense } from "react";
 
 import NotFound from "../components/common/NotFound";
@@ -23,7 +23,7 @@ const TanStackDevtools =
 
 export const Route = createRootRoute({
   component: () => (
-    <div className="bg-cds-background min-h-[calc(100dvh-47px)]">
+    <div className="min-h-[calc(100dvh-47px)] bg-background">
       <Outlet />
       <Suspense>
         <TanStackDevtools />

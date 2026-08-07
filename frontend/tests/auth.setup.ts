@@ -6,9 +6,7 @@ const authFile = "playwright/.auth/user.json";
 setup("authenticate", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Email", { exact: true }).fill(playwrightTestUserEmail);
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill(playwrightTestUserPassword);
+  await page.getByLabel("Password", { exact: true }).fill(playwrightTestUserPassword);
   await page.click("#cd_login_button");
   await page.waitForURL("/");
   await page.context().storageState({ path: authFile });

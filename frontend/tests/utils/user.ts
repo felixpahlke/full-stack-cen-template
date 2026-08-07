@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 export async function logInUser(page: Page, email: string, password: string) {
   await page.goto("/");

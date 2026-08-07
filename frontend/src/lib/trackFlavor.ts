@@ -5,9 +5,7 @@ const ENDPOINT =
 
 function getHostKind() {
   const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "[::1]"
-    ? "local"
-    : "remote";
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" ? "local" : "remote";
 }
 
 function simpleHash() {
@@ -17,9 +15,7 @@ function simpleHash() {
 }
 
 export function trackFlavor() {
-  const telemetry_enabled = import.meta.env.VITE_TELEMETRY_ENABLED as
-    | string
-    | undefined;
+  const telemetry_enabled = import.meta.env.VITE_TELEMETRY_ENABLED as string | undefined;
 
   if (telemetry_enabled !== "true") return;
 

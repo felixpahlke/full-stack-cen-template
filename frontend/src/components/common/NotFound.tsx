@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
 import { Button } from "@carbon/react";
+import { Link } from "@tanstack/react-router";
+
 const NotFound = () => {
   return (
     <div className="mx-auto flex h-screen max-w-sm flex-col items-center justify-center text-center">
