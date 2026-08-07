@@ -195,7 +195,16 @@ remove_direct_app_routes() {
     direct_routes=$(find_direct_app_routes)
     while IFS= read -r route; do [[ -z "$route" ]] || resources+=("route/$route"); done <<< "$direct_routes"
     if ((${#resources[@]})); then print_warning "Removing owned direct ingress after proxy readiness: ${resources[*]}"; fi
-    for route in "${resources[@]}"; do delete_owned_oc_resource route "${route#route/}"; done
+    for route in "${resources[@]}"; do
+        route=${route#route/}
+        if [[ "$route" == oauth-proxy ]]; then
+            oc_resource_is_owned route "$route" || { warn_unowned_collision route "$route"; return 1; }
+            print_warning 'Clearing direct alternate backends from owned route/oauth-proxy while preserving proxy ingress.'
+            run oc patch route/oauth-proxy --type=merge --patch '{"spec":{"alternateBackends":null}}'
+        else
+            delete_owned_oc_resource route "$route"
+        fi
+    done
     direct_routes=$(find_direct_app_routes)
     [[ -z "$direct_routes" ]] || { print_error "direct application Routes remain: ${direct_routes//$'\n'/ }"; return 1; }
 }
