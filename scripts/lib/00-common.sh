@@ -37,7 +37,7 @@ add_deployment_output() { printf -v "DEPLOYMENT_OUTPUT__${1}" '%s' "$2"; }
 get_deployment_output() { local key="DEPLOYMENT_OUTPUT__${1}"; printf '%s' "${!key-}"; }
 
 print_deployment_summary() {
-    local frontend_url backend_url oauth_proxy_url oauth_redirect_url backend_webhook frontend_webhook webhook_state
+    local frontend_url backend_url oauth_proxy_url oauth_redirect_url backend_webhook frontend_webhook webhook_state webhook_reason
     frontend_url=$(get_deployment_output frontend_url)
     backend_url=$(get_deployment_output backend_url)
     oauth_proxy_url=$(get_deployment_output oauth_proxy_url)
@@ -45,12 +45,17 @@ print_deployment_summary() {
     backend_webhook=$(get_deployment_output backend_webhook)
     frontend_webhook=$(get_deployment_output frontend_webhook)
     webhook_state=$(get_deployment_output github_webhooks_configured)
+    webhook_reason=$(get_deployment_output github_webhooks_unavailable_reason)
     print_success 'Deployment completed successfully.'
     [[ -z "$oauth_proxy_url" ]] || print_status "OAuth entry point: https://$oauth_proxy_url"
     [[ -z "$frontend_url" ]] || print_status "Frontend: https://$frontend_url"
     [[ -z "$backend_url" ]] || print_status "Backend: https://$backend_url"
     [[ -z "$oauth_redirect_url" ]] || print_status "OAuth redirect URL: $oauth_redirect_url"
-    [[ -z "$webhook_state" ]] || print_status "GitHub webhooks configured automatically: $webhook_state"
+    if [[ -n "$webhook_reason" ]]; then
+        print_status "GitHub webhooks active: false ($webhook_reason)"
+    elif [[ -n "$webhook_state" ]]; then
+        print_status "GitHub webhooks configured automatically: $webhook_state"
+    fi
     if [[ -n "$backend_webhook" || -n "$frontend_webhook" ]]; then
         print_terminal 'OpenShift webhook URLs (contain credentials; terminal-only):' || \
             print_warning 'Webhook URLs are hidden because no interactive terminal is available.'
