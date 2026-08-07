@@ -18,6 +18,10 @@ values, and `BACKEND_CORS_ORIGINS`. OpenShift additionally requires `_APP_NAME` 
 `_GIT_SSH_URL`; `_GITHUB_TOKEN`, `_GITHUB_HOST`, and `_DEPLOYMENT_BRANCH_FILTER` are optional.
 Replace every example secret.
 
+When `_DEPLOYMENT_BRANCH_FILTER` is blank, the script uses this checkout's fixed flavor branch
+(`local-auth`). It prints the resolved ref and verifies that the branch exists in the configured
+repository through the deploy key before creating a BuildConfig.
+
 Set `MIGRATE_ON_START=true` and a suitable `MIGRATION_LOCK_TIMEOUT_SECONDS`. Replicas serialize
 database upgrades and each verifies the exact bundled Alembic heads before readiness. A mismatch,
 timeout, or failed migration deliberately prevents the backend from becoming ready.
@@ -34,6 +38,15 @@ second confirmation, and targets only the named owned PostgreSQL resources. Use
 `--regenerate-ssh-key` only when rotating the deploy key. Run `npm run test:deploy` before
 deployment-script changes.
 
+If a running in-cluster PostgreSQL instance reports a different `POSTGRES_DB`, `POSTGRES_USER`, or
+`POSTGRES_PASSWORD`, deployment stops before replacing the application secret. Applying changed
+initialization credentials requires typed destructive confirmation and deletes the owned
+PostgreSQL PVC. Declining leaves both sides untouched.
+
+The deployer owns the `webhook-access-unauthenticated` RoleBinding from
+`system:unauthenticated` to `system:webhook`. GitHub API failures fail deployment. Without a token,
+usable credential-bearing webhook URLs are shown only on the interactive terminal.
+
 ## Ownership and cleanup
 
 Resources are owned only when both labels match:
@@ -48,6 +61,23 @@ before mutation; cleanup repeats the ownership check immediately before deletion
 only obsolete resources for this branch, preserves the PostgreSQL PVC during normal convergence,
 and leaves unknown, unowned, and other-instance resources untouched. Secrets are recreated from
 mode-0600 files and are never supplied as command-line values.
+
+### One-time legacy adoption
+
+Deployments created by the pre-ownership script can be migrated with the deliberately explicit
+`--adopt-legacy-resources` flag. The project must already exist. The deployer checks exact legacy
+names and application fingerprints, prints every proposed resource, and refuses partial ownership
+or ambiguity. It changes nothing until the operator types
+`adopt <PROJECT_NAME>/<APP_NAME>`. Without both the flag and that phrase, adoption is impossible.
+Back up PostgreSQL first.
+
+The integrated-registry gate requires `get` on the registry config, `get`/`watch` on the
+`image-registry` Deployment, and `get` on its Endpoints in `openshift-image-registry`. Missing only
+those reads produces a warning and skips the gate; readable genuine unreadiness still fails.
+Registry operator configuration remains administrator-owned.
+
+`--show-env-values` writes values directly to the interactive terminal and refuses non-interactive
+use, so captured deployment output stays redacted.
 
 OAuth branches use staged ingress: backend/frontend workloads become Ready, then proxy ingress is
 applied, and only then are owned direct Routes removed. That ordering is tested in mocks even
@@ -74,17 +104,20 @@ real-cluster deployment claim. Complete and record all items:
    real Route API.
 8. OpenShift resources retain both labels after BuildConfig, image-trigger, Deployment, and Route
    controllers reconcile them.
-9. The integrated-registry readiness gate succeeds on a configured cluster and fails clearly
-   without auto-patching an unconfigured registry.
-10. GitHub deploy keys and both component webhooks work without exposing tokens or webhook
-    secrets.
-11. Normal database deployment preserves the PostgreSQL PVC; confirmed reset removes only the
-    exact owned PostgreSQL resources.
+9. The integrated-registry gate succeeds with the documented reads, warns when only those reads
+   are unavailable, and fails on genuine unreadiness without patching operator state.
+10. GitHub deploy keys, webhook RBAC, automatic creation, and terminal-only manual URLs produce
+    successful deliveries without exposing credentials to logs.
+11. Normal database deployment preserves the PostgreSQL PVC; credential drift stops before secret
+    replacement; confirmed reset removes only the exact owned PostgreSQL resources.
 12. In a shared namespace/project, `app-a` cannot mutate or delete `app-b`.
 13. OAuth login/logout, secure cookies, forwarded identity headers, and the private Basic Auth
     proxy/backend seam work end to end.
 14. Backend-only branches create no frontend resources; the no-database branch preserves any
     existing PVC for recovery.
+15. Legacy adoption labels only the printed, fingerprinted set after the separate typed phrase and
+    refuses an ambiguous same-name object.
+16. The printed source ref exists remotely and both BuildConfigs clone that exact ref.
 
 OAuth-only checklist items are cross-branch release checks and are not exercised by this
 local-auth topology.

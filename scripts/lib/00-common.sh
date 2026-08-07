@@ -23,18 +23,40 @@ print_warning() { printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
 print_error() { printf '%b\n' "${RED}error:${NC} $1" >&2; }
 print_section_header() { printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
 
+print_terminal() {
+    if [[ -n "${CEN_DEPLOY_TERMINAL_FILE:-}" && "$DEPLOY_MOCK" == true ]]; then
+        printf '%s\n' "$1" >> "$CEN_DEPLOY_TERMINAL_FILE"
+    elif [[ -w /dev/tty ]]; then
+        printf '%s\n' "$1" > /dev/tty
+    else
+        return 1
+    fi
+}
+
 add_deployment_output() { printf -v "DEPLOYMENT_OUTPUT__${1}" '%s' "$2"; }
 get_deployment_output() { local key="DEPLOYMENT_OUTPUT__${1}"; printf '%s' "${!key-}"; }
 
 print_deployment_summary() {
-    local frontend_url backend_url oauth_proxy_url
+    local frontend_url backend_url oauth_proxy_url oauth_redirect_url backend_webhook frontend_webhook webhook_state
     frontend_url=$(get_deployment_output frontend_url)
     backend_url=$(get_deployment_output backend_url)
     oauth_proxy_url=$(get_deployment_output oauth_proxy_url)
+    oauth_redirect_url=$(get_deployment_output oauth_redirect_url)
+    backend_webhook=$(get_deployment_output backend_webhook)
+    frontend_webhook=$(get_deployment_output frontend_webhook)
+    webhook_state=$(get_deployment_output github_webhooks_configured)
     print_success 'Deployment completed successfully.'
     [[ -z "$oauth_proxy_url" ]] || print_status "OAuth entry point: https://$oauth_proxy_url"
     [[ -z "$frontend_url" ]] || print_status "Frontend: https://$frontend_url"
     [[ -z "$backend_url" ]] || print_status "Backend: https://$backend_url"
+    [[ -z "$oauth_redirect_url" ]] || print_status "OAuth redirect URL: $oauth_redirect_url"
+    [[ -z "$webhook_state" ]] || print_status "GitHub webhooks configured automatically: $webhook_state"
+    if [[ -n "$backend_webhook" || -n "$frontend_webhook" ]]; then
+        print_terminal 'OpenShift webhook URLs (contain credentials; terminal-only):' || \
+            print_warning 'Webhook URLs are hidden because no interactive terminal is available.'
+        [[ -z "$frontend_webhook" ]] || print_terminal "  Frontend: $frontend_webhook" || true
+        [[ -z "$backend_webhook" ]] || print_terminal "  Backend: $backend_webhook" || true
+    fi
 }
 
 cen_ownership_labels() {
@@ -93,7 +115,7 @@ is_mock_command() {
 validate_mock_commands() {
     [[ "$DEPLOY_MOCK" == true ]] || return 0
     local command_name
-    for command_name in oc kubectl ibmcloud curl docker; do
+    for command_name in oc kubectl ibmcloud curl docker git; do
         is_mock_command "$command_name" || {
             print_error "mock deploy refused: $command_name is not a marked, non-symlink mock inside CEN_DEPLOY_MOCK_BIN"
             return 1
@@ -163,8 +185,12 @@ load_branch_flavor() {
 }
 
 load_env_file() {
-    local env_file=$1 show_names=${2:-false} line name value clean_name
+    local env_file=$1 show_values=${2:-false} line name value clean_name
     [[ -f "$env_file" ]] || { print_error "environment file not found: $env_file"; return 1; }
+    if [[ "$show_values" == true ]] && ! print_terminal "Environment values loaded from $env_file (explicitly requested):"; then
+        print_error '--show-env-values requires an interactive terminal'
+        return 1
+    fi
     while IFS= read -r line || [[ -n "$line" ]]; do
         [[ -z "$line" || "$line" == \#* ]] && continue
         [[ "$line" == export\ * ]] && line=${line#export }
@@ -181,7 +207,7 @@ load_env_file() {
                 clean_name=${name#_}
                 [[ -z "$clean_name" ]] || { printf -v "$clean_name" '%s' "$value"; export -n "$clean_name" 2>/dev/null || true; }
             fi
-            [[ "$show_names" != true ]] || print_status "Loaded $name=<redacted>"
+            [[ "$show_values" != true ]] || print_terminal "  $name=$value"
         fi
     done < "$env_file"
     if [[ -n "${_CEN_FLAVOR:-}" && "$_CEN_FLAVOR" != "$CEN_DEPLOY_FLAVOR" ]]; then
@@ -194,11 +220,77 @@ sanitize_name() {
 }
 
 resolve_app_name() {
-    APP_NAME=$(sanitize_name "$1")
+    APP_NAME=$1
     if [[ -z "$APP_NAME" || ${#APP_NAME} -gt 63 || ! "$APP_NAME" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
         print_error "invalid application identity: $1"
         return 1
     fi
+}
+
+validate_project_name() {
+    local value=$1 limit=${2:-63} label=${3:-PROJECT_NAME}
+    if [[ -z "$value" || ${#value} -gt "$limit" || ! "$value" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+        print_error "$label must be a lowercase DNS label of at most $limit characters"
+        return 1
+    fi
+}
+
+validate_email() {
+    [[ "$1" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] || {
+        print_error "FIRST_SUPERUSER is not a valid email address"
+        return 1
+    }
+}
+
+validate_api_key() {
+    local length=${#1}
+    case "$length" in
+        16|32|64|128|256) ;;
+        *) print_error "API_KEY length must be one of 16, 32, 64, 128, or 256 characters (current: $length)"; return 1 ;;
+    esac
+}
+
+validate_password_minimum() {
+    local value=$1 name=$2 minimum=${3:-8}
+    ((${#value} >= minimum)) || {
+        print_error "$name must be at least $minimum characters long (current: ${#value})"
+        return 1
+    }
+}
+
+is_placeholder_value() {
+    case "$1" in
+        changethis|replace-me|generate-on-first-dev-run|\<*\>|*placeholder*) return 0 ;;
+    esac
+    return 1
+}
+
+merge_cors_origin() {
+    local configured=${1:-} generated=${2:-}
+    [[ -n "$generated" ]] || { printf '%s' "$configured"; return 0; }
+    node -e '
+      const raw=process.argv[1].trim(), origin=process.argv[2]; let values=[];
+      if(raw.startsWith("[")){try{values=JSON.parse(raw)}catch{process.exit(2)}}
+      else if(raw) values=raw.split(",").map(x=>x.trim()).filter(Boolean);
+      if(values.includes("*")){process.stdout.write("*");process.exit(0)}
+      if(!values.includes(origin)) values.push(origin);
+      process.stdout.write(values.join(","));' "$configured" "$generated" || {
+        print_error 'BACKEND_CORS_ORIGINS must be a comma-separated list or a JSON array'
+        return 1
+    }
+}
+
+persist_env_value() {
+    local name=$1 value=$2 persisted_file
+    make_temp_file persisted_file
+    awk -v key="$name" -v replacement="$name=$value" '
+      BEGIN { written=0 }
+      $0 ~ "^(# *)?" key "=" { if (!written) print replacement; written=1; next }
+      { print }
+      END { if (!written) print replacement }
+    ' "$ENV_FILE" > "$persisted_file"
+    chmod 600 "$persisted_file"
+    mv "$persisted_file" "$ENV_FILE"
 }
 
 is_application_env_name() {
@@ -263,12 +355,33 @@ validate_runtime_env() {
         done
     fi
     if [[ "$OAUTH_ENABLED" == true ]]; then
-        for key in OAUTH2_PROXY_COOKIE_SECRET OAUTH2_PROXY_CLIENT_ID OAUTH2_PROXY_CLIENT_SECRET OAUTH2_PROXY_OIDC_ISSUER_URL OAUTH2_PROXY_UPSTREAM_PASSWORD; do
+        for key in OAUTH2_PROXY_COOKIE_SECRET OAUTH2_PROXY_CLIENT_ID OAUTH2_PROXY_CLIENT_SECRET OAUTH2_PROXY_OIDC_ISSUER_URL; do
             [[ -n "${!key:-}" ]] || missing+=("$key")
         done
-        [[ ${#OAUTH2_PROXY_UPSTREAM_PASSWORD} -ge 32 ]] || { print_error 'OAUTH2_PROXY_UPSTREAM_PASSWORD must be at least 32 characters'; return 1; }
     fi
     if ((${#missing[@]})); then print_error "missing required environment values: ${missing[*]}"; return 1; fi
+
+    validate_project_name "$PROJECT_NAME"
+    if [[ -n "${_CE_PROJECT_NAME:-}" ]]; then validate_project_name "$_CE_PROJECT_NAME" 20 _CE_PROJECT_NAME; fi
+    case "$CEN_DEPLOY_FLAVOR" in
+        local-auth|local-auth-custom-ui)
+            validate_email "$FIRST_SUPERUSER"
+            validate_password_minimum "$FIRST_SUPERUSER_PASSWORD" FIRST_SUPERUSER_PASSWORD
+            [[ -z "${SIGNUP_ACCESS_PASSWORD:-}" ]] || validate_password_minimum "$SIGNUP_ACCESS_PASSWORD" SIGNUP_ACCESS_PASSWORD
+            if [[ -n "${SECRET_KEY:-}" ]] && ! is_placeholder_value "$SECRET_KEY"; then
+                validate_password_minimum "$SECRET_KEY" SECRET_KEY 32
+            fi
+            ;;
+        backend-only|backend-only-no-db) validate_api_key "$API_KEY" ;;
+    esac
+    if [[ "$HAS_DATABASE" == true ]]; then validate_password_minimum "$POSTGRES_PASSWORD" POSTGRES_PASSWORD; fi
+    if [[ "$OAUTH_ENABLED" == true ]]; then
+        validate_password_minimum "$OAUTH2_PROXY_COOKIE_SECRET" OAUTH2_PROXY_COOKIE_SECRET 16
+        is_placeholder_value "$OAUTH2_PROXY_COOKIE_SECRET" && {
+            print_error 'OAUTH2_PROXY_COOKIE_SECRET must not be a placeholder'
+            return 1
+        }
+    fi
 }
 
 confirm_target() {
@@ -279,5 +392,5 @@ confirm_target() {
 }
 
 show_help() {
-    printf 'Usage: %s [--env-file PATH] [--reset-prod-db] [--regenerate-ssh-key] [--show-env-values] [--dry-run]\n' "$0"
+    printf 'Usage: %s [--env-file PATH] [--reset-prod-db] [--regenerate-ssh-key] [--adopt-legacy-resources] [--show-env-values] [--dry-run]\n' "$0"
 }

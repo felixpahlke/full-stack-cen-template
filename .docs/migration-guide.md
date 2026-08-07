@@ -19,6 +19,25 @@ Dockerfiles and the separate backend/frontend production images are unchanged.
    `MIGRATE_ON_START=true`, and `MIGRATION_LOCK_TIMEOUT_SECONDS=60` as needed.
 5. Start with `npm run dev`.
 
+## Adopting an old OpenShift deployment
+
+The hardened deployer does not infer ownership from names. Before the first production redeploy,
+back up PostgreSQL and run:
+
+```bash
+./scripts/oc-deploy.sh --adopt-legacy-resources
+```
+
+The target project must already exist. The script verifies the matching legacy resource set,
+refuses partially labeled or ambiguous same-name objects, and prints the exact adoption list.
+Review it, then type `adopt <PROJECT_NAME>/<APP_NAME>`. No labels are applied if the flag is
+omitted, a fingerprint differs, or the phrase is not exact. Do not bulk-label the namespace;
+unknown resources intentionally remain outside the migration set.
+
+If PostgreSQL initialization credentials changed too, the subsequent deploy stops before replacing
+the application secret and requires a separate typed destructive reset. Adoption itself never
+deletes or recreates the database.
+
 Compose now runs only PostgreSQL and Adminer. Uvicorn and Vite run on the host, so host Python,
 uv, Node, npm, and frontend dependencies are breaking new development prerequisites. Port
 conflicts now fail before startup. Backend startup, rather than a separate shell step, owns
@@ -37,6 +56,9 @@ container pattern when native browsers are blocked.
 - Startup refuses remote development databases unless explicitly allowed.
 - Startup refuses a schema that is not exactly at the checkout's Alembic heads.
 - Ctrl-C shuts down native children and backing-service containers but preserves database data.
+- Blank OpenShift branch filters now resolve to the checked-out flavor branch and must exist in the
+  configured repository before BuildConfigs are created.
+- Legacy OpenShift resources require the verified adoption flow above.
 
 ## Rollback
 

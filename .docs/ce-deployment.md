@@ -18,9 +18,13 @@ Required application values are `PROJECT_NAME`, `ENVIRONMENT=production`,
 `POSTGRES_SERVER`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and
 `POSTGRES_PASSWORD`. Set `BACKEND_CORS_ORIGINS` as appropriate. Use strong non-example secrets.
 
-Required Code Engine values are `_IAM_API_KEY`, `_IBM_CLOUD_RESOURCE_GROUP`,
-`_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and `_CR_REGISTRY`. `_IBM_CLOUD_ACCOUNT_NAME` and
-`_CR_NAMESPACE` are optional constraints. `_APP_NAME` is the resource-ownership identity.
+Required Code Engine values are `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`,
+`_CE_PROJECT_NAME`, and `_CR_REGISTRY`. `_IBM_CLOUD_ACCOUNT_NAME` and `_CR_NAMESPACE` are optional
+constraints. `_APP_NAME` is the resource-ownership identity.
+
+`_IAM_API_KEY` is required to create or rotate the registry secret. Later deployments can reuse an
+existing correctly owned secret without the key; supplying it rotates deliberately. Default image
+names are application-scoped to avoid cross-application tag collisions.
 
 Keep `MIGRATE_ON_START=true` for application-owned migrations and set
 `MIGRATION_LOCK_TIMEOUT_SECONDS` for the maximum replica lock wait. Every backend replica checks
@@ -39,6 +43,19 @@ Review the plan, then deploy:
 The script asks for the exact target name before mutating cloud state. It builds and pushes
 separate images and creates the backend/frontend applications. Run `npm run test:deploy` before
 changing deployment code.
+
+For non-OAuth frontends, the deployer always embeds an absolute Code Engine backend URL through
+`VITE_API_URL`; nginx's `http://backend:8000` fallback is OpenShift-only. Before cloud mutation it
+checks nginx compatibility and requires a Dockerfile `ARG` for every active `VITE_*` value. It
+persists `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, and OAuth redirect/well-known URLs in the
+mode-0600 `.env.production`. Configured CORS entries are retained; backend-only deployment never
+adds `*` unless it was explicitly configured.
+
+Fresh non-OAuth projects are polled until readable before selection. OAuth intentionally requires
+an existing readable project so visibility narrowing can precede registry, build, and secret
+mutation. The summary reports every public application URL and the OAuth redirect where relevant;
+private OAuth workload URLs remain hidden. `--show-env-values` is terminal-only and refuses
+non-interactive use.
 
 ## Ownership and cleanup
 
@@ -68,8 +85,8 @@ real-cluster deployment claim. Complete and record all items:
    registry/build/secret failure.
 4. Fresh OAuth Code Engine applications are private from creation and reachable by the public
    proxy through project-local DNS.
-5. Separate backend/frontend image builds, instance-scoped tags, registry-secret recreation, and
-   registry permissions work end to end.
+5. Separate backend/frontend image builds, instance-scoped tags, owned registry-secret reuse and
+   deliberate rotation, and registry permissions work end to end.
 6. OpenShift direct-to-OAuth conversion keeps the old path until proxy readiness, then switches
    ingress and removes owned direct paths.
 7. Weighted `alternateBackends`, numeric ports, and primary-Route alternate clearing match the
@@ -87,6 +104,10 @@ real-cluster deployment claim. Complete and record all items:
     proxy/backend seam work end to end.
 14. Backend-only branches create no frontend resources; the no-database branch preserves any
     existing PVC for recovery.
+15. Non-OAuth frontends contain the persisted absolute `VITE_API_URL`, reach the CE backend, and
+    preserve configured CORS; backend-only summaries show the backend URL.
+16. Fresh non-OAuth project creation waits for readiness, while OAuth still refuses to create a
+    project automatically.
 
 OAuth-only checklist items are cross-branch release checks and are not exercised by this
 local-auth topology.
