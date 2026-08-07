@@ -6,5 +6,5 @@ set -x
 # Let the DB start
 python app/backend_pre_start.py
 
-# Run migrations
-alembic upgrade head
+# Each FastAPI worker owns migrate/verify/seed in its lifespan. PostgreSQL advisory
+# locking serializes workers and replicas, so prestart only waits for reachability.

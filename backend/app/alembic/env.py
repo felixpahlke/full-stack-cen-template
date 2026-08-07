@@ -8,9 +8,9 @@ from sqlalchemy import engine_from_config, pool
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# Application startup configures logging before invoking Alembic.
+if config.attributes.get("configure_logger", True):
+    fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -30,10 +30,9 @@ target_metadata = SQLModel.metadata
 
 
 def get_url():
-    database_url = config.attributes.get("database_url")
-    if database_url:
-        return database_url
-    return str(get_settings().SQLALCHEMY_DATABASE_URI)
+    return config.attributes.get("database_url") or str(
+        get_settings().SQLALCHEMY_DATABASE_URI
+    )
 
 
 def run_migrations_offline():
@@ -64,21 +63,31 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
+    def run(connection):
         context.configure(
             connection=connection, target_metadata=target_metadata, compare_type=True
         )
 
         with context.begin_transaction():
             context.run_migrations()
+
+    connection = config.attributes.get("connection")
+    if connection is not None:
+        # The PostgreSQL advisory lock is session-scoped, so Alembic must use this
+        # exact connection rather than opening its own.
+        run(connection)
+        return
+
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = get_url()
+    engine = engine_from_config(
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with engine.connect() as connection:
+        run(connection)
 
 
 if context.is_offline_mode():

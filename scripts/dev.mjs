@@ -43,8 +43,6 @@ try {
   await requiredCompose(["up", "-d", "--wait", "db", "adminer"], "compose");
   await waitForTcp(Number(effectiveEnv.DB_PORT), "PostgreSQL");
   await waitForHttp(Number(effectiveEnv.ADMINER_PORT), "Adminer");
-  await required(npm, ["run", "db:migrate"], "migrations");
-
   const apiPort = effectiveEnv.API_PORT;
   console.log(
     `\nDevelopment ready: API http://localhost:${apiPort}, ` +
