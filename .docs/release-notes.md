@@ -1,41 +1,11 @@
-# Release Notes
+# Release notes — backend-only modernization
 
-## Latest Changes
+Uvicorn now runs natively under `npm run dev`; Compose contains only PostgreSQL and Adminer.
+Backend tests use disposable Testcontainers databases. Startup serializes migrations and refuses
+readiness unless the database is exactly at the checkout's Alembic heads.
 
-### Refactors
+The removed user/owner test and dependency residue does not change the live API-key item surface.
+Deployment now uses two-label ownership and fail-closed collision handling. Real cluster smoke
+testing is pending; both deployment guides include the 14-item maintainer checklist.
 
-- ♻️ init 1
-
-### Docs
-
-- 📝 init
-
-### Internal
-
-- 👷 init
-
-## 0.0.1
-
-### Highlights
-
-- init
-
-### Features
-
-- init
-
-### Refactors
-
-- ♻️ init
-
-### Upgrades
-
-- ⬆️ init
-
-### Docs
-
-- 💡 init
-
-### Internal
-
-- 👷 init
+See [migration-guide.md](migration-guide.md). Rollback tag: `pre-modernization/backend-only`.

@@ -1,113 +1,65 @@
-# OpenShift Deployment
+# OpenShift deployment — backend-only
 
-Deploy your application to OpenShift using the automated deployment script.
+This branch deploys PostgreSQL and one backend image. It creates no frontend or OAuth resources.
 
-## Quick Start
+## Configure and deploy
 
-### 1. Prerequisites
-
-- **OpenShift CLI** installed (`brew install openshift-cli`)
-- **Git** installed
-
-### 2. Create Environment File
+Install `oc`, Docker, and Git; log in to the intended cluster. A GitHub token is optional for
+deploy-key/webhook automation.
 
 ```bash
 cp .env.production.example .env.production
-```
-
-### 3. Configure Required Variables
-
-Edit `.env.production` with your production values:
-
-```bash
-_APP_NAME=my-app                              # Lowercase, hyphens only
-PROJECT_NAME=my-openshift-project            # OpenShift namespace
-_GIT_SSH_URL=git@github.com:user/repo.git    # Repository SSH URL
-# and so on...
-```
-
-> **❗️ Remember to change `changethis` values** ❗️
-
-### 4. Create GitHub Token (Recommended)
-
-This enables automatic deploy key and webhook setup:
-
-**For IBM GitHub Enterprise:**
-
-1. Go to https://github.ibm.com/settings/tokens
-
-**For Public GitHub:**
-
-1. Go to https://github.com/settings/tokens
-
-**Then:** 2. Click "Generate new token (classic)" 3. Name it (e.g., "OpenShift Deployment") 4. Select scopes: `repo` and `admin:repo_hook` 5. Click "Generate token" and copy it 6. Add to `.env.production`: `_GITHUB_TOKEN=ghp_your_token_here`
-
-> **Note:** Without this token, you'll need to manually add deploy keys and webhooks after deployment.
-
-### 5. Login to OpenShift
-
-```bash
-oc login --token=<token> --server=<server-url>
-```
-
-_Find this in the OpenShift console: top right corner → Copy login command_
-
-### 6. Run Deployment
-
-```bash
+./scripts/oc-deploy.sh --dry-run
 ./scripts/oc-deploy.sh
 ```
 
-The script guides you through the process and handles everything automatically.
+Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, `BACKEND_CORS_ORIGINS`, all five
+`POSTGRES_*` values, `_APP_NAME`, and `_GIT_SSH_URL`. GitHub host/token and branch filter are
+optional. Keep migrate-on-start enabled; migration lock timeout or exact-head mismatch prevents
+readiness.
 
-> **💡 Good to know:**
->
-> - The script is **idempotent** — you can rerun it anytime to update environment variables or configuration
-> - Any **custom variables** you add to `.env.production` will be automatically passed to the backend as environment variables
+The deployer requires exact target confirmation. `--reset-prod-db` requires a second confirmation
+and deletes only the exact owned PostgreSQL resource set. `--regenerate-ssh-key` rotates the key.
 
----
+## Ownership and cleanup
 
-## Deployment Flavors
+Ownership requires both `app.kubernetes.io/managed-by=cen-template` and
+`app.kubernetes.io/instance=<APP_NAME>`. Same-name resources without both labels are never
+adopted. Cleanup rechecks labels immediately before deletion, preserves the PVC during normal
+convergence, leaves other instances untouched, and ensures no frontend resources are created.
+Secrets use mode-0600 files and never command arguments.
 
-Set `_CEN_FLAVOR` in `.env.production`:
+## Real-cluster maintainer checklist
 
-| Flavor                    | Components                      | Auth    | Use Case                        |
-| ------------------------- | ------------------------------- | ------- | ------------------------------- |
-| **oauth-proxy**           | Frontend + Backend + DB + OAuth | SSO     | Enterprise apps with SSO        |
-| **oauth-proxy-custom-ui** | Backend + DB + OAuth            | SSO     | Custom frontend with SSO        |
-| **local-auth**            | Frontend + Backend + DB         | Local   | Standard full-stack app         |
-| **local-auth-custom-ui**  | Backend + DB                    | Local   | Custom frontend with local auth |
-| **backend-only**          | Backend + DB                    | API Key | APIs for external frontends     |
-| **backend-only-no-db**    | Backend only                    | API Key | Stateless APIs/microservices    |
+Real cluster smoke tests are pending and remain a release blocker for a deployment claim:
 
----
+1. Code Engine accepts `--visibility project` on create/update and its not-found response matches
+   the fail-closed classifier.
+2. Code Engine Kubernetes access exposes and retains both ownership labels on Knative Services
+   and Secrets.
+3. Existing public OAuth application workloads become project-private before an injected
+   registry/build/secret failure.
+4. Fresh OAuth applications are private from creation and reachable by the public proxy through
+   project-local DNS.
+5. Separate backend/frontend image builds, instance-scoped tags, registry-secret recreation, and
+   registry permissions work end to end.
+6. OpenShift direct-to-OAuth conversion keeps the old path until proxy readiness, then switches
+   ingress and removes owned direct paths.
+7. Weighted `alternateBackends`, numeric ports, and primary-Route alternate clearing match the
+   real Route API.
+8. OpenShift resources retain both labels after BuildConfig, image-trigger, Deployment, and Route
+   controllers reconcile them.
+9. The integrated-registry readiness gate succeeds on a configured cluster and fails clearly
+   without auto-patching an unconfigured registry.
+10. GitHub deploy keys and both component webhooks work without exposing tokens or webhook
+    secrets.
+11. Normal database deployment preserves the PostgreSQL PVC; confirmed reset removes only the
+    exact owned PostgreSQL resources.
+12. In a shared namespace/project, `app-a` cannot mutate or delete `app-b`.
+13. OAuth login/logout, secure cookies, forwarded identity headers, and the private Basic Auth
+    proxy/backend seam work end to end.
+14. Backend-only branches create no frontend resources; the no-database branch preserves any
+    existing PVC for recovery.
 
-## Command-Line Options
-
-```bash
-./scripts/oc-deploy.sh [options]
-
---flavor <name>         Override deployment flavor
---env-file <path>       Use custom environment file
---reset-prod-db         Reset database (WARNING: deletes data)
---regenerate-ssh-key    Regenerate SSH keys
---show-env-values       Show env values during deployment
---help                  Display help
-```
-
----
-
-## Common Issues
-
-| Problem                   | Solution                                   |
-| ------------------------- | ------------------------------------------ |
-| `You must be logged in`   | Run `oc login --server=<url>`              |
-| Deploy key already exists | Run with `--regenerate-ssh-key`            |
-| Build failed              | Check logs: `oc logs -f bc/<app>-frontend` |
-| Route not accessible      | Wait for builds: `oc get builds`           |
-
----
-
-## More Information
-
-For detailed configuration, architecture, extending the script, and advanced troubleshooting, see the [Script README](../scripts/README.md).
+OAuth/frontend items are cross-branch release checks; this topology proves the absence half of
+item 14.

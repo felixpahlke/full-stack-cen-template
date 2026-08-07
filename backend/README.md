@@ -1,44 +1,22 @@
 # Backend development
 
-The backend is FastAPI with SQLModel, PostgreSQL, Alembic, and API-key authentication.
-Install its Python environment from the repository root:
+This FastAPI backend uses SQLModel, PostgreSQL, Alembic, and `X-API-Key` authentication. It has no
+user table, ownership field, bearer authentication, frontend, or generated browser client.
 
-```bash
-uv sync --project backend
-```
+- `app/tables.py`: item tables
+- `app/models.py`: request/response schemas
+- `app/crud.py`: unowned CRUD
+- `app/api/routes/`: API-key-protected routes and public health
+- `app/core/config.py`: root `.env` settings
+- `app/alembic/`: migration history
 
-Start the complete development loop with `npm run dev`; see
-[development.md](../.docs/development.md). PostgreSQL and Adminer run in Compose while
-Uvicorn runs natively with reload.
+Install with `uv sync --project backend`; run with root `npm run dev`. Keep database work in CRUD,
+routes thin, and settings mirrored in `.env.example`.
 
-## Structure
-
-- `app/tables.py`: SQLModel database tables
-- `app/models.py`: request and response schemas
-- `app/crud.py`: database operations
-- `app/api/routes/`: HTTP route handlers
-- `app/core/config.py`: environment-backed settings
-- `app/alembic/`: migration environment and revisions
-
-The item API is unowned. Its routes require `X-API-Key`; the health endpoint is public.
-
-## Commands
-
-Run all supported checks and tests from the repository root:
+Use root `db:revision` and `db:migrate`; never rewrite shipped revisions. Startup always verifies
+exact bundled heads and optionally migrates under an advisory lock. Tests use a disposable
+Testcontainers PostgreSQL instance:
 
 ```bash
 npm run verify
 ```
-
-Apply migrations or generate a revision with:
-
-```bash
-npm run db:migrate
-npm run db:revision -- -m "Describe the schema change"
-```
-
-Schema changes must use Alembic. Do not edit or replace existing migration history.
-
-Backend tests use Testcontainers and a disposable PostgreSQL 12 database. An explicitly
-provided `TEST_DATABASE_URL` is accepted only when its database name is clearly test-only;
-see [development.md](../.docs/development.md) for the guard rules.

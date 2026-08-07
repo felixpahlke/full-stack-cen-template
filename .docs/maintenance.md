@@ -1,87 +1,46 @@
-## Maintenance and Updates to the Template
+# Maintaining the branch variants
 
-This repository uses branches as product flavors, not as short-lived feature branches.
-For contributor-facing branch guidance, start with `CONTRIBUTING.md`.
+The six long-lived branches are product variants. Shared changes start on `local-auth`, are
+committed there, and are then merged with `git merge local-auth --no-commit` into each target.
+Resolve conflicts by preserving the target's UI, authentication, route, database, and deployment
+topology. Use descriptive target commits rather than generic merge messages.
 
-When you maintain the template, preserve each branch's flavor identity while pulling
-in the shared changes from `local-auth`.
+| Branch | UI | Authentication | Database |
+| --- | --- | --- | --- |
+| `local-auth` | Carbon | Local users/JWT | PostgreSQL |
+| `local-auth-custom-ui` | shadcn/ui | Local users/JWT | PostgreSQL |
+| `oauth-proxy` | Carbon | oauth2-proxy identity seam | PostgreSQL |
+| `oauth-proxy-custom-ui` | shadcn/ui | oauth2-proxy identity seam | PostgreSQL |
+| `backend-only` | None | API key | PostgreSQL |
+| `backend-only-no-db` | None | API key | None |
 
-### Canonical Workflow
+## Guardrails
 
-1. Start on `local-auth`. This is the canonical source branch for template updates.
-2. Implement and commit the generic change on `local-auth` first.
-3. For every other flavor branch:
-   - checkout the target branch
-   - merge with `git merge local-auth --no-commit`
-   - resolve conflicts by preserving the target branch's flavor
-   - run branch-appropriate validation
-   - commit the resolved result
-4. Push the updated branches.
+- Carbon branches stay Carbon; custom-UI branches stay shadcn/ui.
+- Local-auth, OAuth, and API-key authorization surfaces must not leak into one another.
+- OAuth identity subjects remain opaque strings and the private Basic seam remains proxy-only.
+- Backend-only stays frontend-free. The no-database branch stays free of Compose, Alembic,
+  persistence packages, and database settings.
+- Shared deployment script bodies stay identical. Branch topology comes from
+  `scripts/deploy-flavor.conf`, not a runtime-selected file tree.
+- Frontend generated files are never edited. Run `npm run generate-client` on the branch after an
+  exposed API or route change.
+- Keep telemetry comments and branch-specific frontend/backend telemetry variable names.
 
-Do not blindly accept `local-auth` during conflict resolution. The target branch may need
-to keep a different UI stack, auth model, route surface, or backend shape.
+## Validation
 
-### Flavor Matrix
+Install dependencies using that branch's root documentation, then run:
 
-- `local-auth`
-  - Carbon frontend
-  - local authentication
-  - full local-auth user/admin/settings surface
-- `local-auth-custom-ui`
-  - shadcn custom UI
-  - local authentication
-- `oauth-proxy`
-  - Carbon frontend
-  - OAuth proxy authentication
-- `oauth-proxy-custom-ui`
-  - shadcn custom UI
-  - OAuth proxy authentication
-- `backend-only`
-  - backend plus database
-  - API key auth
-  - no frontend
-- `backend-only-no-db`
-  - backend only
-  - API key auth
-  - no frontend
-  - no database-backed config/routes/tests
+```bash
+npm run verify
+npm run test:deploy
+```
 
-### Merge Rules Learned During Flavor Maintenance
+For frontend branches, also run the documented Playwright flow and `npm --prefix frontend audit`.
+For backend-only-no-db, prove `DOCKER_HOST=unix:///nonexistent npm run verify`. Build the relevant
+production image(s) when Docker or deployment behavior changes. Review `git diff --cached` before
+committing each target.
 
-- Preserve the target branch's UI system.
-  - Carbon branches stay Carbon.
-  - shadcn branches stay shadcn.
-- Preserve the target branch's authentication model.
-  - local-auth branches stay local-auth.
-  - oauth-proxy branches stay oauth-proxy.
-  - backend-only branches stay API-key-based.
-- Preserve the target branch's route and API surface.
-  - Do not reintroduce pages, components, or backend routes that belong only to a different flavor.
-- Preserve the target branch's backend shape.
-  - `backend-only` stays backend-only.
-  - `backend-only-no-db` stays no-db and should not gain DB-backed config, routes, or tests.
-- Never edit `frontend/src/client/` manually. If exposed backend routes change on a frontend flavor, regenerate the client with `./scripts/generate-client.sh`.
-
-### Tracking Rules
-
-- Frontend flavors currently use frontend-side flavor tracking.
-- Backend-only flavors use backend-side startup tracking.
-- Keep the telemetry toggle in env example files with this explanatory comment:
-  - `We just track which flavor you're using. We want to find out, which flavors are being used.`
-- For backend-only branches, keep the toggle as `TELEMETRY_ENABLED`, not `VITE_TELEMETRY_ENABLED`.
-
-### Validation Checklist
-
-- Frontend flavors:
-  - `cd frontend && npm run typecheck`
-- Backend-only flavors:
-  - `backend/.venv/bin/ruff check backend/app backend/tests`
-  - `backend/.venv/bin/ruff format backend/app backend/tests --check`
-- Backend-only tracking test:
-  - `cd backend && API_KEY=changethis12345678 TELEMETRY_ENABLED=true ./.venv/bin/pytest tests/test_telemetry.py`
-- Before committing any merge resolution:
-  - `git diff --cached`
-
-### Practical Troubleshooting Notes
-
-- The frontend container mounts source code separately from container `node_modules`. If you switch branches and suddenly get missing package import errors, the source changed but the container dependencies may not have been recreated yet.
+If a branch switch leaves dependencies stale, rerun `npm ci`, `npm ci --prefix frontend` when the
+frontend exists, and `uv sync --project backend`. Development application processes are native;
+only documented backing/auth services use Compose.
