@@ -21,6 +21,9 @@ Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
 refused. Keep migrate-on-start enabled and configure its lock timeout. A migration or exact-head
 failure prevents readiness.
 
+When `_DEPLOYMENT_BRANCH_FILTER` is blank, the script resolves it to `oauth-proxy`, prints it, and
+verifies that branch through the configured deploy key before creating either BuildConfig.
+
 Read-only collision/direct-ingress preflight runs before mutation. The script makes backend and
 frontend Ready, makes the proxy Ready, applies proxy Service/Route, and only then removes owned
 direct Routes. Weighted alternate backends and numeric target ports are preserved during the
@@ -29,6 +32,12 @@ transition. `/oauth2/sign_out` ends the proxy cookie but cannot terminate upstre
 `--reset-prod-db` is separately confirmed and deletes only the exact owned PostgreSQL resource
 set. `--regenerate-ssh-key` rotates the deploy key. Run `npm run test:deploy` before script changes.
 
+Running PostgreSQL `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` values are compared
+before the shared application secret changes. Drift requires typed destructive confirmation and an
+owned PVC reset; declining leaves both sides untouched. The deployer also owns the
+`webhook-access-unauthenticated` RoleBinding from `system:unauthenticated` to `system:webhook`.
+GitHub API failures are fatal; tokenless usable webhook URLs are terminal-only.
+
 ## Ownership and cleanup
 
 Ownership requires both `app.kubernetes.io/managed-by=cen-template` and
@@ -36,6 +45,18 @@ Ownership requires both `app.kubernetes.io/managed-by=cen-template` and
 adopted. Cleanup rechecks immediately before deletion, removes only obsolete owned resources,
 preserves the PVC during normal convergence, and leaves other instances untouched. Secrets use
 mode-0600 temporary files and are never passed as command-line values.
+
+### One-time legacy adoption
+
+Use `--adopt-legacy-resources` only for a project created by the pre-ownership deployer. It verifies
+exact application fingerprints, prints the precise unlabeled set, refuses partial labels or
+ambiguity, and applies both labels only after the separate phrase
+`adopt <PROJECT_NAME>/<APP_NAME>`. Without the flag and phrase it cannot run. Back up PostgreSQL
+first; adoption itself does not reset it.
+
+The registry gate needs `get` on the registry config, `get`/`watch` on the image-registry
+Deployment, and `get` on its Endpoints. Missing only those reads warns and skips the gate; readable
+unreadiness still fails. `--show-env-values` is terminal-only and refuses non-interactive use.
 
 ## Real-cluster maintainer checklist
 
@@ -57,14 +78,16 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
    real Route API.
 8. OpenShift resources retain both labels after BuildConfig, image-trigger, Deployment, and Route
    controllers reconcile them.
-9. The integrated-registry readiness gate succeeds on a configured cluster and fails clearly
-   without auto-patching an unconfigured registry.
-10. GitHub deploy keys and both component webhooks work without exposing tokens or webhook
-    secrets.
-11. Normal database deployment preserves the PostgreSQL PVC; confirmed reset removes only the
-    exact owned PostgreSQL resources.
+9. The registry gate succeeds with documented reads, warns when only those reads are unavailable,
+   and fails on genuine unreadiness without patching operator state.
+10. Deploy keys, webhook RBAC, automatic hooks, and terminal-only manual URLs produce successful
+    deliveries without exposing credentials to logs.
+11. Database deployment preserves the PVC; credential drift stops before secret replacement;
+    confirmed reset removes only the exact owned resources.
 12. In a shared namespace/project, `app-a` cannot mutate or delete `app-b`.
 13. OAuth login/logout, secure cookies, forwarded identity headers, and the private Basic Auth
     proxy/backend seam work end to end.
 14. Backend-only branches create no frontend resources; the no-database branch preserves any
     existing PVC for recovery.
+15. Legacy adoption labels only its printed fingerprinted set after the typed adoption phrase.
+16. Both BuildConfigs use the printed, remotely verified `oauth-proxy` ref.

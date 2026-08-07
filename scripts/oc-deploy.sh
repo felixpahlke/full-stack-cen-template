@@ -16,6 +16,7 @@ RESET_PROD_DB=false
 REGENERATE_SSH_KEY=false
 SHOW_ENV_VALUES=false
 FLAVOR_OVERRIDE=''
+ADOPT_LEGACY_RESOURCES=false
 
 parse_arguments() {
     while (($#)); do
@@ -27,6 +28,7 @@ parse_arguments() {
             --no-db) FLAVOR_OVERRIDE=backend-only-no-db; shift ;;
             --reset-prod-db) RESET_PROD_DB=true; shift ;;
             --regenerate-ssh-key) REGENERATE_SSH_KEY=true; shift ;;
+            --adopt-legacy-resources) ADOPT_LEGACY_RESOURCES=true; shift ;;
             --show-env-values) SHOW_ENV_VALUES=true; shift ;;
             --dry-run) DEPLOY_DRY_RUN=true; shift ;;
             *) print_error "unknown option: $1"; exit 2 ;;
@@ -54,8 +56,10 @@ main() {
     resolve_app_name "${_APP_NAME:-${PROJECT_NAME:-cen-app}}"
     validate_runtime_env
     GIT_SSH_URL=${_GIT_SSH_URL:-${GIT_SSH_URL:-}}
-    DEPLOYMENT_BRANCH_FILTER=${_DEPLOYMENT_BRANCH_FILTER:-${DEPLOYMENT_BRANCH_FILTER:-main}}
     [[ -n "$GIT_SSH_URL" ]] || { print_error '_GIT_SSH_URL is required'; return 1; }
+    git_repo_parts "$GIT_SSH_URL"
+    resolve_deployment_branch_ref
+    ensure_oauth_upstream_password
 
     print_section_header 'OpenShift deployment'
     if [[ "$DEPLOY_DRY_RUN" == true ]]; then dry_run_plan; return 0; fi
@@ -63,20 +67,24 @@ main() {
     check_oc_login
     confirm_target 'OpenShift deployment' "$PROJECT_NAME"
     setup_project
+    adopt_legacy_resources
 
     # These read-only checks precede SSH, registry, secret, database, and build mutations.
     preflight_deploy_collisions
     preflight_oauth_ingress
+    protect_postgres_credential_change
 
     if [[ "$REGENERATE_SSH_KEY" == true ]]; then delete_ssh_keys; fi
     setup_ssh_keys
+    validate_remote_branch_ref
     setup_image_registry
-    ensure_oauth_upstream_password
     if [[ "$OAUTH_ENABLED" == true ]]; then update_app_env_secret_with_urls; else create_initial_app_env_secret; fi
-    deploy_database
-    ensure_webhook_secret
 
-    if [[ "$RESET_PROD_DB" == true ]]; then reset_production_database; print_deployment_summary; return 0; fi
+    if [[ "$RESET_PROD_DB" == true ]]; then reset_production_database; print_deployment_summary; return 0
+    elif [[ "${DB_CREDENTIAL_RESET:-false}" == true ]]; then reset_production_database true
+    else deploy_database
+    fi
+    ensure_webhook_secret
 
     deploy_frontend
     deploy_backend

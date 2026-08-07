@@ -18,6 +18,37 @@ git_repo_parts() {
     GITHUB_REPO_API="${GITHUB_API_BASE}/repos/${GIT_OWNER}/${GIT_REPO}"
 }
 
+resolve_deployment_branch_ref() {
+    DEPLOYMENT_BRANCH_FILTER=${_DEPLOYMENT_BRANCH_FILTER:-${DEPLOYMENT_BRANCH_FILTER:-}}
+    [[ -n "$DEPLOYMENT_BRANCH_FILTER" ]] || DEPLOYMENT_BRANCH_FILTER=$CEN_DEPLOY_FLAVOR
+    if [[ "$DEPLOYMENT_BRANCH_FILTER" == -* || "$DEPLOYMENT_BRANCH_FILTER" == *'..'* || \
+        "$DEPLOYMENT_BRANCH_FILTER" == *'~'* || "$DEPLOYMENT_BRANCH_FILTER" == *'^'* || \
+        "$DEPLOYMENT_BRANCH_FILTER" == *':'* || "$DEPLOYMENT_BRANCH_FILTER" == *' '* || \
+        "$DEPLOYMENT_BRANCH_FILTER" == */ || "$DEPLOYMENT_BRANCH_FILTER" == .* ]]; then
+        print_error "invalid deployment branch ref: $DEPLOYMENT_BRANCH_FILTER"
+        return 1
+    fi
+    print_status "Resolved source branch: $DEPLOYMENT_BRANCH_FILTER"
+    add_deployment_output source_branch "$DEPLOYMENT_BRANCH_FILTER"
+}
+
+validate_remote_branch_ref() {
+    local key_dir=${CEN_DEPLOY_SSH_DIR:-"$HOME/.ssh/$PROJECT_NAME"}
+    local key_file="$key_dir/ocp-key" output
+    [[ -f "$key_file" ]] || { print_error "cannot validate source branch without deploy key: $key_file"; return 1; }
+    if ! output=$(GIT_SSH_COMMAND="ssh -i $key_file -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+        git ls-remote --exit-code --heads "$GIT_SSH_URL" "refs/heads/$DEPLOYMENT_BRANCH_FILTER" 2>&1); then
+        print_error "source branch '$DEPLOYMENT_BRANCH_FILTER' does not resolve in $GIT_SSH_URL"
+        [[ -z "$output" ]] || printf '%s\n' "$output" >&2
+        return 1
+    fi
+    [[ -n "$output" ]] || {
+        print_error "source branch '$DEPLOYMENT_BRANCH_FILTER' does not resolve in $GIT_SSH_URL"
+        return 1
+    }
+    print_success "Verified source branch '$DEPLOYMENT_BRANCH_FILTER' in the configured repository."
+}
+
 make_github_curl_config() {
     local destination=$1 token=${GITHUB_TOKEN:-}
     [[ -n "$token" ]] || return 1

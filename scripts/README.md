@@ -25,7 +25,19 @@ exactly.
 OAuth2-proxy is digest-pinned. Backend/frontend application workloads become project-private in
 Code Engine before other mutations. On OpenShift, backend/frontend and proxy readiness precede
 proxy ingress; owned direct Routes are removed only after the switch. The private
-`OAUTH2_PROXY_UPSTREAM_PASSWORD` is generated when absent but all documented placeholder or weak
-values are refused.
+`OAUTH2_PROXY_UPSTREAM_PASSWORD` is generated when absent or set to the documented generation
+marker; arbitrary placeholders and weak values are refused.
+
+Blank OpenShift branch filters resolve to `oauth-proxy`, are printed, and must exist remotely before
+BuildConfig creation. `--adopt-legacy-resources` verifies and prints a legacy set, then requires
+`adopt <PROJECT_NAME>/<APP_NAME>` before applying both ownership labels. Webhooks include the owned
+unauthenticated `system:webhook` RoleBinding; API failures are fatal and usable manual URLs are
+terminal-only. PostgreSQL credential drift stops before secret replacement and requires typed reset
+confirmation. Registry readiness skips only when the required cluster reads are unavailable.
+
+Code Engine persists an absolute `VITE_API_URL`, merged CORS, redirect, and well-known URLs after
+nginx/Dockerfile preflight. Owned registry credentials may be reused without `_IAM_API_KEY`; setting
+the key rotates them. Application-scoped image names and existing-project-only OAuth deployment are
+intentional. `--show-env-values` is terminal-only.
 
 See [Code Engine](../.docs/ce-deployment.md) and [OpenShift](../.docs/oc-deployment.md).
