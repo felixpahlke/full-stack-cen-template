@@ -11,7 +11,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 
-from app.core.config import LogLevel, settings
+from app.core.config import LogLevel
 
 
 class UTCFormatter(logging.Formatter):
@@ -26,11 +26,11 @@ def setup_logging(log_level: LogLevel | str | None = None) -> None:
     Configure application-wide logging.
 
     Args:
-        log_level: The logging level (LogLevel enum, or string like DEBUG, INFO, WARNING, ERROR, CRITICAL).
-                   If None, will be determined from settings.EFFECTIVE_LOG_LEVEL.
+        log_level: The logging level (LogLevel enum, or string like DEBUG, INFO, WARNING,
+            ERROR, CRITICAL). Defaults to INFO.
     """
     if log_level is None:
-        log_level = settings.EFFECTIVE_LOG_LEVEL
+        log_level = LogLevel.INFO
 
     if isinstance(log_level, LogLevel):
         log_level_str = log_level.value
@@ -61,8 +61,6 @@ def setup_logging(log_level: LogLevel | str | None = None) -> None:
         "uvicorn",
         "uvicorn.access",
         "uvicorn.error",
-        "sqlalchemy",
-        "sqlalchemy.engine",
     ]:
         third_party_logger = logging.getLogger(logger_name)
         third_party_logger.setLevel(third_party_level)
