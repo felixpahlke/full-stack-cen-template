@@ -1,10 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
-
-import { Items } from "../../client";
-import ActionsMenu from "../common/ActionsMenu";
-
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -13,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Items } from "../../client";
+import ActionsMenu from "../common/ActionsMenu";
 
 const PER_PAGE = 10;
 
@@ -33,8 +31,7 @@ export default function ItemsTable() {
   const queryClient = useQueryClient();
   const navigate = useNavigate({ from: "/items" });
   const { page } = useSearch({ from: "/_layout/items" });
-  const setPage = (newPage: number) =>
-    navigate({ search: () => ({ page: newPage }) });
+  const setPage = (newPage: number) => navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: items,
@@ -101,11 +98,7 @@ export default function ItemsTable() {
         </TableBody>
       </Table>
       <div className="mt-4 flex items-center justify-end gap-4">
-        <Button
-          variant="outline"
-          onClick={() => setPage(page - 1)}
-          disabled={!hasPreviousPage}
-        >
+        <Button variant="outline" onClick={() => setPage(page - 1)} disabled={!hasPreviousPage}>
           Previous
         </Button>
         <span>Page {page}</span>

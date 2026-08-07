@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useAuth from "../../hooks/useAuth";
 import { ModeToggle } from "../theme/ThemeSwitcher";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserMenu from "./UserMenu";
 
 export function Header() {
@@ -27,11 +27,7 @@ export function Header() {
         {isMobile ? (
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-foreground h-8 w-8"
-              >
+              <Button variant="ghost" size="icon" className="text-foreground h-8 w-8">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
@@ -64,10 +60,7 @@ export function Header() {
           </Link>
         )}
 
-        <Separator
-          orientation="vertical"
-          className="md:block mr-2 hidden h-4"
-        />
+        <Separator orientation="vertical" className="md:block mr-2 hidden h-4" />
 
         <nav className="md:flex hidden items-center space-x-8 pl-4 text-sm">
           {navItems.map((item) => (

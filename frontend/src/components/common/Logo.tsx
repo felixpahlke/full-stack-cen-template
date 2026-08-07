@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
@@ -7,11 +7,7 @@ interface LogoProps {
   logoSize?: "sm" | "md" | "lg";
 }
 
-export const Logo = ({
-  className,
-  logoSize = "md",
-  logoOnly = false,
-}: LogoProps) => {
+export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps) => {
   const { activeTheme } = useTheme();
 
   return (
@@ -23,9 +19,7 @@ export const Logo = ({
           "w-16": logoSize === "lg",
         })}
         src={
-          activeTheme === "dark"
-            ? "/assets/images/logo-light.png"
-            : "/assets/images/logo-dark.png"
+          activeTheme === "dark" ? "/assets/images/logo-light.png" : "/assets/images/logo-dark.png"
         }
         alt="IBM-Client-Engineering"
       />

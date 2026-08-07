@@ -1,11 +1,4 @@
 {
-    "recommendations": [
-        "ms-python.python",
-        "charliermarsh.ruff",
-        "esbenp.prettier-vscode"
-    ],
-    "unwantedRecommendations": [
-        "ms-python.autopep8",
-        "ms-python.yapf"
-    ]
+  "recommendations": ["ms-python.python", "charliermarsh.ruff", "biomejs.biome"],
+  "unwantedRecommendations": ["ms-python.autopep8", "ms-python.yapf"]
 }

@@ -1,10 +1,6 @@
-import { useState } from "react";
 import { Edit, MoreVertical, Trash } from "lucide-react";
-
-import type { ItemPublic } from "../../client";
-import EditItem from "../items/EditItem";
-import Delete from "./DeleteAlert";
-
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import type { ItemPublic } from "../../client";
+import EditItem from "../items/EditItem";
+import Delete from "./DeleteAlert";
 
 interface ActionsMenuProps {
   type: string;
@@ -28,7 +26,7 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild disabled={disabled}>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" aria-label={`Actions for ${value.title}`}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

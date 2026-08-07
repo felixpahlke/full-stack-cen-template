@@ -1,7 +1,6 @@
-import { FiLogOut } from "react-icons/fi";
-import { cn } from "@/lib/utils";
-import useAuth from "../../hooks/useAuth";
 import { useState } from "react";
+import { FiLogOut } from "react-icons/fi";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import useAuth from "../../hooks/useAuth";
 
 interface UserMenuProps {
   className?: string;
@@ -32,16 +32,9 @@ const UserMenu = ({ className }: UserMenuProps) => {
         <div className="h-full">
           <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="User menu"
-                data-testid="user-menu"
-              >
+              <Button variant="ghost" size="icon" aria-label="User menu" data-testid="user-menu">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>
-                    {user?.name ? user.name.charAt(0) : "U"}
-                  </AvatarFallback>
+                  <AvatarFallback>{user?.name ? user.name.charAt(0) : "U"}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>

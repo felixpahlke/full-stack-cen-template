@@ -1,5 +1,5 @@
-import { toast } from "sonner";
 import type { AxiosError } from "axios";
+import { toast } from "sonner";
 
 export const namePattern = {
   value: /^[A-Za-z\s\u00C0-\u017F]{1,30}$/,
@@ -26,10 +26,7 @@ export const passwordRules = (isRequired = true) => {
   return rules;
 };
 
-export const confirmPasswordRules = (
-  getValues: () => any,
-  isRequired = true,
-) => {
+export const confirmPasswordRules = (getValues: () => any, isRequired = true) => {
   const rules: any = {
     validate: (value: string) => {
       const password = getValues().password || getValues().new_password;
