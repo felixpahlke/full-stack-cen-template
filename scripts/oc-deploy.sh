@@ -86,6 +86,7 @@ main() {
     else
         reconcile_direct_ingress
         update_app_env_secret_with_urls
+        oc_resource_is_owned deployment backend || { warn_unowned_collision deployment backend; return 1; }
         run oc rollout restart deployment/backend
         run oc rollout status deployment/backend --timeout=15m
     fi
