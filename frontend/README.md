@@ -1,140 +1,63 @@
-# FastAPI Project - Frontend
+# Frontend development
 
-The frontend is built with [Vite](https://vitejs.dev/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [TanStack Query](https://tanstack.com/query), [TanStack Router](https://tanstack.com/router), [Carbon](https://carbondesignsystem.com/) and [Carboncn UI](https://www.carboncn.dev/).
+The frontend uses React, TypeScript, Vite, TanStack Query and Router, IBM Carbon,
+and Tailwind CSS 4. Direct dependencies are exact-pinned and the lockfile is
+managed by npm. Node.js 20.19 or newer is required.
 
-## Install dependencies
-
-Note: you might need to change your node version with nvm.
-you can get nvm [here](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-```bash
-cd frontend
-nvm install # this will install the node version specified in .nvmrc
-nvm use
-```
-
-Install the dependencies:
+Install the root and frontend dependencies from the repository root:
 
 ```bash
-npm install
+npm ci
+npm --prefix frontend ci
 ```
 
-## Frontend development
+Then start the complete OAuth development loop with `npm run dev`.
 
-_Note: for more detailed tips, e.g. on how to **create a new page**, see the tutorials [here](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials/tree/main/full-stack-tutorial-watsonx-chat)_
+The browser entry is the oauth2-proxy URL derived from `OAUTH2_PROXY_PORT`; Vite's
+native port is an internal development upstream. Same-origin `/api` requests are
+proxied by Vite to the loopback FastAPI process while preserving the identity
+headers stamped by oauth2-proxy.
 
-The frontend will be started in development mode with hot reloading, inside the Docker Compose stack, so you don't have to worry about the correct node version or other dependencies.
-
-```bash
-docker compose watch
-```
-
-Open your browser at http://localhost:4180/  (this is the Oauth-Proxy, forwarding to the frontend)
-
-
-## Generate Client
-
-### Automatically
-
-- Activate the backend virtual environment.
-- From the top level project directory, run the script:
-
-```bash
-./scripts/generate-client.sh
-```
-
-- Commit the changes.
-
-### Manually
-
-- Start the Docker Compose stack.
-
-- Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
-
-- To simplify the names in the generated frontend client code, modify the `openapi.json` file by running the following script:
-
-```bash
-node modify-openapi-operationids.js
-```
-
-- To generate the frontend client, run:
+Generate the API client from the repository root:
 
 ```bash
 npm run generate-client
 ```
 
-- Commit the changes.
+Generation is offline and does not require `.env`, a running backend, or Docker.
+Do not edit `frontend/src/client` manually.
 
-Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
+Run `npm --prefix frontend run generate-routes` when only route source files change.
 
-## Code Structure
+## Styling and themes
 
-The frontend code is structured as follows:
+Carbon component styles live in `src/styles/carbon.scss`. Tailwind 4 is configured
+through `src/styles/index.css` and the `@tailwindcss/vite` plugin; there is no
+Tailwind configuration file or PostCSS configuration. The bridge in
+`src/styles/themes/carbon.css` maps Tailwind utilities to active Carbon tokens.
+Theme selection supports light, dark, and system settings, persists under
+`vite-ui-theme`, and resolves to Carbon `g10` or `g90` plus the matching `.dark`
+state.
 
-- `frontend/src` - The main frontend code.
-- `frontend/src/assets` - Static assets.
-- `frontend/src/client` - The generated OpenAPI client.
-- `frontend/src/components` - The different components of the frontend.
-- `frontend/src/hooks` - Custom hooks.
-- `frontend/src/routes` - The different routes of the frontend which include the pages.
+## Verification
 
-## Using a Remote API
-
-If you want to use a remote API, you can set the environment variable `VITE_API_URL` to the URL of the remote API. For example, you can set it in the `frontend/.env` file:
-
-```env
-VITE_API_URL=https://api.my-domain.example.com
-```
-
-Then, when you run the frontend, it will use that URL as the base URL for the API.
-
-## End-to-End Testing with Playwright
-
-The frontend includes initial end-to-end tests using Playwright. To run the tests, you need to have the Docker Compose stack running. Start the stack with the following command:
+Run the environment-independent checks without a root `.env`:
 
 ```bash
-docker compose watch
+npm run verify
+npm --prefix frontend audit
 ```
 
-For the tests to work with AppID authentication, you need to create a user in your AppID instance. In AppID, go to CloudDirectory -> Users and create a new user. Then you have to set the environment variables `PLAYWRIGHT_TEST_USER_EMAIL` and `PLAYWRIGHT_TEST_USER_PASSWORD` in the `.env` file.
-
-Then, you can run the tests with the following command:
+The real Dex/oauth2-proxy browser suite requires the development environment and
+its root `.env`. Start the stack, then run:
 
 ```bash
-npx playwright test
+PLAYWRIGHT_EXTERNAL_SERVER=true npm run test:e2e
 ```
 
-You can also run your tests in UI mode to see the browser and interact with it running:
+If the native browser cannot launch, use the matching containerized browser with
+`npm run test:e2e:container` while the development stack is running.
 
-```bash
-npx playwright test --ui
-```
-
-To stop and remove the Docker Compose stack and clean the data created in tests, use the following command:
-
-```bash
-docker compose down -v
-```
-
-To update the tests, navigate to the tests directory and modify the existing test files or add new ones as needed.
-
-For more information on writing and running Playwright tests, refer to the official [Playwright documentation](https://playwright.dev/docs/intro).
-
-### Removing the frontend
-
-If you are developing an API-only app and want to remove the frontend, you can do it easily:
-
-- Remove the `./frontend` directory.
-
-- In the `docker-compose.yml` file, remove the whole service / section `frontend`.
-
-Done, you have a frontend-less (api-only) app. 🤓
-
----
-
-If you want, you can also remove the `FRONTEND` environment variables from:
-
-- `.env`
-- `./scripts/*.sh`
-
-But it would be only to clean them up, leaving them won't really have any effect either way.
+The suite reads its proxy URL and Dex credentials from the root `.env`, persists
+the proxy session for authenticated projects, exercises item ownership and
+sign-out, and probes header spoofing through real HTTP.
