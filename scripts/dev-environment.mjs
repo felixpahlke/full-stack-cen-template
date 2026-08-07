@@ -27,7 +27,7 @@ export const requiredDevEnv = [
 
 const generatedSecrets = {
   OAUTH2_PROXY_CLIENT_SECRET: () => randomBytes(32).toString("hex"),
-  OAUTH2_PROXY_COOKIE_SECRET: () => randomBytes(32).toString("base64"),
+  OAUTH2_PROXY_COOKIE_SECRET: () => randomBytes(32).toString("base64url"),
   OAUTH2_PROXY_UPSTREAM_PASSWORD: () => randomBytes(32).toString("hex"),
 };
 const secretMarker = "generate-on-first-dev-run";

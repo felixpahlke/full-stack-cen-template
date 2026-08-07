@@ -54,6 +54,7 @@ obviously weak values.
 npm run verify
 npm run generate-client
 npm run test:e2e
+npm run test:e2e:container
 npm run db:migrate
 ```
 

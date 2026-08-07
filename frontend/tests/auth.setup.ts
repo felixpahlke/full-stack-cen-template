@@ -15,7 +15,7 @@ setup("authenticate through bundled Dex", async ({ page }) => {
   const principal = await me.json();
   expect(principal).toMatchObject({
     email: dexTestUserEmail,
-    name: "admin",
+    name: dexTestUserEmail,
   });
   expect(principal.id).not.toMatch(/^[0-9a-f-]{36}$/i);
   await page.context().storageState({ path: authFile });

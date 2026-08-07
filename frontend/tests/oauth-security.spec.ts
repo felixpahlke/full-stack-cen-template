@@ -1,24 +1,19 @@
 import http from "node:http";
-import { expect, request, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { proxyUrl } from "./config";
 
 test("real proxy rejects unauthenticated identity and authorization spoofing", async ({ page }) => {
-  const anonymous = await request.newContext({ baseURL: proxyUrl });
-  const probes: Array<Record<string, string>> = [
-    {},
-    { "X-Forwarded-User": "forged", "X-Forwarded-Email": "forged@example.com" },
-    { X_Forwarded_User: "forged", X_Forwarded_Email: "forged@example.com" },
-    { Authorization: "Bearer client-supplied-token" },
+  const probes = [
+    [],
+    ["X-Forwarded-User", "forged", "X-Forwarded-Email", "forged@example.com"],
+    ["X_Forwarded_User", "forged", "X_Forwarded_Email", "forged@example.com"],
+    ["Authorization", "Bearer client-supplied-token"],
   ];
   for (const headers of probes) {
-    const response = await anonymous.get("/api/v1/users/me", {
-      headers,
-      maxRedirects: 0,
-    });
-    expect(response.status()).toBe(302);
-    expect(response.headers().location).toContain("/oauth2/");
+    const response = await rawRequest(headers);
+    expect(response.status).toBe(302);
+    expect(response.location).toContain("/dex/auth");
   }
-  await anonymous.dispose();
 
   const duplicate = await rawRequest([
     "X-Forwarded-User",
@@ -29,7 +24,7 @@ test("real proxy rejects unauthenticated identity and authorization spoofing", a
     "forged@example.com",
   ]);
   expect(duplicate.status).toBe(302);
-  expect(duplicate.location).toContain("/oauth2/");
+  expect(duplicate.location).toContain("/dex/auth");
 
   const genuine = await page.request.get("/api/v1/users/me", { maxRedirects: 0 });
   expect(genuine.status()).toBe(200);
@@ -38,15 +33,19 @@ test("real proxy rejects unauthenticated identity and authorization spoofing", a
 function rawRequest(headers: string[]): Promise<{ status: number; location: string }> {
   const target = new URL("/api/v1/users/me", proxyUrl);
   return new Promise((resolve, reject) => {
-    const req = http.request(target, { method: "GET", headers }, (response) => {
-      response.resume();
-      response.once("end", () =>
-        resolve({
-          status: response.statusCode || 0,
-          location: response.headers.location || "",
-        }),
-      );
-    });
+    const req = http.request(
+      target,
+      { method: "GET", headers: ["Host", target.host, ...headers] },
+      (response) => {
+        response.resume();
+        response.once("end", () =>
+          resolve({
+            status: response.statusCode || 0,
+            location: response.headers.location || "",
+          }),
+        );
+      },
+    );
     req.once("error", reject);
     req.end();
   });

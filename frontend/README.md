@@ -24,6 +24,9 @@ Run the real Dex/oauth2-proxy browser suite after starting the stack:
 PLAYWRIGHT_EXTERNAL_SERVER=true npm run test:e2e
 ```
 
+If the native browser cannot launch, use the matching containerized browser with
+`npm run test:e2e:container` while the development stack is running.
+
 The suite reads its proxy URL and Dex credentials from the root `.env`, persists
 the proxy session for authenticated projects, exercises item ownership and
 sign-out, and probes header spoofing through real HTTP.

@@ -67,7 +67,7 @@ test("checkout OAuth secrets are generated once and then remain stable", () => {
       ]);
       const first = buildEffectiveEnvironment(root, {});
       assert.ok(first.OAUTH2_PROXY_CLIENT_SECRET.length >= 64);
-      assert.ok(first.OAUTH2_PROXY_COOKIE_SECRET.length >= 43);
+      assert.equal(first.OAUTH2_PROXY_COOKIE_SECRET.length, 43);
       assert.ok(first.OAUTH2_PROXY_UPSTREAM_PASSWORD.length >= 64);
       assert.deepEqual(generateCheckoutSecrets(envFile), []);
       assert.equal(
