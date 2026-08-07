@@ -1,91 +1,47 @@
+import path from "node:path";
+import process from "node:process";
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
+try {
+  process.loadEnvFile(path.resolve(import.meta.dirname, "../.env"));
+} catch {
+  // `npm run dev` prints the actionable missing-env message.
+}
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+const webPort = process.env.WEB_PORT || "5173";
+const webUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${webPort}`;
+const apiPort = process.env.API_PORT || "8000";
+const externalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "true";
+
 export default defineConfig({
   testDir: "./tests",
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  reporter: "list",
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:5173",
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: webUrl,
     trace: "on-first-retry",
+    launchOptions: {
+      args: ["--host-resolver-rules=MAP localhost host.docker.internal"],
+    },
   },
-
-  /* Configure projects for major browsers */
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },
-
     {
       name: "chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/user.json",
-      },
+      use: { ...devices["Desktop Chrome"], storageState: "playwright/.auth/user.json" },
       dependencies: ["setup"],
     },
-
-    // {
-    //   name: 'firefox',
-    //   use: {
-    //     ...devices['Desktop Firefox'],
-    //     storageState: 'playwright/.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: {
-    //     ...devices['Desktop Safari'],
-    //     storageState: 'playwright/.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: externalServer
+    ? undefined
+    : {
+        command: "npm --prefix .. run dev",
+        url: `http://localhost:${apiPort}/api/v1/utils/health-check/`,
+        timeout: 180_000,
+        reuseExistingServer: !process.env.CI,
+        gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
+      },
 });

@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: true,
+      allowedHosts: ["host.docker.internal"],
       port: Number(env.WEB_PORT) || 5173,
       strictPort: true,
       watch: {

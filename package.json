@@ -19,7 +19,7 @@
     "lint:backend": "uv run --project backend ruff check backend",
     "test": "npm run test:scripts && npm run test:backend",
     "test:backend": "uv run --project backend pytest backend/app/tests",
-    "test:e2e": "npm --prefix frontend exec playwright test",
+    "test:e2e": "npm exec --prefix frontend -- playwright test --config frontend/playwright.config.ts",
     "test:scripts": "node --test scripts/*.test.mjs",
     "typecheck": "npm --prefix frontend run typecheck",
     "verify": "npm run check && npm run test && npm run build"

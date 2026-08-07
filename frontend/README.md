@@ -111,7 +111,9 @@ npm --prefix frontend exec playwright test --ui
 
 If native browser binaries are unavailable, run the matching
 `mcr.microsoft.com/playwright` image and forward ports 5173 and 8000 to the host. The
-image tag must match the exact `@playwright/test` version in `package.json`.
+image tag must match the exact `@playwright/test` version in `package.json`. Set
+`PLAYWRIGHT_EXTERNAL_SERVER=true` and `PLAYWRIGHT_BASE_URL=http://localhost:5173`; the
+Playwright config maps the container's localhost requests to the host services.
 
 ## Verification
 
