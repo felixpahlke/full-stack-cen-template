@@ -382,6 +382,7 @@ validate_runtime_env() {
             return 1
         }
     fi
+    return 0
 }
 
 confirm_target() {
