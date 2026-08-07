@@ -1,4 +1,3 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -18,8 +17,8 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
 
-from app.tables import SQLModel  # noqa
-from app.core.config import settings # noqa
+from app.core.config import get_settings  # noqa: E402
+from app.tables import SQLModel  # noqa: E402
 
 target_metadata = SQLModel.metadata
 
@@ -30,7 +29,10 @@ target_metadata = SQLModel.metadata
 
 
 def get_url():
-    return str(settings.SQLALCHEMY_DATABASE_URI)
+    database_url = config.attributes.get("database_url")
+    if database_url:
+        return database_url
+    return str(get_settings().SQLALCHEMY_DATABASE_URI)
 
 
 def run_migrations_offline():

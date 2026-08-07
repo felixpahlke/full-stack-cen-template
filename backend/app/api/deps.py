@@ -1,71 +1,93 @@
+from base64 import b64decode
+from binascii import Error as Base64Error
+from collections import Counter
 from collections.abc import Generator
+from secrets import compare_digest
 from typing import Annotated
 
-import jwt
-import requests
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer
-from jwt import PyJWKClient
+from fastapi import Depends, HTTPException, Request, status
+from pydantic import ValidationError
+from sqlalchemy import Engine
 from sqlmodel import Session
 
-from app.core.config import settings
-from app.core.db import engine
-from app.core.singleton import Singleton
-from app.models import TokenPayload, User
+from app.core.config import Settings, get_settings
+from app.core.db import get_engine
+from app.models import User
+
+IDENTITY_HEADERS = {
+    b"x-forwarded-user",
+    b"x-forwarded-email",
+    b"x-forwarded-preferred-username",
+}
+PROTECTED_HEADERS = IDENTITY_HEADERS | {b"authorization"}
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db(
+    engine: Annotated[Engine, Depends(get_engine)],
+) -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
 
 
-bearer = HTTPBearer()
-
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 SessionDep = Annotated[Session, Depends(get_db)]
 
-TokenDep = Annotated[str, Depends(bearer)]
 
+def get_current_user(request: Request, settings: SettingsDep) -> User:
+    if not _has_unambiguous_proxy_headers(request):
+        raise _unauthorized()
+    if not _has_proxy_credential(request, settings):
+        raise _unauthorized()
 
-@Singleton
-class JWKSUrlClient:
-    pyjwk_client: PyJWKClient | None = None
-
-    def __init__(self):
-        openid_config = requests.get(settings.OAUTH2_PROXY_WELL_KNOWN_URL)
-        openid_config.raise_for_status()
-        self.pyjwk_client = PyJWKClient(openid_config.json()["jwks_uri"])
-
-
-def get_current_user(token: TokenDep) -> User:
-    token = token.credentials
-
+    subject = (request.headers.get("x-forwarded-user") or "").strip()
+    email = (request.headers.get("x-forwarded-email") or "").strip().lower()
+    name = (request.headers.get("x-forwarded-preferred-username") or email).strip()
+    if not subject or not email or "," in subject or "," in email:
+        raise _unauthorized()
     try:
-        jwks_client = JWKSUrlClient.instance()
-        signing_key = jwks_client.pyjwk_client.get_signing_key_from_jwt(token)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Failed to get signing key: {str(e)}",
-        )
+        return User(id=subject, email=email, name=name or email)
+    except ValidationError:
+        raise _unauthorized() from None
 
+
+def _has_unambiguous_proxy_headers(request: Request) -> bool:
+    counts: Counter[bytes] = Counter()
+    for raw_name, _ in request.scope.get("headers", []):
+        lowered = raw_name.lower()
+        normalized = lowered.replace(b"_", b"-")
+        if normalized not in PROTECTED_HEADERS:
+            continue
+        if lowered != normalized:
+            return False
+        counts[normalized] += 1
+    return (
+        counts[b"authorization"] == 1
+        and counts[b"x-forwarded-user"] == 1
+        and counts[b"x-forwarded-email"] == 1
+        and counts[b"x-forwarded-preferred-username"] <= 1
+    )
+
+
+def _has_proxy_credential(request: Request, settings: Settings) -> bool:
+    authorization = request.headers.get("authorization") or ""
+    scheme, _, encoded = authorization.partition(" ")
+    if scheme.lower() != "basic" or not encoded:
+        return False
     try:
-        data: TokenPayload = jwt.decode(
-            token,
-            signing_key,
-            issuer=settings.OAUTH2_PROXY_OIDC_ISSUER_URL,
-            options={"verify_aud": False, "verify_exp": False},
-            algorithms=["RS256"],
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Failed to decode token: {str(e)}",
-        )
+        credentials = b64decode(encoded, validate=True).decode()
+    except (Base64Error, UnicodeDecodeError):
+        return False
+    _, separator, password = credentials.partition(":")
+    return bool(separator) and compare_digest(
+        password, settings.OAUTH2_PROXY_UPSTREAM_PASSWORD
+    )
 
-    # Note: There is more data in the token, but we only use the id, email and name currently
-    user = User(id=data["sub"], email=data["email"], name=data["name"])
 
-    return user
+def _unauthorized() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+    )
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]

@@ -1,5 +1,7 @@
 import warnings
 from enum import Enum
+from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -11,6 +13,23 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = BACKEND_ROOT.parent if BACKEND_ROOT.name == "backend" else BACKEND_ROOT
+ENV_FILE = REPO_ROOT / ".env"
+API_V1_STR = "/api/v1"
+
+UPSTREAM_PASSWORD_PLACEHOLDER = "generate-on-first-dev-run"
+COOKIE_SECRET_PLACEHOLDER = "generate-on-first-dev-run"
+CLIENT_SECRET_PLACEHOLDER = "generate-on-first-dev-run"
+PUBLIC_SECRET_VALUES = {
+    "",
+    "changethis",
+    "changeme",
+    "generate-on-first-dev-run",
+    "replace-me",
+    "secret",
+}
 
 
 class Environment(str, Enum):
@@ -27,63 +46,61 @@ class LogLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-def parse_cors(v: Any) -> list[str] | str:
-    if isinstance(v, str) and not v.startswith("["):
-        return [i.strip() for i in v.split(",")]
-    elif isinstance(v, list | str):
-        return v
-    raise ValueError(v)
+def parse_cors(value: Any) -> list[str] | str:
+    if isinstance(value, str) and not value.startswith("["):
+        return [item.strip() for item in value.split(",") if item.strip()]
+    if isinstance(value, list | str):
+        return value
+    raise ValueError(value)
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        env_file=ENV_FILE,
         env_ignore_empty=True,
         extra="ignore",
     )
-    API_V1_STR: str = "/api/v1"
-    # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    FRONTEND_HOST: str = "http://localhost:4180"
+
+    API_V1_STR: str = API_V1_STR
+    CEN_FLAVOR: str = "oauth-proxy-custom-ui"
+    PROJECT_NAME: str
     ENVIRONMENT: Environment = Environment.LOCAL
-    LOG_LEVEL: LogLevel | None = None  # Optional override for log level
+    LOG_LEVEL: LogLevel | None = None
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def EFFECTIVE_LOG_LEVEL(self) -> LogLevel:
-        if self.LOG_LEVEL is not None:
-            return self.LOG_LEVEL
+    API_PORT: int = 8000
+    WEB_PORT: int = 5173
+    DB_PORT: int = 5432
+    ADMINER_PORT: int = 8080
+    DEX_PORT: int = 5556
+    OAUTH2_PROXY_PORT: int = 4180
 
-        if self.ENVIRONMENT == Environment.LOCAL:
-            return LogLevel.INFO  # Standard logging for local development
-        elif self.ENVIRONMENT == Environment.STAGING:
-            return LogLevel.INFO  # Standard logging for staging
-        elif self.ENVIRONMENT == Environment.PRODUCTION:
-            return LogLevel.WARNING  # Only warnings and errors for production
-        else:
-            return LogLevel.INFO  # Default to INFO
+    OAUTH2_PROXY_UPSTREAM_PASSWORD: str = UPSTREAM_PASSWORD_PLACEHOLDER
+    OAUTH2_PROXY_COOKIE_SECRET: str = COOKIE_SECRET_PLACEHOLDER
+    OAUTH2_PROXY_CLIENT_SECRET: str = CLIENT_SECRET_PLACEHOLDER
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl | Literal["*"]] | str, BeforeValidator(parse_cors)
     ] = []
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def all_cors_origins(self) -> list[str]:
-        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
-            self.FRONTEND_HOST
-        ]
-
-    PROJECT_NAME: str
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
-    OAUTH2_PROXY_WELL_KNOWN_URL: str
-    OAUTH2_PROXY_OIDC_ISSUER_URL: str
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def EFFECTIVE_LOG_LEVEL(self) -> LogLevel:
+        if self.LOG_LEVEL is not None:
+            return self.LOG_LEVEL
+        if self.ENVIRONMENT == Environment.PRODUCTION:
+            return LogLevel.WARNING
+        return LogLevel.INFO
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def all_cors_origins(self) -> list[str]:
+        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -97,25 +114,53 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    # TODO: update type to EmailStr when sqlmodel supports it
-    EMAIL_TEST_USER: str = "test@example.com"
-
-    def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        if value == "changethis":
-            message = (
-                f'The value of {var_name} is "changethis", '
-                "for security, please change it, at least for deployments."
-            )
-            if self.ENVIRONMENT == "local":
-                warnings.warn(message, stacklevel=1)
-            else:
-                raise ValueError(message)
+    def _check_secret(
+        self,
+        var_name: str,
+        value: str,
+        *,
+        reject_locally: bool = False,
+        minimum_length: int = 32,
+    ) -> None:
+        normalized = value.strip()
+        weak = (
+            normalized.lower() in PUBLIC_SECRET_VALUES
+            or len(normalized) < minimum_length
+            or len(set(normalized)) == 1
+        )
+        if not weak:
+            return
+        message = (
+            f"{var_name} must be a non-placeholder random value of at least "
+            f"{minimum_length} characters. Run `npm run dev` to generate local values."
+        )
+        if self.ENVIRONMENT == Environment.LOCAL and not reject_locally:
+            warnings.warn(message, stacklevel=1)
+            return
+        raise ValueError(message)
 
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
-        self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
-
+        if self.POSTGRES_PASSWORD == "changethis":
+            message = "POSTGRES_PASSWORD must be changed for deployments."
+            if self.ENVIRONMENT == Environment.LOCAL:
+                warnings.warn(message, stacklevel=1)
+            else:
+                raise ValueError(message)
+        self._check_secret(
+            "OAUTH2_PROXY_UPSTREAM_PASSWORD",
+            self.OAUTH2_PROXY_UPSTREAM_PASSWORD,
+            reject_locally=True,
+        )
+        self._check_secret(
+            "OAUTH2_PROXY_COOKIE_SECRET", self.OAUTH2_PROXY_COOKIE_SECRET
+        )
+        self._check_secret(
+            "OAUTH2_PROXY_CLIENT_SECRET", self.OAUTH2_PROXY_CLIENT_SECRET
+        )
         return self
 
 
-settings = Settings()  # type: ignore
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()  # type: ignore[call-arg]
