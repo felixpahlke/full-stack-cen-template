@@ -19,7 +19,7 @@ ensure_webhook_secret() {
 }
 
 configure_component_webhook() {
-    local component=$1 server url redacted_url response code body curl_config payload_file
+    local component=$1 server url redacted_url code body curl_config payload_file response_file
     oc_resource_is_owned buildconfig "$component" || { warn_unowned_collision buildconfig "$component"; return 1; }
     server=$(oc whoami --show-server)
     url="${server%/}/apis/build.openshift.io/v1/namespaces/${PROJECT_NAME}/buildconfigs/${component}/webhooks/${WEBHOOK_SECRET_VALUE}/github"
@@ -28,15 +28,16 @@ configure_component_webhook() {
         print_warning "Configure the $component webhook manually: $redacted_url"
         return 0
     fi
-    response=$(curl --disable --config "$curl_config" --silent --show-error --write-out '\n%{http_code}' --url "$GITHUB_REPO_API/hooks" || true)
-    code=$(printf '%s\n' "$response" | tail -n 1); body=$(printf '%s\n' "$response" | sed '$d')
+    make_temp_file response_file
+    code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" \
+        --write-out '%{http_code}' --url "$GITHUB_REPO_API/hooks" || true)
+    body=$(<"$response_file")
     if [[ "$code" =~ ^2 && "$body" == *"$url"* ]]; then return 0; fi
     make_temp_file payload_file
     printf '{"name":"web","active":true,"events":["push"],"config":{"url":"%s","content_type":"json","insecure_ssl":"0"}}' "$url" > "$payload_file"
-    response=$(curl --disable --config "$curl_config" --silent --show-error --write-out '\n%{http_code}' \
+    code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" --write-out '%{http_code}' \
         --request POST --header 'Accept: application/vnd.github+json' --url "$GITHUB_REPO_API/hooks" \
         --data-binary "@$payload_file" || true)
-    code=$(printf '%s\n' "$response" | tail -n 1)
     [[ "$code" =~ ^2 ]] || print_warning "GitHub webhook creation failed (HTTP $code); use: $redacted_url"
 }
 
