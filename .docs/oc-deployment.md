@@ -34,9 +34,41 @@ set. `--regenerate-ssh-key` rotates the deploy key. Run `npm run test:deploy` be
 
 Running PostgreSQL `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` values are compared
 before the shared application secret changes. Drift requires typed destructive confirmation and an
-owned PVC reset; declining leaves both sides untouched. The deployer also owns the
-`webhook-access-unauthenticated` RoleBinding from `system:unauthenticated` to `system:webhook`.
-GitHub API failures are fatal; tokenless usable webhook URLs are terminal-only.
+owned PVC reset; declining leaves both sides untouched.
+
+The deployer owns the `webhook-access-unauthenticated` RoleBinding from
+`system:unauthenticated` to `system:webhook`. Creating it requires permission both to create a
+RoleBinding in the project and to bind the `system:webhook` ClusterRole. Project-scoped users on
+managed clusters may need a cluster administrator to apply it:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webhook-access-unauthenticated
+  labels:
+    app.kubernetes.io/managed-by: cen-template
+    app.kubernetes.io/instance: <APP_NAME>
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:webhook
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:unauthenticated
+```
+
+Apply that manifest with `oc -n <PROJECT_NAME> apply -f rolebinding.yaml`. This deliberately lets
+unauthenticated GitHub POST requests reach OpenShift build webhooks; the random secret embedded in
+each BuildConfig webhook URL is what authenticates and protects the trigger. If the deployer lacks
+the required RBAC permission, application deployment continues but the summary reports webhooks as
+inactive and prints the credential-bearing URLs only on the interactive terminal. Until an
+administrator creates the binding, GitHub pushes do not trigger builds. Other RoleBinding apply
+errors and GitHub API failures remain fatal. Without a GitHub token, usable credential-bearing
+webhook URLs are likewise terminal-only.
 
 ## Ownership and cleanup
 
