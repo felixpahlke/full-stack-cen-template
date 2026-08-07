@@ -1,79 +1,91 @@
 # Development
 
-FastAPI and Vite run natively for hot reload. Docker Compose runs only PostgreSQL,
-Adminer, Dex, and oauth2-proxy. The browser always enters through oauth2-proxy; do
-not use the native Vite URL as an application entry point.
+## Prerequisites and first run
 
-## First run
-
-Install Node.js 20.19+, npm, uv, and a Docker-compatible runtime. Then run:
+- Node.js 20.19+ with npm
+- Python 3.10–3.12 and uv
+- Docker Desktop, Colima, or native Linux Docker
+- `docker compose` or standalone `docker-compose`
 
 ```bash
-cp .env.example .env
 npm ci
-npm --prefix frontend ci
+npm ci --prefix frontend
 uv sync --project backend
+cp .env.example .env
 npm run dev
 ```
 
-On the first `npm run dev`, the runner replaces the three
-`generate-on-first-dev-run` markers in `.env` with strong checkout-local values
-and restricts the file permissions. It validates ports and the local database
-target, starts the four Compose services, waits for PostgreSQL, Adminer, Dex, and
-oauth2-proxy, applies Alembic migrations, and then starts native uvicorn and Vite.
-There is no user seed because OAuth subjects are not stored in a user table.
+The supervisor detects Docker Desktop, Colima, or native Linux and selects the correct
+container-to-host Vite address. It refuses missing tools, dependencies, environment values,
+unsafe remote databases, or occupied ports before starting services.
 
-All ports and the local Dex test credentials come from the root `.env`. With the
-example ports, the browser entry is `http://localhost:4180`, Dex is
-`http://localhost:5556/dex`, the loopback-only API is `http://127.0.0.1:8000`,
-Vite is `http://localhost:5173`, and Adminer is `http://localhost:8080`.
+## Topology, ports, and environment
 
-Press Ctrl-C once for graceful native-process shutdown followed by `compose down`.
-A second Ctrl-C accelerates cleanup. The PostgreSQL named volume is preserved.
-The runner detects both `docker compose` and standalone `docker-compose` (including
-Colima setups). It detects the daemon runtime before Compose starts and selects the
-container-to-host path without overriding runtime-native DNS:
+Compose starts PostgreSQL, Adminer, Dex, and oauth2-proxy. Uvicorn and Vite run natively with
+reload/HMR. The backend is loopback-only; browsers must use the proxy.
 
-- Docker Desktop uses `host.docker.internal` with Docker Desktop's native mapping.
-- Colima uses `host.lima.internal` with Colima/Lima's native mapping and no
-  override for that hostname.
-- Native Linux Docker uses `host.docker.internal` plus an explicit `host-gateway`
-  mapping.
+| Key | Default | URL/service |
+| --- | ---: | --- |
+| `OAUTH2_PROXY_PORT` | 4180 | Browser entry: `http://localhost:4180` |
+| `WEB_PORT` | 5173 | Vite upstream; not the authenticated entry |
+| `API_PORT` | 8000 | Loopback backend |
+| `DEX_PORT` | 5556 | Local issuer under `/dex` |
+| `ADMINER_PORT` | 8080 | Adminer |
+| `DB_PORT` / `POSTGRES_PORT` | 5432 | Local PostgreSQL; values must match |
 
-After Vite starts, the runner performs an HTTP probe from a container to the selected
-host and stops with a runtime- and hostname-specific error if that path is broken.
+Required runtime keys are `CEN_FLAVOR`, `ENVIRONMENT`, `PROJECT_NAME`, all port keys,
+`POSTGRES_*`, the four `OAUTH2_PROXY_*` credentials, `OAUTH2_PROXY_COOKIE_SECURE`, the five
+`DEX_TEST_USER_*` fields, `PLAYWRIGHT_EXTERNAL_SERVER`, and telemetry. `VITE_API_URL` and
+`BACKEND_CORS_ORIGINS` remain empty for same-origin proxy routing.
 
-## Authentication boundary
+The marker values `generate-on-first-dev-run` are intentionally invalid. On the first
+`npm run dev`, strong `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, and
+`OAUTH2_PROXY_UPSTREAM_PASSWORD` values are generated into that checkout's ignored `.env`.
+Missing, example, or weak secrets are refused in every environment. Each checkout therefore has
+a different private proxy/backend credential.
 
-Local development uses the bundled Dex password account. oauth2-proxy owns the
-browser session, validates nonce and PKCE S256, strips client identity headers,
-and injects normalized identity plus a per-checkout upstream credential. FastAPI
-accepts identity only when that credential is present and binds to loopback in the
-native runner. Direct bearer tokens and forwarded headers are not authentication.
+Dex is a local-only test IdP pinned as
+`dexidp/dex:v2.45.1-distroless@sha256:8bfd667b384c2a2555c355c58c167e11127d2ea1a3711f1c246e4d7c5528eb2a`.
+oauth2-proxy is pinned as
+`quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561`.
 
-Dex is pinned to the v2.45.1 distroless multi-architecture image by digest. This was
-the current stable upstream release reviewed on August 7, 2026; the tag documents the
-release while the digest prevents an unreviewed image change.
+## Authentication and logout
 
-Deployments continue to support an external OIDC provider through the standard
-`OAUTH2_PROXY_CLIENT_ID`, `OAUTH2_PROXY_CLIENT_SECRET`, and
-`OAUTH2_PROXY_OIDC_ISSUER_URL` environment values used by the deployment assets.
-Use `OAUTH2_PROXY_COOKIE_SECURE=true` behind HTTPS and provide independent random
-cookie and upstream secrets. Non-local backend startup rejects placeholder or
-obviously weak values.
+Open `http://localhost:4180`; unauthenticated requests redirect through `/oauth2/sign_in` to
+Dex. The proxy owns the secure session cookie and sends normalized identity to FastAPI only with
+the private Basic credential. The backend rejects spoofed forwarded headers, direct browser
+bearer tokens, and an incorrect seam password.
 
-## Commands
+Logout routes through `/oauth2/sign_out` and ends the proxy session. It does **not** terminate
+the upstream IdP SSO session. Returning to login can silently authenticate while the Dex/external
+IdP session remains active; fully ending SSO requires the provider's logout/session controls.
+
+## Migrate on start and shutdown
+
+With `MIGRATE_ON_START=true`, backend startup acquires PostgreSQL advisory lock `7461001`, upgrades
+to the checkout's Alembic heads, verifies exact head equality, and seeds before readiness.
+`MIGRATION_LOCK_TIMEOUT_SECONDS` defaults to 60. With migration disabled, exact-head checking
+still runs. Lock timeout, unreachable database, broken migration, or any extra/missing revision
+aborts startup and readiness.
+
+One Ctrl-C gives children up to five seconds, then kills survivors and bounds Compose teardown;
+worst case is about 12 seconds. A second Ctrl-C escalates immediately. The database volume is
+preserved.
+
+## Tests, generation, and troubleshooting
 
 ```bash
 npm run verify
-npm run generate-client
-npm run test:e2e
-npm run test:e2e:container
-npm run db:migrate
+npm run test:deploy
 ```
 
-Client generation is offline and atomic: it constructs OpenAPI from the app
-factory, generates into a staging directory, type-checks it, and publishes only a
-complete client. `npm run verify` does not read `.env`; backend tests use a
-disposable Testcontainers PostgreSQL database unless `TEST_DATABASE_URL` names an
-explicit strict test database.
+Backend tests use a disposable Testcontainers PostgreSQL instance and ignore `.env`. Playwright
+must traverse real Dex and oauth2-proxy; use the commands in `frontend/README.md`. Native browser
+launch may be blocked locally, so the container command is the supported fallback.
+
+Use `npm run generate-client` after API changes and never edit generated client/route files.
+Occupied ports are reported up front. For missing `backend/.venv`, rerun
+`uv sync --project backend`; for missing frontend packages, rerun `npm ci --prefix frontend`.
+Use the detected Compose command for logs. If proxy startup reports that Vite is unreachable,
+check the active Docker context: Docker Desktop uses `host.docker.internal`, Colima uses
+`host.lima.internal`, and native Linux uses the host-gateway mapping.

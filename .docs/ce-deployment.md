@@ -1,264 +1,72 @@
-# IBM Code Engine Deployment Guide
+# Code Engine deployment — oauth-proxy
 
-This guide covers deploying the application to **IBM Code Engine**, a serverless container platform with automatic scaling.
+This branch deploys separate backend/frontend images behind a public oauth2-proxy. PostgreSQL is
+external to Code Engine. Backend and frontend applications are project-private from creation.
 
-## Table of Contents
+## Configure and deploy
 
-- [Prerequisites](#prerequisites)
-- [Environment Configuration](#environment-configuration)
-- [Frontend Configuration](#frontend-configuration)
-- [Deployment](#deployment)
-- [OAuth2 Proxy Configuration](#oauth2-proxy-configuration)
-- [Post-Deployment](#post-deployment)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Prerequisites
-
-- **IBM Cloud Account** with appropriate permissions
-- **IBM Cloud CLI** installed
-- **Container Registry Namespace** created
-- **PostgreSQL Database** (provisioned manually)
-
-### Install Required Tools
-
-1. **IBM Cloud CLI**:
-
-   ```bash
-   Linux: curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
-   MacOS: curl -fsSL https://clis.cloud.ibm.com/install/osx | sh
-   ```
-
-2. **Required Plugins**:
-
-   ```bash
-   ibmcloud plugin install container-registry
-   ibmcloud plugin install code-engine
-   ```
-
----
-
-## Environment Configuration
-
-### Step 1: Create Production Environment File
-
-Copy the example file to create your production configuration:
+Install Docker, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`; log in to
+the intended account. Then:
 
 ```bash
 cp .env.production.example .env.production
-```
-
-### Step 2: Configure Required Variables
-
-Edit `.env.production` and set the required variables.
-
-#### 1. General Configuration
-
-```bash
-# Application Identity
-PROJECT_NAME=my-new-project
-ENVIRONMENT=production
-
-# Admin User
-FIRST_SUPERUSER=admin@example.com
-FIRST_SUPERUSER_PASSWORD=your-secure-password
-SIGNUP_ACCESS_PASSWORD=your-secure-password
-
-# Backend Security
-SECRET_KEY=your-secret-key-min-8-chars
-
-# Database
-POSTGRES_SERVER=your-db-host
-POSTGRES_PORT=5432
-POSTGRES_DB=app
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your-db-password
-
-# Endpoints that can communicate with backend
-# This is automatically set to frontend url by deployment script
-BACKEND_CORS_ORIGINS=your-frontend-url
-```
-
-#### 2. IBM Cloud Configuration
-
-```bash
-# VITE_API_URL can stay empty
-# This is automatically set to backend url by deployment script
-VITE_API_URL=your-backend-url
-
-# IBM Cloud Resources
-# For the cloud account make sure to only use the name after the dash
-# 2292046 - ClientEngineeringDACH = ClientEngineeringDACH
-_IAM_API_KEY=<your-api-key>
-_IBM_CLOUD_RESOURCE_GROUP=Default
-_IBM_CLOUD_REGION=eu-de
-_IBM_CLOUD_ACCOUNT_NAME=your-cloud-account-name-after-the-dash
-
-# Code Engine Project
-_CE_PROJECT_NAME=my-project-max-20-chars
-_CR_REGISTRY=de.icr.io
-
-# Optionally specify this variable in case techzone doesnt allow creation of a new namespace or you simply want to reuse an existing one
-_CR_NAMESPACE=
-```
-
-> [!IMPORTANT]
-> You will notice some variables in `.env.production` are prefixed with an underscore (e.g., `_CE_PROJECT_NAME`).
->
-> - **Variables starting with `_`**: These are used **only by the deployment script** (e.g., to configure infrastructure) and are **NOT** passed to the application container.
-> - **Variables without `_`**: These are passed as environment variables to the running application.
->
-> This separation ensures that sensitive infrastructure credentials or script-specific configurations do not pollute the application's runtime environment.
-
----
-
-## Frontend Configuration
-
-### Nginx Configuration
-
-The frontend use an Nginx server to serve the static files. For Code Engine deployments, the backend and frontend run as separate services (apps).
-
-**Requirement:** You **MUST** disable the `/api` location block in `frontend/nginx.conf`.
-
-1. Open `frontend/nginx.conf`.
-2. Locate the `location /api` block.
-3. Comment it out or remove it.
-
-```nginx
-# frontend/nginx.conf
-
-# ... other config ...
-
-# COMMENT THIS OUT FOR CODE ENGINE:
-# location /api {
-#   proxy_pass http://backend:8000;
-# }
-```
-
-> [!IMPORTANT]
-> If you leave this block active, Nginx will try to proxy requests to `http://backend:8000` inside the same container/pod, which **will fail** on Code Engine because the backend runs in a separate service. The deployment script has a check that will prevent deployment if this block is active.
-
----
-
-## Deployment
-
-### 1. Configure Secrets
-
-Ensure all sensitive values in `.env.production` (like `SECRET_KEY`, `POSTGRES_PASSWORD`, `_IAM_API_KEY`) are set to your actual secret values.
-
-> [!WARNING]
-> Never commit `.env.production` to version control as it contains sensitive credentials.
-
-### 2. Run Deployment Script
-
-Deploys frontend and backend containers as applications in CodeEngine. In case OAuth2 variables are configured, an oauth-proxy application is added.
-
-```bash
+./scripts/ce-deploy.sh --dry-run
 ./scripts/ce-deploy.sh
 ```
----
 
-## OAuth2 Proxy Configuration
+Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
+`BACKEND_CORS_ORIGINS`, `OAUTH2_PROXY_COOKIE_SECRET`, `OAUTH2_PROXY_CLIENT_ID`,
+`OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_OIDC_ISSUER_URL`,
+`OAUTH2_PROXY_UPSTREAM_PASSWORD`, and `OAUTH2_PROXY_COOKIE_SECURE=true`. Documented example,
+marker, missing, or weak proxy secrets are refused. The upstream password is the private Basic
+credential shared only by proxy and backend.
 
-To protect your application with an OIDC provider (e.g., IBM App ID, Keycloak, Auth0), configure the following in `.env.production`:
+Set `_APP_NAME`, `_IAM_API_KEY`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`,
+`_CE_PROJECT_NAME`, and `_CR_REGISTRY`; account name and registry namespace are optional
+constraints. Keep `MIGRATE_ON_START=true` and choose a migration lock timeout. Exact Alembic-head
+verification runs before readiness; failure means the release must not serve traffic.
 
-```bash
-# OAuth2 Proxy Cookie Secret (32 characters recommended)
-OAUTH2_PROXY_COOKIE_SECRET=your-32-char-secret
+The deployer first makes existing owned application workloads project-private (or proves them
+absent), then builds images and reconciles secrets/workloads, and exposes only oauth2-proxy.
+OAuth2-proxy is digest-pinned. Proxy logout ends the proxy session but not upstream IdP SSO, so a
+new login can be silent.
 
-# OIDC Provider Configuration
-OAUTH2_PROXY_CLIENT_ID=your-client-id
-OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
-OAUTH2_PROXY_OIDC_ISSUER_URL=https://your-oidc-provider.com
+## Ownership and cleanup
 
-# Private proxy/backend seam. The example marker or a missing value is generated
-# by the deployment script and stored in both Code Engine secrets.
-OAUTH2_PROXY_UPSTREAM_PASSWORD=<generate-a-random-upstream-password>
+Ownership requires both `app.kubernetes.io/managed-by=cen-template` and
+`app.kubernetes.io/instance=<APP_NAME>`. A same-name resource without both labels is left alone
+and causes fail-closed collision handling. Cleanup rechecks labels immediately before deletion,
+touches only obsolete resources in this topology, and preserves database storage during normal
+convergence. Secret values travel through mode-0600 files, never command arguments.
 
-# Optional: Well-Known URL (Auto-generated if missing)
-# Defaults to: ${OAUTH2_PROXY_OIDC_ISSUER_URL}/.well-known/openid-configuration
-# OAUTH2_PROXY_WELL_KNOWN_URL=https://your-oidc-provider.com/.well-known/openid-configuration
-```
+## Real-cluster maintainer checklist
 
-> [!NOTE]
-> **Behavior:**
-> - **All variables set:** OAuth2 Proxy is deployed and protects the application. Nginx and Backend are set to internal (cluster-local) access only.
-> - **Any variable missing:** OAuth2 Proxy is skipped. Application is publicly accessible.
-> - **Proxy/backend seam:** The deployed proxy uses a digest-pinned v7.15.3 image, secure cookies, stripped client auth headers, and Basic upstream authentication. Secret values are passed through protected temporary files rather than command arguments.
+Real cluster smoke tests are pending and remain a release blocker for a deployment claim:
 
----
-
-## Post-Deployment
-
-After a successful deployment, the script will output:
-
-- **Application URLs** (Frontend, Backend, or OAuth Proxy)
-- **Infrastructure Details** (Region, Project, Registry)
-
-### Verifying Status
-
-Check application status via CLI:
-
-```bash
-ibmcloud ce project list
-ibmcloud ce project select -n <your-project-name>
-```
-
-View logs:
-
-```bash
-ibmcloud ce application list
-ibmcloud ce application logs -n <your-app-name> -f
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. Database Connection Failed
-
-- **Symptoms:** Backend fails to start, logs show connection refused.
-- **Fix:** Ensure `POSTGRES_SERVER` host is reachable from Code Engine. Check if your database allows connections from public IPs (if using public endpoints) or the correct private network. Code Engine does NOT run in your VPC by default; it connects via public internet unless specifically configured with Satellite or VPN.
-
-#### 2. Frontend Cannot Reach Backend
-
-- **Symptoms:** Frontend loads, but API calls fail (404 or Network Error).
-- **Fix:**
-  - Check browser console.
-  - Verify `VITE_API_URL` was correctly updated in `.env.production` by the script.
-  - Ensure `BACKEND_CORS_ORIGINS` includes the frontend URL.
-
-#### 3. Deployment Script Fails on Nginx Check
-
-- **Symptoms:** Script exits with "Found active 'location /api' block".
-- **Fix:** Follow instructions in [Frontend Configuration](#frontend-configuration) to comment out the `/api` block.
-
-#### 4. Build Failures
-
-- **Symptoms:** `docker image build` fails.
-- **Fix:**
-  - Ensure Docker is running locally with `docker info`.
-  - Check disk space.
-  - If on Apple Silicon (M1/M2/M3), ensure you can build `linux/amd64` images (Deployment script forces this platform).
-
-#### 5. Frontend Build fails
-- **Symptoms:** `npm run build` fails during deployment.
-- **Fix:**
-  - ``cd frontend`` to get into your frontend folder
-  - ``npm run build`` to trigger frontend build
-  - Now you will see detailed errors in terminal, often it is about unused imports 
-
-#### 6. Script wrongly states deployment failed
-- **Symptoms:** Script outputs that the deployed container could not start
-- **Fix:** Check CodeEngine, sometimes the container takes a little longer to start up than the script actually waits for
-
-### Debugging
-
-Enable verbose output for connection debugging by checking the `.env.production` values (the script updates them automatically):
-
-```bash
-cat .env.production | grep URL
-```
+1. Code Engine accepts `--visibility project` on create/update and its not-found response matches
+   the fail-closed classifier.
+2. Code Engine Kubernetes access exposes and retains both ownership labels on Knative Services
+   and Secrets.
+3. Existing public OAuth application workloads become project-private before an injected
+   registry/build/secret failure.
+4. Fresh OAuth applications are private from creation and reachable by the public proxy through
+   project-local DNS.
+5. Separate backend/frontend image builds, instance-scoped tags, registry-secret recreation, and
+   registry permissions work end to end.
+6. OpenShift direct-to-OAuth conversion keeps the old path until proxy readiness, then switches
+   ingress and removes owned direct paths.
+7. Weighted `alternateBackends`, numeric ports, and primary-Route alternate clearing match the
+   real Route API.
+8. OpenShift resources retain both labels after BuildConfig, image-trigger, Deployment, and Route
+   controllers reconcile them.
+9. The integrated-registry readiness gate succeeds on a configured cluster and fails clearly
+   without auto-patching an unconfigured registry.
+10. GitHub deploy keys and both component webhooks work without exposing tokens or webhook
+    secrets.
+11. Normal database deployment preserves the PostgreSQL PVC; confirmed reset removes only the
+    exact owned PostgreSQL resources.
+12. In a shared namespace/project, `app-a` cannot mutate or delete `app-b`.
+13. OAuth login/logout, secure cookies, forwarded identity headers, and the private Basic Auth
+    proxy/backend seam work end to end.
+14. Backend-only branches create no frontend resources; the no-database branch preserves any
+    existing PVC for recovery.

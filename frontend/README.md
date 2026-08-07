@@ -1,63 +1,39 @@
 # Frontend development
 
-The frontend uses React, TypeScript, Vite, TanStack Query and Router, IBM Carbon,
-and Tailwind CSS 4. Direct dependencies are exact-pinned and the lockfile is
-managed by npm. Node.js 20.19 or newer is required.
+This React 19/TypeScript/Vite frontend uses IBM Carbon, Tailwind CSS 4, TanStack Router/Query,
+and the generated API client. Install only with npm.
 
-Install the root and frontend dependencies from the repository root:
+Start the complete stack with the root quick-start sequence. Always browse through
+`http://localhost:4180`; `http://localhost:5173` is only the proxy's Vite upstream. Login starts
+at `/oauth2/sign_in`; logout uses `/oauth2/sign_out`. Proxy logout does not terminate the
+upstream IdP SSO session, so the next login may be silent.
 
-```bash
-npm ci
-npm --prefix frontend ci
-```
-
-Then start the complete OAuth development loop with `npm run dev`.
-
-The browser entry is the oauth2-proxy URL derived from `OAUTH2_PROXY_PORT`; Vite's
-native port is an internal development upstream. Same-origin `/api` requests are
-proxied by Vite to the loopback FastAPI process while preserving the identity
-headers stamped by oauth2-proxy.
-
-Generate the API client from the repository root:
+## Generated artifacts
 
 ```bash
 npm run generate-client
+npm run check:generated
 ```
 
-Generation is offline and does not require `.env`, a running backend, or Docker.
-Do not edit `frontend/src/client` manually.
+Generation imports the backend directly and atomically updates `frontend/src/client` and
+`frontend/src/routeTree.gen.ts`. Never edit them manually.
 
-Run `npm --prefix frontend run generate-routes` when only route source files change.
+## Real-proxy Playwright
 
-## Styling and themes
-
-Carbon component styles live in `src/styles/carbon.scss`. Tailwind 4 is configured
-through `src/styles/index.css` and the `@tailwindcss/vite` plugin; there is no
-Tailwind configuration file or PostCSS configuration. The bridge in
-`src/styles/themes/carbon.css` maps Tailwind utilities to active Carbon tokens.
-Theme selection supports light, dark, and system settings, persists under
-`vite-ui-theme`, and resolves to Carbon `g10` or `g90` plus the matching `.dark`
-state.
-
-## Verification
-
-Run the environment-independent checks without a root `.env`:
-
-```bash
-npm run verify
-npm --prefix frontend audit
-```
-
-The real Dex/oauth2-proxy browser suite requires the development environment and
-its root `.env`. Start the stack, then run:
+Start `npm run dev`, then either run a native browser:
 
 ```bash
 PLAYWRIGHT_EXTERNAL_SERVER=true npm run test:e2e
 ```
 
-If the native browser cannot launch, use the matching containerized browser with
-`npm run test:e2e:container` while the development stack is running.
+or use the verified container wrapper when native browsers are missing/blocked:
 
-The suite reads its proxy URL and Dex credentials from the root `.env`, persists
-the proxy session for authenticated projects, exercises item ownership and
-sign-out, and probes header spoofing through real HTTP.
+```bash
+npm run test:e2e:container
+```
+
+The wrapper derives the exact Playwright image version from the lockfile, mounts the checkout,
+and traverses Dex, oauth2-proxy, secure cookies, logout, and protected pages. A direct Vite or
+backend-only browser test is not an acceptable OAuth check.
+
+Run `npm run check`, `npm run build`, and `npm --prefix frontend audit` for frontend quality.
