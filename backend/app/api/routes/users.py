@@ -8,9 +8,9 @@ from app import crud
 from app.api.deps import (
     CurrentUser,
     SessionDep,
+    SettingsDep,
     get_current_active_superuser,
 )
-from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Message,
@@ -137,7 +137,9 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
 
 
 @router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister) -> Any:
+def register_user(
+    session: SessionDep, settings: SettingsDep, user_in: UserRegister
+) -> Any:
     """
     Create new user without the need to be logged in.
     """

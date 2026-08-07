@@ -1,6 +1,8 @@
 import secrets
 import warnings
 from enum import Enum
+from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -12,6 +14,11 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = BACKEND_ROOT.parent if BACKEND_ROOT.name == "backend" else BACKEND_ROOT
+ENV_FILE = REPO_ROOT / ".env"
+API_V1_STR = "/api/v1"
 
 
 class Environment(str, Enum):
@@ -38,12 +45,10 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        env_file=ENV_FILE,
         env_ignore_empty=True,
         extra="ignore",
     )
-    API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
@@ -125,4 +130,6 @@ class Settings(BaseSettings):
         return self
 
 
-settings = Settings()  # type: ignore
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()  # type: ignore[call-arg]
