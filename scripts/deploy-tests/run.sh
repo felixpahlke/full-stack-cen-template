@@ -179,7 +179,7 @@ if [[ "$args" == *' get routes.route.openshift.io,services,deployments.apps '* ]
     const direct=process.argv[1]==="true",unowned=process.argv[2]==="true";const items=[
       {kind:"Service",metadata:{name:"backend"},spec:{selector:{deployment:"backend"},ports:[{name:"http",port:8000,targetPort:8000}]}},
       {kind:"Service",metadata:{name:"safe"},spec:{selector:{deployment:"safe"},ports:[{name:"web",port:80,targetPort:8081}]}},
-      {kind:"Deployment",metadata:{name:"backend"},spec:{template:{metadata:{labels:{deployment:"backend"}},spec:{containers:[{name:"backend",ports:[]}]}}}
+      {kind:"Deployment",metadata:{name:"backend"},spec:{template:{metadata:{labels:{deployment:"backend"}},spec:{containers:[{name:"backend",ports:[]}]}}}}
     ]; if(direct)items.push({kind:"Route",metadata:{name:"weighted-direct",labels:unowned?{}:{"app.kubernetes.io/managed-by":"cen-template","app.kubernetes.io/instance":"app-a"}},spec:{to:{name:"safe"},alternateBackends:[{name:"backend",weight:10}],port:{targetPort:8000}}});process.stdout.write(JSON.stringify({items}))' "$direct" "$unowned"
   exit 0
 fi

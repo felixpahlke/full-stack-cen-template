@@ -2,10 +2,10 @@
 
 readonly OAUTH2_PROXY_IMAGE='quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
 
-is_oauth_enabled() { [[ "$OAUTH_ENABLED" == true ]]; }
+is_oauth_enabled() { [[ "${OAUTH_ENABLED:-${DEPLOY_OAUTH:-true}}" == true ]]; }
 
 ensure_oauth_upstream_password() {
-    [[ "$OAUTH_ENABLED" == true ]] || return 0
+    is_oauth_enabled || return 0
     local value=${OAUTH2_PROXY_UPSTREAM_PASSWORD:-} first_character
     first_character=${value:0:1}
     if [[ -z "$value" || "$value" == generate-on-first-dev-run || "$value" == replace-me || "$value" =~ ^\<.*\>$ ]]; then
@@ -26,14 +26,25 @@ oauth_public_host() {
 
 create_oauth_proxy_secret() {
     local host
-    host=$(oauth_public_host) || return 1
+    if declare -F openshift_apps_domain >/dev/null; then host=$(oauth_public_host) || return 1
+    else host=$(oc get route oauth-proxy -o jsonpath='{.spec.host}') || return 1
+    fi
+    # The seam is stored as OAUTH2_PROXY_BASIC_AUTH_PASSWORD via --from-env-file.
     create_oauth_env_secret "https://$host"
     add_deployment_output oauth_redirect_url "https://$host/oauth2/callback"
 }
 
 apply_oauth_workload() {
-    ensure_oc_resource_owned_or_absent deployment oauth-proxy
-    cat <<EOF | apply_resource 'OAuth proxy workload'
+    if declare -F ensure_oc_resource_owned_or_absent >/dev/null; then ensure_oc_resource_owned_or_absent deployment oauth-proxy; fi
+    if declare -F apply_resource >/dev/null; then
+        apply_oauth_workload_manifest | apply_resource 'OAuth proxy workload'
+    else
+        apply_oauth_workload_manifest | oc apply -f -
+    fi
+}
+
+apply_oauth_workload_manifest() {
+    cat <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -102,9 +113,12 @@ EOF
 }
 
 deploy_oauth_proxy() {
-    [[ "$OAUTH_ENABLED" == true ]] || return 0
+    is_oauth_enabled || return 0
     apply_oauth_workload
-    run oc rollout status deployment/oauth-proxy --timeout=15m
+    if declare -F run >/dev/null; then run oc rollout status deployment/oauth-proxy --timeout=15m
+    else oc rollout status deployment/oauth-proxy --timeout=15m
+    fi
+    declare -F apply_resource >/dev/null || return 0
     print_success 'OAuth proxy workload is Ready; switching ingress now.'
     apply_oauth_ingress
     remove_direct_app_routes

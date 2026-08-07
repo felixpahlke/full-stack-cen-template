@@ -64,7 +64,39 @@ update_app_env_secret_with_urls() {
 
 create_oauth_env_secret() {
     local public_url=$1 secret_file secret_name="$APP_NAME-oauth-proxy-secret"
-    make_temp_file secret_file
-    write_oauth_env_file "$secret_file" "$public_url"
-    recreate_oc_env_secret "$secret_name" "$secret_file"
+    if declare -F make_temp_file >/dev/null; then make_temp_file secret_file
+    else secret_file=$(mktemp "${TMPDIR:-/tmp}/cen-oauth-secret.XXXXXX"); chmod 600 "$secret_file"
+    fi
+    if declare -F write_oauth_env_file >/dev/null; then write_oauth_env_file "$secret_file" "$public_url"
+    else
+        {
+            printf 'OAUTH2_PROXY_COOKIE_SECRET=%s\n' "$OAUTH2_PROXY_COOKIE_SECRET"
+            printf 'OAUTH2_PROXY_CLIENT_ID=%s\n' "$OAUTH2_PROXY_CLIENT_ID"
+            printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$OAUTH2_PROXY_CLIENT_SECRET"
+            printf 'OAUTH2_PROXY_OIDC_ISSUER_URL=%s\n' "$OAUTH2_PROXY_OIDC_ISSUER_URL"
+            printf 'OAUTH2_PROXY_REDIRECT_URL=%s/oauth2/callback\n' "$public_url"
+            printf 'OAUTH2_PROXY_BASIC_AUTH_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD"
+            printf 'OAUTH2_PROXY_COOKIE_SECURE=true\n'
+        } > "$secret_file"
+    fi
+    if declare -F ensure_oc_resource_owned_or_absent >/dev/null; then recreate_oc_env_secret "$secret_name" "$secret_file"
+    else oc create secret generic "$secret_name" --from-env-file="$secret_file"; rm -f "$secret_file"
+    fi
+}
+
+# Compatibility helper retained for callers that source only the secret/OAuth libraries.
+write_backend_secret_env_file() {
+    local destination=$1 line name oauth_enabled=${OAUTH_ENABLED:-${DEPLOY_OAUTH:-false}} found=false
+    : > "$destination"; chmod 600 "$destination"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]] || continue
+        name=${BASH_REMATCH[1]}
+        [[ "$name" != _* && "$name" != VITE_* && "$name" != GITHUB_TOKEN && "$name" != IAM_API_KEY ]] || continue
+        [[ "$name" != OAUTH2_PROXY_* || "$name" == OAUTH2_PROXY_UPSTREAM_PASSWORD || "$name" == OAUTH2_PROXY_WELL_KNOWN_URL ]] || continue
+        printf '%s=%s\n' "$name" "${!name-}" >> "$destination"
+        [[ "$name" != OAUTH2_PROXY_UPSTREAM_PASSWORD ]] || found=true
+    done < "$ENV_FILE"
+    if [[ "$oauth_enabled" == true && "$found" == false ]]; then
+        printf 'OAUTH2_PROXY_UPSTREAM_PASSWORD=%s\n' "$OAUTH2_PROXY_UPSTREAM_PASSWORD" >> "$destination"
+    fi
 }
