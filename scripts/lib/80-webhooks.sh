@@ -19,32 +19,59 @@ ensure_webhook_secret() {
 }
 
 configure_component_webhook() {
-    local component=$1 server url redacted_url code body curl_config payload_file response_file
+    local component=$1 server url code body curl_config payload_file response_file
     oc_resource_is_owned buildconfig "$component" || { warn_unowned_collision buildconfig "$component"; return 1; }
     server=$(oc whoami --show-server)
     url="${server%/}/apis/build.openshift.io/v1/namespaces/${PROJECT_NAME}/buildconfigs/${component}/webhooks/${WEBHOOK_SECRET_VALUE}/github"
-    redacted_url="${server%/}/apis/build.openshift.io/v1/namespaces/${PROJECT_NAME}/buildconfigs/${component}/webhooks/<redacted-webhook-secret>/github"
+    add_deployment_output "${component}_webhook" "$url"
     if ! make_github_curl_config curl_config; then
-        print_warning "Configure the $component webhook manually: $redacted_url"
+        print_warning "GITHUB_TOKEN is not set; configure the $component GitHub webhook manually."
+        print_terminal "Manual $component webhook URL: $url" || \
+            print_warning 'The credential-bearing URL is hidden because no interactive terminal is available.'
         return 0
     fi
     make_temp_file response_file
-    code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" \
-        --write-out '%{http_code}' --url "$GITHUB_REPO_API/hooks" || true)
+    if ! code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" \
+        --write-out '%{http_code}' --url "$GITHUB_REPO_API/hooks"); then
+        print_error "GitHub webhook lookup failed for $component"
+        return 1
+    fi
     body=$(<"$response_file")
     if [[ "$code" =~ ^2 && "$body" == *"$url"* ]]; then return 0; fi
+    [[ "$code" =~ ^2 ]] || { print_error "GitHub webhook lookup failed for $component (HTTP $code)"; return 1; }
     make_temp_file payload_file
     printf '{"name":"web","active":true,"events":["push"],"config":{"url":"%s","content_type":"json","insecure_ssl":"0"}}' "$url" > "$payload_file"
-    code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" --write-out '%{http_code}' \
+    if ! code=$(curl --disable --config "$curl_config" --silent --show-error --output "$response_file" --write-out '%{http_code}' \
         --request POST --header 'Accept: application/vnd.github+json' --url "$GITHUB_REPO_API/hooks" \
-        --data-binary "@$payload_file" || true)
-    [[ "$code" =~ ^2 ]] || print_warning "GitHub webhook creation failed (HTTP $code); use: $redacted_url"
+        --data-binary "@$payload_file"); then
+        print_error "GitHub webhook creation request failed for $component"
+        return 1
+    fi
+    [[ "$code" =~ ^2 ]] || { print_error "GitHub webhook creation failed for $component (HTTP $code)"; return 1; }
+    print_success "GitHub webhook configured for $component."
+}
+
+ensure_webhook_rbac() {
+    ensure_oc_resource_owned_or_absent rolebinding webhook-access-unauthenticated
+    cat <<EOF | apply_resource 'unauthenticated OpenShift build webhook access'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webhook-access-unauthenticated
+  labels: {$CEN_MANAGED_BY_KEY: $CEN_MANAGED_BY_VALUE, $CEN_INSTANCE_KEY: $APP_NAME}
+  annotations: {rbac.authorization.kubernetes.io/autoupdate: "true"}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: system:webhook}
+subjects: [{apiGroup: rbac.authorization.k8s.io, kind: Group, name: system:unauthenticated}]
+EOF
 }
 
 setup_webhooks() {
+    local automatic=true
     ensure_webhook_secret
+    ensure_webhook_rbac
     git_repo_parts "$GIT_SSH_URL"
+    [[ -n "${GITHUB_TOKEN:-}" ]] || automatic=false
     configure_component_webhook backend
     if [[ "$HAS_FRONTEND" == true ]]; then configure_component_webhook frontend; fi
-    add_deployment_output github_webhooks_configured true
+    add_deployment_output github_webhooks_configured "$automatic"
 }

@@ -41,11 +41,11 @@ create_backend_env_secret() {
 create_initial_app_env_secret() { create_backend_env_secret "$APP_NAME-env"; }
 
 update_app_env_secret_with_urls() {
-    local backend_host frontend_host oauth_host
+    local backend_host frontend_host oauth_host generated_origin=''
     if [[ "$OAUTH_ENABLED" == true ]]; then
         oauth_host=$(oauth_public_host)
         FRONTEND_URL="https://$oauth_host"
-        BACKEND_CORS_ORIGINS="https://$oauth_host"
+        generated_origin="https://$oauth_host"
         OAUTH2_PROXY_WELL_KNOWN_URL="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}/.well-known/openid-configuration"
     else
         backend_host=$(capture_route_host backend)
@@ -54,11 +54,10 @@ update_app_env_secret_with_urls() {
             frontend_host=$(capture_route_host frontend)
             [[ -n "$frontend_host" ]] || { print_error 'frontend route host is unavailable'; return 1; }
             FRONTEND_URL="https://$frontend_host"
-            BACKEND_CORS_ORIGINS="https://$frontend_host"
-        else
-            BACKEND_CORS_ORIGINS='*'
+            generated_origin="https://$frontend_host"
         fi
     fi
+    BACKEND_CORS_ORIGINS=$(merge_cors_origin "${BACKEND_CORS_ORIGINS:-}" "$generated_origin") || return 1
     create_backend_env_secret "$APP_NAME-env"
 }
 

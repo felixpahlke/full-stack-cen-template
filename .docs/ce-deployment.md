@@ -17,19 +17,28 @@ cp .env.production.example .env.production
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
 `BACKEND_CORS_ORIGINS`, `OAUTH2_PROXY_COOKIE_SECRET`, `OAUTH2_PROXY_CLIENT_ID`,
 `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_OIDC_ISSUER_URL`,
-`OAUTH2_PROXY_UPSTREAM_PASSWORD`, and `OAUTH2_PROXY_COOKIE_SECURE=true`. Documented example,
-marker, missing, or weak proxy secrets are refused. The upstream password is the private Basic
-credential shared only by proxy and backend.
+`OAUTH2_PROXY_UPSTREAM_PASSWORD`, and `OAUTH2_PROXY_COOKIE_SECURE=true`. Weak proxy secrets are
+refused. The documented upstream-password generation marker is replaced with a strong value;
+arbitrary placeholders are refused. The upstream password is the private Basic credential shared
+only by proxy and backend.
 
-Set `_APP_NAME`, `_IAM_API_KEY`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`,
-`_CE_PROJECT_NAME`, and `_CR_REGISTRY`; account name and registry namespace are optional
-constraints. Keep `MIGRATE_ON_START=true` and choose a migration lock timeout. Exact Alembic-head
+Set `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and
+`_CR_REGISTRY`; account name and registry namespace are optional constraints. `_IAM_API_KEY` is
+required when creating or rotating the registry secret; an existing correctly owned secret can be
+reused without it. Keep `MIGRATE_ON_START=true` and choose a migration lock timeout. Exact Alembic-head
 verification runs before readiness; failure means the release must not serve traffic.
 
 The deployer first makes existing owned application workloads project-private (or proves them
 absent), then builds images and reconciles secrets/workloads, and exposes only oauth2-proxy.
 OAuth2-proxy is digest-pinned. Proxy logout ends the proxy session but not upstream IdP SSO, so a
 new login can be silent.
+
+Before cloud mutation, the deployer validates the nginx fallback and every active Vite Dockerfile
+`ARG`. It persists the absolute proxy-backed `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, OAuth
+redirect, and well-known URL in mode-0600 `.env.production`. Public entry and redirect URLs appear
+in the summary; private workloads remain hidden. Application-scoped image names and the requirement
+for an existing readable OAuth Code Engine project are intentional isolation properties.
+`--show-env-values` is terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
@@ -51,8 +60,8 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
    registry/build/secret failure.
 4. Fresh OAuth applications are private from creation and reachable by the public proxy through
    project-local DNS.
-5. Separate backend/frontend image builds, instance-scoped tags, registry-secret recreation, and
-   registry permissions work end to end.
+5. Separate backend/frontend image builds, instance-scoped tags, owned registry-secret reuse and
+   deliberate rotation, and registry permissions work end to end.
 6. OpenShift direct-to-OAuth conversion keeps the old path until proxy readiness, then switches
    ingress and removes owned direct paths.
 7. Weighted `alternateBackends`, numeric ports, and primary-Route alternate clearing match the
@@ -70,3 +79,7 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
     proxy/backend seam work end to end.
 14. Backend-only branches create no frontend resources; the no-database branch preserves any
     existing PVC for recovery.
+15. Persisted Vite, CORS, redirect, and well-known values match the public proxy URL, while private
+    workload URLs remain absent from the summary.
+16. OAuth project absence fails before creation, and the documented seam marker is generated while
+    arbitrary placeholders fail before cloud work.
