@@ -94,8 +94,9 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
               label="Theme"
               items={themeItems}
               selectedItem={getSelectedThemeLabel()}
-              // @ts-expect-error
-              onChange={(item) => handleThemeChange(item)}
+              onChange={(item) => {
+                if (typeof item === "string") handleThemeChange(item);
+              }}
             />
           </Menu>
         )}
@@ -103,5 +104,3 @@ export function ThemeSwitcher({ displayAs = "dropdown" }: ThemeSwitcherProps) {
     </>
   );
 }
-
-export default ThemeSwitcher;

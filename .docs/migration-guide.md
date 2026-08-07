@@ -88,6 +88,24 @@ token = create_access_token(subject, expires_delta, settings.SECRET_KEY)
 init_db(session, settings)
 ```
 
+## Frontend extension compatibility
+
+`ThemeProvider` again accepts `defaultTheme`. `useTheme()` keeps `resolvedTheme` and also exposes
+the former Carbon name, `actualTheme`, as a deprecated alias. When `vite-ui-theme` has no value,
+the provider migrates a valid preference from the old `carbon-theme` key and removes the old key.
+
+The Carbon palette intentionally changes from `white`/`g100` to `g10`/`g90` so Carbon components
+and CSS variables use the supported paired themes. This is a visible contrast and surface-color
+change, not an accidental compatibility regression.
+
+CarbonCN scaffolding is restored in `frontend/components.json`, updated for Tailwind 4's CSS-first
+configuration. Run its CLI from `frontend`; generated components belong in
+`src/components/carboncn`.
+
+Native Playwright runs no longer rewrite `localhost`. Container runs must set
+`PLAYWRIGHT_CONTAINER=true`, as shown in the frontend guide. Biome now enables the available
+ESLint equivalents; [known React Hooks coverage gaps](lint-coverage.md) are documented explicitly.
+
 ## Breaking changes
 
 - The old Compose application-process workflow is removed; use `npm run dev`.

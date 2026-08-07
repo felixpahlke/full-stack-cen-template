@@ -6,22 +6,40 @@ export type Theme = "dark" | "light" | "system";
 type ThemeContextValue = {
   theme: Theme;
   resolvedTheme: "dark" | "light";
+  /** @deprecated Use resolvedTheme. */
+  actualTheme: "dark" | "light";
   setTheme: (theme: Theme) => void;
+};
+
+type ThemeProviderProps = {
+  children: ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 const prefersDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
+const isTheme = (value: string | null): value is Theme =>
+  value === "dark" || value === "light" || value === "system";
+
+function initialTheme(storageKey: string, defaultTheme: Theme): Theme {
+  const stored = localStorage.getItem(storageKey);
+  if (isTheme(stored)) return stored;
+  if (storageKey !== "vite-ui-theme") return defaultTheme;
+
+  const legacyTheme = localStorage.getItem("carbon-theme");
+  if (!isTheme(legacyTheme)) return defaultTheme;
+  localStorage.setItem(storageKey, legacyTheme);
+  localStorage.removeItem("carbon-theme");
+  return legacyTheme;
+}
 
 export function ThemeProvider({
   children,
+  defaultTheme = "system",
   storageKey = "vite-ui-theme",
-}: {
-  children: ReactNode;
-  storageKey?: string;
-}) {
-  const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme | null) ?? "system",
-  );
+}: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(() => initialTheme(storageKey, defaultTheme));
   const [systemDark, setSystemDark] = useState(prefersDark);
 
   useEffect(() => {
@@ -46,7 +64,7 @@ export function ThemeProvider({
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, actualTheme: resolvedTheme, setTheme }}>
       <CarbonTheme theme={resolvedTheme === "dark" ? "g90" : "g10"}>{children}</CarbonTheme>
     </ThemeContext.Provider>
   );

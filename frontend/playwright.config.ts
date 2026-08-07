@@ -12,6 +12,7 @@ const webPort = process.env.WEB_PORT || "5173";
 const webUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${webPort}`;
 const apiPort = process.env.API_PORT || "8000";
 const externalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "true";
+const containerized = process.env.PLAYWRIGHT_CONTAINER === "true";
 
 export default defineConfig({
   testDir: "./tests",
@@ -23,9 +24,9 @@ export default defineConfig({
   use: {
     baseURL: webUrl,
     trace: "on-first-retry",
-    launchOptions: {
-      args: ["--host-resolver-rules=MAP localhost host.docker.internal"],
-    },
+    launchOptions: containerized
+      ? { args: ["--host-resolver-rules=MAP localhost host.docker.internal"] }
+      : undefined,
   },
   projects: [
     { name: "setup", testMatch: /.*\.setup\.ts/ },

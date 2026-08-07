@@ -43,13 +43,21 @@ containerized pattern in a second terminal:
 docker run --rm --network host --ipc=host \
   -v "$PWD:/work" -w /work/frontend \
   -e PLAYWRIGHT_EXTERNAL_SERVER=true \
+  -e PLAYWRIGHT_CONTAINER=true \
   mcr.microsoft.com/playwright:v1.62.1-noble \
   npx playwright test
 ```
 
-The image version must match `@playwright/test` in `frontend/package-lock.json`. The config maps
-container `localhost` to the host application. The suite covers login/logout, protected routes,
-settings, signup, and light/dark/system theme persistence.
+The image version must match `@playwright/test` in `frontend/package-lock.json`.
+`PLAYWRIGHT_CONTAINER=true` enables the container-only mapping from `localhost` to the host
+application; native runs deliberately do not rewrite the hostname. The suite covers login/logout,
+protected routes, settings, signup, and light/dark/system theme persistence.
+
+## CarbonCN scaffolding
+
+`components.json` configures the live [CarbonCN](https://www.carboncn.dev/) CLI for the Tailwind 4
+CSS-first foundation. Run `npx carboncn add <component>` from `frontend`; generated source belongs
+under `src/components/carboncn`. See that directory's README before adding a component.
 
 ## Quality
 
@@ -62,3 +70,6 @@ npm --prefix frontend audit
 Carbon SCSS stays in `src/styles/carbon.scss`; Tailwind is configured in CSS and through the
 Vite plugin. Keep protected routes below `src/routes/_layout` and use the generated client with
 TanStack Query for ordinary API calls.
+
+Biome covers the available ESLint equivalents, with a stdlib TypeScript-comment check for gaps.
+The remaining React Hooks 7 gaps are listed in [the lint coverage note](../.docs/lint-coverage.md).

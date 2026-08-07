@@ -15,6 +15,15 @@ The backend image now runs `uvicorn app.main:create_app --factory`. The compatib
 existing extension code keeps working while module-only imports remain safe without `.env`.
 Strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
 
+Theme extension compatibility is restored: `defaultTheme` works again, `actualTheme` remains as a
+deprecated alias of `resolvedTheme`, and old `carbon-theme` preferences migrate on first load. The
+intentional Carbon palette is now `g10`/`g90` instead of `white`/`g100`, which visibly changes
+surface and contrast tokens. CarbonCN scaffolding is restored for the Tailwind 4 foundation.
+
+Playwright rewrites `localhost` only in the documented container flow. Biome now enables the
+available ESLint equivalents, while the remaining React Hooks 7 gaps are listed in
+[lint-coverage.md](lint-coverage.md) instead of being described as parity.
+
 Production still uses separate backend and nginx frontend images. Real Code Engine and
 OpenShift smoke tests remain pending; the required maintainer checklist is included in both
 deployment guides.

@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { UserPublic } from "../../client";
 import useAuth from "../../hooks/useAuth";
-import ThemeSwitcher from "./ThemeSwitcher";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import UserMenu from "./UserMenu";
 
 export function Header() {

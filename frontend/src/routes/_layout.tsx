@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_layout")({
   },
 });
 
-function Layout() {
+export function Layout() {
   const { isLoading } = useAuth();
 
   return (
