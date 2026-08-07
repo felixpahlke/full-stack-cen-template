@@ -17,9 +17,7 @@ export const Route = createFileRoute("/_layout/admin")({
 function Admin() {
   return (
     <div className="w-full">
-      <h1 className="sm:text-left py-12 text-center text-2xl font-bold">
-        Users Management
-      </h1>
+      <h1 className="sm:text-left py-12 text-center text-2xl font-bold">Users Management</h1>
 
       <ActionsBar type={"User"} addModalAs={AddUser} />
       <UsersTable />

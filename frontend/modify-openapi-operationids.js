@@ -22,10 +22,7 @@ async function modifyOpenAPIFile(filePath) {
       }
     }
 
-    await fs.promises.writeFile(
-      filePath,
-      JSON.stringify(openapiContent, null, 2),
-    );
+    await fs.promises.writeFile(filePath, JSON.stringify(openapiContent, null, 2));
     console.log("File successfully modified");
   } catch (err) {
     console.error("Error:", err);

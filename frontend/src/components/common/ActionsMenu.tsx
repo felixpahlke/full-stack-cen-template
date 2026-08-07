@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
+import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
+import { useState } from "react";
 
 import type { ItemPublic, UserPublic } from "../../client";
 import EditUser from "../admin/EditUser";

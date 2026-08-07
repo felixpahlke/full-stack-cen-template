@@ -1,5 +1,5 @@
-import { toast } from "@/components/common/Toaster";
 import type { AxiosError } from "axios";
+import { toast } from "@/components/common/Toaster";
 
 export const emailPattern = {
   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -26,10 +26,7 @@ export const passwordRules = (isRequired = true) => {
   return rules;
 };
 
-export const confirmPasswordRules = (
-  getValues: () => any,
-  isRequired = true,
-) => {
+export const confirmPasswordRules = (getValues: () => any, isRequired = true) => {
   const rules: any = {
     validate: (value: string) => {
       const password = getValues().password || getValues().new_password;

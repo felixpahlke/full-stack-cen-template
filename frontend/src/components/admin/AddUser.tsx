@@ -1,19 +1,10 @@
+import { Checkbox, Form, Modal, PasswordInput, Stack, TextInput } from "@carbon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import type { AxiosError } from "axios";
-
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "@/components/common/Toaster";
 import { type UserCreate, Users } from "../../client";
 import { emailPattern, handleError } from "../../utils";
-
-import {
-  Checkbox,
-  Form,
-  Modal,
-  PasswordInput,
-  Stack,
-  TextInput,
-} from "@carbon/react";
-import { toast } from "@/components/common/Toaster";
 
 interface AddUserProps {
   isOpen: boolean;
@@ -121,8 +112,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
             {...form.register("confirm_password", {
               required: "Confirm password is required",
               validate: (value) =>
-                value === form.getValues("password") ||
-                "The passwords do not match",
+                value === form.getValues("password") || "The passwords do not match",
             })}
           />
 
@@ -133,11 +123,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
               {...form.register("is_superuser")}
             />
 
-            <Checkbox
-              id="is_active"
-              labelText="Is active?"
-              {...form.register("is_active")}
-            />
+            <Checkbox id="is_active" labelText="Is active?" {...form.register("is_active")} />
           </div>
         </Stack>
       </Form>

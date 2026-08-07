@@ -1,21 +1,12 @@
+import { Button, Form, FormGroup, FormLabel, Stack, TextInput, Tile } from "@carbon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { type UserUpdateMe, Users } from "../../client";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "@/components/common/Toaster";
+import { Users, type UserUpdateMe } from "../../client";
 import useAuth from "../../hooks/useAuth";
 import { emailPattern, handleError } from "../../utils";
-import {
-  Button,
-  Form,
-  Stack,
-  TextInput,
-  Tile,
-  FormGroup,
-  FormLabel,
-} from "@carbon/react";
-import { toast } from "@/components/common/Toaster";
 
 interface UserUpdateForm extends UserUpdateMe {}
 
@@ -98,11 +89,7 @@ const UserInformation = () => {
             />
 
             <Stack orientation="horizontal" gap={3}>
-              <Button
-                type="submit"
-                kind="primary"
-                disabled={isPending || !isValid || !isDirty}
-              >
+              <Button type="submit" kind="primary" disabled={isPending || !isValid || !isDirty}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
               <Button kind="secondary" onClick={onCancel} disabled={isPending}>
@@ -115,9 +102,7 @@ const UserInformation = () => {
         <Stack gap={5}>
           <FormGroup legendText="">
             <FormLabel className="mt-2">Full name</FormLabel>
-            <p
-              className={`py-2 ${!currentUser?.full_name ? "text-gray-500" : ""}`}
-            >
+            <p className={`py-2 ${!currentUser?.full_name ? "text-gray-500" : ""}`}>
               {currentUser?.full_name || "N/A"}
             </p>
           </FormGroup>

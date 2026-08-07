@@ -40,8 +40,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
 
@@ -79,9 +78,7 @@ export function ThemeProvider({
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
-      <CarbonThemeProvider
-        theme={actualTheme === "dark" ? DARK_THEME : LIGHT_THEME}
-      >
+      <CarbonThemeProvider theme={actualTheme === "dark" ? DARK_THEME : LIGHT_THEME}>
         {children}
       </CarbonThemeProvider>
     </ThemeProviderContext.Provider>
@@ -91,8 +88,7 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
+  if (context === undefined) throw new Error("useTheme must be used within a ThemeProvider");
 
   return context;
 };

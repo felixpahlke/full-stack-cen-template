@@ -1,9 +1,8 @@
+import { Modal } from "@carbon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-
-import { Items, Users } from "../../client";
-import { Modal } from "@carbon/react";
 import { toast } from "@/components/common/Toaster";
+import { Items, Users } from "../../client";
 
 interface DeleteProps {
   type: string;
@@ -36,9 +35,7 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
       onClose();
     },
     onError: () => {
-      toast.error(
-        `An error occurred while deleting the ${type.toLowerCase()}.`,
-      );
+      toast.error(`An error occurred while deleting the ${type.toLowerCase()}.`);
     },
     onSettled: () => {
       queryClient.invalidateQueries({
@@ -65,8 +62,7 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
       <div className="py-4">
         {type === "User" && (
           <p>
-            All items associated with this user will also be{" "}
-            <strong>permanently deleted.</strong>
+            All items associated with this user will also be <strong>permanently deleted.</strong>
           </p>
         )}
         <p>Are you sure? You will not be able to undo this action.</p>

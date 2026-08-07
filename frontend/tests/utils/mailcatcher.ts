@@ -40,10 +40,7 @@ export function findLastEmail({
   timeout?: number;
 }) {
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(
-      () => reject(new Error("Timeout while trying to get latest email")),
-      timeout,
-    ),
+    setTimeout(() => reject(new Error("Timeout while trying to get latest email")), timeout),
   );
 
   const checkEmails = async () => {

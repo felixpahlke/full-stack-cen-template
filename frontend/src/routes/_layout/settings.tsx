@@ -1,6 +1,6 @@
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Tabs, Tab, TabList, TabPanel, TabPanels } from "@carbon/react";
 
 import type { UserPublic } from "../../client";
 import Appearance from "../../components/user-settings/Appearance";
@@ -22,9 +22,7 @@ export const Route = createFileRoute("/_layout/settings")({
 function UserSettings() {
   const queryClient = useQueryClient();
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]);
-  const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
-    : tabsConfig;
+  const finalTabs = currentUser?.is_superuser ? tabsConfig.slice(0, 3) : tabsConfig;
 
   return (
     <div className="min-w-96">

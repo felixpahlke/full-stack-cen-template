@@ -1,10 +1,10 @@
-import { useRouter } from "@tanstack/react-router";
-import { FiLogOut, FiUser } from "react-icons/fi";
-import { Button, Menu, MenuItem } from "@carbon/react";
-import { cn } from "@/lib/utils";
 import { UserAvatar } from "@carbon/icons-react";
-import useAuth from "../../hooks/useAuth";
+import { Button, Menu, MenuItem } from "@carbon/react";
+import { useRouter } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { FiLogOut, FiUser } from "react-icons/fi";
+import { cn } from "@/lib/utils";
+import useAuth from "../../hooks/useAuth";
 
 interface UserMenuProps {
   className?: string;

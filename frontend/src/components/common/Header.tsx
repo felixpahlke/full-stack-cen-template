@@ -15,8 +15,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { UserPublic } from "../../client";
 import useAuth from "../../hooks/useAuth";
-import UserMenu from "./UserMenu";
 import ThemeSwitcher from "./ThemeSwitcher";
+import UserMenu from "./UserMenu";
 
 export function Header() {
   const { logout } = useAuth();
@@ -50,10 +50,7 @@ export function Header() {
             />
 
             <HeaderName href="/">Client Engineering</HeaderName>
-            <HeaderNavigation
-              aria-label="IBM Client Engineering"
-              className="hidden lg:flex"
-            >
+            <HeaderNavigation aria-label="IBM Client Engineering" className="hidden lg:flex">
               {navItems.map((item) => (
                 <HeaderMenuItem as={Link} key={item.title} to={item.path}>
                   {item.title}
@@ -77,9 +74,7 @@ export function Header() {
                       {item.title}
                     </HeaderMenuItem>
                   ))}
-                  <HeaderMenuItem href="/settings">
-                    User Settings
-                  </HeaderMenuItem>
+                  <HeaderMenuItem href="/settings">User Settings</HeaderMenuItem>
                   <HeaderMenuItem>
                     <button onClick={handleLogout} className="text-red-500">
                       Logout

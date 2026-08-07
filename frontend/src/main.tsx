@@ -1,14 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-import ReactDOM from "react-dom/client";
-import { routeTree } from "./routeTree.gen";
-
+import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
-import { client } from "./client/client.gen";
-
+import ReactDOM from "react-dom/client";
 import { Toaster } from "@/components/common/Toaster";
+import { client } from "./client/client.gen";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { trackFlavor } from "./lib/trackFlavor";
+import { routeTree } from "./routeTree.gen";
 import "./styles/globals.scss";
 import "./styles/tailwind.scss";
 

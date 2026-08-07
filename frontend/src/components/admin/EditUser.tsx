@@ -1,19 +1,10 @@
+import { Checkbox, Form, Modal, PasswordInput, Stack, TextInput } from "@carbon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import type { AxiosError } from "axios";
-
-import { type UserPublic, type UserUpdate, Users } from "../../client";
-import { emailPattern, handleError } from "../../utils";
-
-import {
-  Checkbox,
-  Form,
-  Modal,
-  PasswordInput,
-  Stack,
-  TextInput,
-} from "@carbon/react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "@/components/common/Toaster";
+import { type UserPublic, Users, type UserUpdate } from "../../client";
+import { emailPattern, handleError } from "../../utils";
 
 interface EditUserProps {
   user: UserPublic;

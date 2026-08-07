@@ -1,12 +1,10 @@
+import { Button, Form, PasswordInput, Stack, Tile } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import type { AxiosError } from "axios";
-
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "@/components/common/Toaster";
 import { type UpdatePassword, Users } from "../../client";
 import { handleError } from "../../utils";
-
-import { Button, Form, PasswordInput, Stack, Tile } from "@carbon/react";
-import { toast } from "@/components/common/Toaster";
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string;
@@ -26,8 +24,7 @@ const ChangePassword = () => {
   const { errors } = form.formState;
 
   const { mutate: updatePassword, isPending } = useMutation({
-    mutationFn: (data: UpdatePassword) =>
-      Users.updatePasswordMe({ body: data }),
+    mutationFn: (data: UpdatePassword) => Users.updatePasswordMe({ body: data }),
     onSuccess: () => {
       toast.success("Password updated successfully.");
       form.reset();
@@ -87,8 +84,7 @@ const ChangePassword = () => {
             {...form.register("confirm_password", {
               required: "Please confirm your password",
               validate: (value) =>
-                value === form.getValues("new_password") ||
-                "The passwords do not match",
+                value === form.getValues("new_password") || "The passwords do not match",
             })}
           />
 

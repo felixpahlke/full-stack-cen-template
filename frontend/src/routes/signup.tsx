@@ -86,10 +86,7 @@ function SignUp() {
             placeholder="Repeat Password"
             invalid={!!errors.confirm_password}
             invalidText={errors.confirm_password?.message}
-            {...form.register(
-              "confirm_password",
-              confirmPasswordRules(form.getValues),
-            )}
+            {...form.register("confirm_password", confirmPasswordRules(form.getValues))}
           />
 
           <PasswordInput

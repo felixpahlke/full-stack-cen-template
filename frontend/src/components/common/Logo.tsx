@@ -7,11 +7,7 @@ interface LogoProps {
   logoSize?: "sm" | "md" | "lg";
 }
 
-export const Logo = ({
-  className,
-  logoSize = "md",
-  logoOnly = false,
-}: LogoProps) => {
+export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps) => {
   const { actualTheme } = useTheme();
 
   return (

@@ -34,8 +34,7 @@ export default function UsersTable() {
   const [pageSize, setPageSize] = useState<number>(10);
   const { page } = useSearch({ from: "/_layout/admin" });
   const navigate = useNavigate({ from: "/admin" });
-  const setPage = (newPage: number) =>
-    navigate({ search: () => ({ page: newPage }) });
+  const setPage = (newPage: number) => navigate({ search: () => ({ page: newPage }) });
 
   const {
     data: users,
@@ -66,9 +65,7 @@ export default function UsersTable() {
       id: user.id,
       full_name: (
         <div className="flex items-center gap-2">
-          <span className={!user.full_name ? "text-gray-500" : ""}>
-            {user.full_name || "N/A"}
-          </span>
+          <span className={!user.full_name ? "text-gray-500" : ""}>{user.full_name || "N/A"}</span>
           {currentUser?.id === user.id && (
             <Tag type="blue" size="sm">
               You
@@ -81,20 +78,12 @@ export default function UsersTable() {
       status: (
         <div className="flex items-center gap-2">
           <div
-            className={`h-2 w-2 rounded-full ${
-              user.is_active ? "bg-green-500" : "bg-red-500"
-            }`}
+            className={`h-2 w-2 rounded-full ${user.is_active ? "bg-green-500" : "bg-red-500"}`}
           />
           {user.is_active ? "Active" : "Inactive"}
         </div>
       ),
-      actions: (
-        <ActionsMenu
-          type="User"
-          value={user}
-          disabled={currentUser?.id === user.id}
-        />
-      ),
+      actions: <ActionsMenu type="User" value={user} disabled={currentUser?.id === user.id} />,
     })) || [];
 
   return (
@@ -105,10 +94,7 @@ export default function UsersTable() {
             <TableHead>
               <TableRow>
                 {headers.map((header) => (
-                  <TableHeader
-                    {...getHeaderProps({ header, isSortable: false })}
-                    key={header.key}
-                  >
+                  <TableHeader {...getHeaderProps({ header, isSortable: false })} key={header.key}>
                     {header.header}
                   </TableHeader>
                 ))}

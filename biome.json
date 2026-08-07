@@ -1,0 +1,42 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!backend", "!**/routeTree.gen.ts", "!**/*.scss"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 100
+  },
+  "linter": {
+    "rules": {
+      "a11y": { "noSvgWithoutTitle": "off", "useButtonType": "off" },
+      "complexity": { "noUselessFragments": "off" },
+      "suspicious": { "noExplicitAny": "off", "noUnknownAtRules": "off" },
+      "style": { "noNonNullAssertion": "off" }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["frontend/src/client/**"],
+      "linter": { "enabled": false },
+      "assist": { "enabled": false }
+    }
+  ]
+}

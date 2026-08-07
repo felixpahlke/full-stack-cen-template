@@ -1,7 +1,7 @@
-import { ToastNotification, ToastNotificationProps } from "@carbon/react";
+import { ToastNotification, type ToastNotificationProps } from "@carbon/react";
 // import * as motion from "motion/react-client";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type ToastType = Exclude<ToastNotificationProps["kind"], undefined>;
 
@@ -117,13 +117,7 @@ export function Toaster() {
 
   useEffect(() => {
     const handleToast = (event: ToastEvent) => {
-      const {
-        message,
-        type,
-        title,
-        caption: customCaption,
-        duration,
-      } = event.detail;
+      const { message, type, title, caption: customCaption, duration } = event.detail;
 
       const caption =
         customCaption ||
@@ -150,8 +144,7 @@ export function Toaster() {
     };
 
     window.addEventListener(TOAST_EVENT, handleToast as EventListener);
-    return () =>
-      window.removeEventListener(TOAST_EVENT, handleToast as EventListener);
+    return () => window.removeEventListener(TOAST_EVENT, handleToast as EventListener);
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import { RadioButtonGroup, RadioButton, Tile, Tag } from "@carbon/react";
+import { RadioButton, RadioButtonGroup, Tag, Tile } from "@carbon/react";
 import { useTheme } from "../theme/ThemeProvider";
 
 const Appearance = () => {
@@ -15,9 +15,7 @@ const Appearance = () => {
         className="mt-4"
         name="theme-selection"
         valueSelected={theme}
-        onChange={(value) =>
-          handleThemeChange(value ? value.toString() : "system")
-        }
+        onChange={(value) => handleThemeChange(value ? value.toString() : "system")}
         orientation="vertical"
       >
         <RadioButton

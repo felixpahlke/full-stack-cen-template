@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 import { accessPassword } from "./config";
 import { randomEmail, randomPassword } from "./utils/random";
@@ -24,11 +24,7 @@ const fillForm = async (
   await page.getByPlaceholder("Access Password").fill(accessPassword);
 };
 
-const verifyInput = async (
-  page: Page,
-  placeholder: string,
-  options?: OptionsType,
-) => {
+const verifyInput = async (page: Page, placeholder: string, options?: OptionsType) => {
   const input = page.getByPlaceholder(placeholder, options);
   await expect(input).toBeVisible();
   await expect(input).toHaveText("");
@@ -116,9 +112,7 @@ test("Sign up with weak password", async ({ page }) => {
   await fillForm(page, fullName, email, password, password, accessPassword);
   await page.getByRole("button", { name: "Sign Up" }).click();
 
-  await expect(
-    page.getByText("Password must be at least 8 characters"),
-  ).toBeVisible();
+  await expect(page.getByText("Password must be at least 8 characters")).toBeVisible();
 });
 
 test("Sign up with mismatched passwords", async ({ page }) => {

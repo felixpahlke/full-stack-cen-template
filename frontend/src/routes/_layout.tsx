@@ -1,5 +1,5 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { Loading } from "@carbon/react";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { Header } from "../components/common/Header";
 import useAuth, { isLoggedIn } from "../hooks/useAuth";
