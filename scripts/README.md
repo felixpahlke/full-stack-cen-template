@@ -37,8 +37,10 @@ explicit, separately confirmed reset removes only the named owned database resou
 
 Blank `_DEPLOYMENT_BRANCH_FILTER` resolves to `deploy-flavor.conf`, is printed, and must exist in
 the configured repository before a BuildConfig is created. OpenShift hooks include an owned
-`system:unauthenticated` → `system:webhook` RoleBinding; API failures are fatal and manual
-credential-bearing URLs are terminal-only.
+`system:unauthenticated` → `system:webhook` RoleBinding. A missing permission to create that
+binding or bind the ClusterRole disables webhooks without failing the application deployment;
+other apply failures and GitHub API failures remain fatal. Manual credential-bearing URLs are
+terminal-only.
 
 Code Engine always persists and supplies an absolute `VITE_API_URL`, validates nginx/Dockerfile
 compatibility before cloud mutation, preserves configured CORS, and reports all public application
