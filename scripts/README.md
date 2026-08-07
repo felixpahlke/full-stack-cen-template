@@ -31,10 +31,11 @@ marker; arbitrary placeholders and weak values are refused.
 Blank OpenShift branch filters resolve to `oauth-proxy-custom-ui`, are printed, and must exist
 remotely before BuildConfig creation. `--adopt-legacy-resources` verifies and prints a legacy set,
 then requires `adopt <PROJECT_NAME>/<APP_NAME>` before applying both ownership labels. Webhooks
-include the owned unauthenticated `system:webhook` RoleBinding; API failures are fatal and usable
-manual URLs are terminal-only. PostgreSQL credential drift stops before secret replacement and
-requires typed reset confirmation. Registry readiness skips only when the required reads are
-unavailable.
+include the owned unauthenticated `system:webhook` RoleBinding. Missing permission to create the
+binding or bind its ClusterRole disables webhooks without failing application deployment; other
+apply failures and GitHub API failures remain fatal. Usable manual URLs are terminal-only.
+PostgreSQL credential drift stops before secret replacement and requires typed reset confirmation.
+Registry readiness skips only when the required reads are unavailable.
 
 Code Engine persists an absolute `VITE_API_URL`, merged CORS, redirect, and well-known URLs after
 nginx/Dockerfile preflight. Owned registry credentials may be reused without `_IAM_API_KEY`; setting

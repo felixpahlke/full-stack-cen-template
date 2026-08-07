@@ -215,7 +215,13 @@ args=" $* "; safe_kind() { printf '%s' "$1" | tr './' '__'; }; resource_file() {
 if [[ "$args" == *' version --client '* ]]; then printf 'Client Version: 4.18.0\n'; exit 0; fi
 if [[ "$args" == *' whoami --show-server '* ]]; then printf 'https://api.mock.openshift.example'; exit 0; fi
 if [[ "$args" == *' whoami '* ]]; then printf 'mock-user'; exit 0; fi
-if [[ "$args" == *' auth can-i '* ]]; then [[ "${MOCK_REGISTRY_READ_DENIED:-false}" == true ]] && printf 'no' || printf 'yes'; exit 0; fi
+if [[ "$args" == *' auth can-i '* ]]; then
+  if [[ "${MOCK_WEBHOOK_RBAC_DENIED:-false}" == true && "$args" == *' bind clusterroles.rbac.authorization.k8s.io/system:webhook '* ]]; then printf 'no'
+  elif [[ "${MOCK_REGISTRY_READ_DENIED:-false}" == true ]]; then printf 'no'
+  else printf 'yes'
+  fi
+  exit 0
+fi
 if [[ "$args" == *' get ingress.config.openshift.io cluster '* ]]; then printf 'apps.mock.example'; exit 0; fi
 if [[ "$args" == *' get configs.imageregistry.operator.openshift.io cluster '*'.spec.managementState'* ]]; then [[ "${MOCK_REGISTRY_UNREADY:-false}" == true ]] && printf 'Removed' || printf 'Managed'; exit 0; fi
 if [[ "$args" == *' get configs.imageregistry.operator.openshift.io cluster '*'.spec.storage'* ]]; then [[ "${MOCK_REGISTRY_UNREADY:-false}" == true ]] && printf '{}' || printf '{"emptyDir":{}}'; exit 0; fi
@@ -257,6 +263,15 @@ if [[ "$args" == *' create secret generic '* && "$args" == *' -o yaml '* ]]; the
 fi
 if [[ "$args" == *' apply '* && "$args" == *' -f - '* ]]; then
   input=$(cat); printf '%s\n---MOCK-DOCUMENT---\n' "$input" >> "$MOCK_MANIFESTS"
+  if [[ "$input" == *'kind: RoleBinding'* ]]; then
+    if [[ "${MOCK_WEBHOOK_RBAC_APPLY_FAILURE:-}" == forbidden ]]; then
+      printf 'Error from server (Forbidden): rolebindings.rbac.authorization.k8s.io "webhook-access-unauthenticated" is forbidden: user cannot bind clusterrole system:webhook\n' >&2
+      exit 1
+    elif [[ "${MOCK_WEBHOOK_RBAC_APPLY_FAILURE:-}" == invalid ]]; then
+      printf 'error: error parsing STDIN: error converting YAML to JSON\n' >&2
+      exit 1
+    fi
+  fi
   if [[ "$input" == *'name: oauth-proxy'* && "$input" == *'kind: Route'* ]]; then printf 'MOCK_EVENT oauth-ingress-switched\n' >> "$MOCK_LOG"; fi
   while IFS='|' read -r kind name; do
     case "$kind" in PersistentVolumeClaim) kind=pvc ;; Deployment) kind=deployment ;; Service) kind=service ;; Route) kind=route ;; BuildConfig) kind=buildconfig ;; ImageStream) kind=imagestream ;; Secret) kind=secret ;; RoleBinding) kind=rolebinding ;; esac
@@ -417,6 +432,8 @@ run_oc_success() {
     assert_contains "$STATE/manifests.log" 'name: webhook-access-unauthenticated'
     assert_contains "$STATE/manifests.log" 'name: system:webhook'
     assert_contains "$STATE/manifests.log" 'name: system:unauthenticated'
+    assert_contains "$STATE/calls.log" 'oc auth can-i create rolebindings.rbac.authorization.k8s.io --namespace mock-project'
+    assert_contains "$STATE/calls.log" 'oc auth can-i bind clusterroles.rbac.authorization.k8s.io/system:webhook --namespace mock-project'
     assert_absent "$STATE/secrets/app-a-env.env" GITHUB_TOKEN
     assert_absent "$STATE/secrets/app-a-env.env" IAM_API_KEY
     assert_absent "$STATE/secrets/app-a-env.env" OAUTH2_PROXY_CLIENT_SECRET
@@ -491,8 +508,45 @@ run_oc_branch_ref_cases() {
 }
 
 run_oc_webhook_cases() {
-    prepare_case oc-webhook-failure
+    prepare_case oc-webhook-rbac-denied
     local output="$CASE_DIR/output.log"
+    run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_DENIED=true ./scripts/oc-deploy.sh || {
+        sed -n '1,260p' "$output" >&2; fail 'OpenShift failed deployment after webhook RoleBinding permission denial'
+    }
+    local webhook_secret
+    webhook_secret=$(<"$STATE/secrets/github-webhook-secret.WebHookSecretKey")
+    assert_contains "$output" 'Cannot configure OpenShift webhooks: current user cannot bind ClusterRole system:webhook in this project.'
+    assert_contains "$output" "oc -n mock-project apply -f - <<'EOF'"
+    assert_contains "$output" 'app.kubernetes.io/managed-by: cen-template'
+    assert_contains "$output" 'app.kubernetes.io/instance: app-a'
+    assert_contains "$output" 'Until this RoleBinding exists, GitHub pushes will not trigger OpenShift builds.'
+    assert_contains "$output" 'GitHub webhooks active: false (current user cannot bind ClusterRole system:webhook in this project)'
+    assert_contains "$output" 'Deployment completed successfully.'
+    assert_contains "$STATE/terminal.log" "webhooks/$webhook_secret/github"
+    assert_absent "$output" "$webhook_secret"
+    assert_absent "$STATE/calls.log" '/hooks'
+    assert_absent "$STATE/manifests.log" 'kind: RoleBinding'
+
+    prepare_case oc-webhook-rbac-forbidden-fallback
+    output="$CASE_DIR/output.log"
+    run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=forbidden ./scripts/oc-deploy.sh || {
+        sed -n '1,260p' "$output" >&2; fail 'OpenShift failed deployment after fallback-classified RoleBinding denial'
+    }
+    assert_contains "$output" 'OpenShift rejected the RoleBinding as forbidden'
+    assert_contains "$output" 'GitHub webhooks active: false (OpenShift rejected the RoleBinding as forbidden)'
+    assert_contains "$output" 'Deployment completed successfully.'
+    assert_absent "$STATE/calls.log" '/hooks'
+
+    prepare_case oc-webhook-rbac-apply-failure
+    output="$CASE_DIR/output.log"
+    if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=invalid ./scripts/oc-deploy.sh; then
+        fail 'OpenShift ignored a genuine webhook RoleBinding apply failure'
+    fi
+    assert_contains "$output" 'error parsing STDIN: error converting YAML to JSON'
+    assert_absent "$output" 'Deployment completed successfully.'
+
+    prepare_case oc-webhook-failure
+    output="$CASE_DIR/output.log"
     if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_POST_FAIL=true ./scripts/oc-deploy.sh; then
         sed -n '1,220p' "$output" >&2; sed -n '1,260p' "$STATE/calls.log" >&2
         fail 'OpenShift ignored GitHub webhook POST failure'
@@ -504,12 +558,11 @@ run_oc_webhook_cases() {
     sed -i.bak '/^_GITHUB_TOKEN=/d; /^GITHUB_TOKEN=/d' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
     output="$CASE_DIR/output.log"
     run_with_mocks "$output" 'mock-project\n\n' ./scripts/oc-deploy.sh || { sed -n '1,240p' "$output" >&2; fail 'manual webhook deployment failed'; }
-    local webhook_secret
     webhook_secret=$(<"$STATE/secrets/github-webhook-secret.WebHookSecretKey")
     assert_contains "$STATE/terminal.log" "webhooks/$webhook_secret/github"
     assert_absent "$output" "$webhook_secret"
     assert_contains "$output" 'GitHub webhooks configured automatically: false'
-    pass 'webhook RBAC, POST failure propagation, and terminal-only usable manual URLs are enforced'
+    pass 'webhook RBAC permission fallback, genuine failures, POST failures, and terminal-only URLs are enforced'
 }
 
 prepare_legacy_fixture() {
