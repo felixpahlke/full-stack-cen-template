@@ -49,6 +49,10 @@ setup_project() {
     if resource_exists project "$PROJECT_NAME"; then
         run oc project "$PROJECT_NAME"
     else
+        if [[ "${ADOPT_LEGACY_RESOURCES:-false}" == true ]]; then
+            print_error "legacy adoption requires an existing OpenShift project '$PROJECT_NAME'"
+            return 1
+        fi
         run oc new-project "$PROJECT_NAME"
         run oc label namespace "$PROJECT_NAME" "$CEN_MANAGED_BY_LABEL" "$CEN_INSTANCE_KEY=$APP_NAME" --overwrite
     fi

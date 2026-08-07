@@ -6,11 +6,12 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=lib/00-common.sh
 source "$SCRIPT_DIR/lib/00-common.sh"
+# shellcheck source=lib/75-oauth.sh
+source "$SCRIPT_DIR/lib/75-oauth.sh"
 trap cleanup_deploy_tmp_files EXIT
 
 ENV_FILE="$PROJECT_ROOT/.env.production"
 SHOW_ENV_VALUES=false
-OAUTH2_PROXY_IMAGE='quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
 # OAuth secrets store OAUTH2_PROXY_BASIC_AUTH_PASSWORD via --from-env-file only.
 
 parse_arguments() {
@@ -72,6 +73,51 @@ check_code_engine_preconditions() {
     fi
 }
 
+validate_code_engine_env() {
+    local key missing=()
+    for key in _IBM_CLOUD_RESOURCE_GROUP _IBM_CLOUD_REGION _CE_PROJECT_NAME _CR_REGISTRY; do
+        [[ -n "${!key:-}" ]] || missing+=("$key")
+    done
+    ((${#missing[@]} == 0)) || { print_error "missing required Code Engine values: ${missing[*]}"; return 1; }
+    if [[ "$HAS_DATABASE" == true && "$POSTGRES_SERVER" == postgresql ]]; then
+        print_error 'Code Engine requires an external POSTGRES_SERVER'
+        return 1
+    fi
+}
+
+check_vite_vars_in_dockerfile() {
+    [[ "$HAS_FRONTEND" == true ]] || return 0
+    local dockerfile="$PROJECT_ROOT/frontend/Dockerfile" line name
+    local variables=(VITE_API_URL)
+    [[ -f "$dockerfile" ]] || { print_error "frontend Dockerfile not found: $dockerfile"; return 1; }
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^(VITE_[A-Za-z0-9_]+)= ]] || continue
+        name=${BASH_REMATCH[1]}
+        [[ " ${variables[*]} " == *" $name "* ]] || variables+=("$name")
+    done < "$ENV_FILE"
+    for name in "${variables[@]}"; do
+        grep -Eq "^[[:space:]]*ARG[[:space:]]+${name}([=[:space:]]|$)" "$dockerfile" || {
+            print_error "$name is deployed as a Code Engine build argument but is missing as ARG in frontend/Dockerfile"
+            return 1
+        }
+    done
+    print_success 'Frontend Dockerfile consumes every Code Engine Vite build argument.'
+}
+
+check_nginx_config() {
+    [[ "$HAS_FRONTEND" == true ]] || return 0
+    local nginx="$PROJECT_ROOT/frontend/nginx.conf"
+    [[ -f "$nginx" ]] || { print_error "frontend nginx configuration not found: $nginx"; return 1; }
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/api' "$nginx" && \
+        grep -Eq 'proxy_pass[[:space:]]+http://backend:8000' "$nginx"; then
+        grep -Eq '^[[:space:]]*ARG[[:space:]]+VITE_API_URL([=[:space:]]|$)' "$PROJECT_ROOT/frontend/Dockerfile" || {
+            print_error 'nginx /api targets the OpenShift-only backend service and the frontend cannot consume Code Engine VITE_API_URL'
+            return 1
+        }
+        print_status 'nginx same-origin /api fallback targets OpenShift; Code Engine will embed an absolute VITE_API_URL.'
+    fi
+}
+
 target_code_engine_project() {
     run ibmcloud target -g "$_IBM_CLOUD_RESOURCE_GROUP"
     run ibmcloud target -r "$_IBM_CLOUD_REGION"
@@ -83,12 +129,22 @@ target_code_engine_project() {
             return 1
         fi
         run ibmcloud ce project create --name "$_CE_PROJECT_NAME"
+        wait_for_code_engine_project
         run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     fi
     CE_SUBDOMAIN=$(ibmcloud ce project current | awk '/Subdomain:/ {print $2; exit}')
     [[ -n "$CE_SUBDOMAIN" ]] || { print_error 'could not read Code Engine project subdomain'; return 1; }
     CLUSTER_ID=${CE_SUBDOMAIN#*.}
     CLUSTER_ID=${CLUSTER_ID%%.*}
+}
+
+wait_for_code_engine_project() {
+    local deadline=$((SECONDS + 300))
+    until ibmcloud ce project get --name "$_CE_PROJECT_NAME" >/dev/null 2>&1; do
+        ((SECONDS < deadline)) || { print_error "timed out waiting for Code Engine project '$_CE_PROJECT_NAME' to become ready"; return 1; }
+        sleep 5
+    done
+    print_success "Code Engine project '$_CE_PROJECT_NAME' is ready."
 }
 
 visibility_not_found() {
@@ -156,7 +212,11 @@ ensure_registry_secret() {
             warn_unowned_collision registry-secret "$_CR_REGISTRY_SECRET_NAME"
             return 1
         fi
-        print_warning "Deleting owned registry-secret/$_CR_REGISTRY_SECRET_NAME before exact recreation"
+        if [[ -z "${_IAM_API_KEY:-}" ]]; then
+            print_status "Reusing owned registry-secret/$_CR_REGISTRY_SECRET_NAME; set _IAM_API_KEY to rotate it."
+            return 0
+        fi
+        print_warning "Rotating owned registry-secret/$_CR_REGISTRY_SECRET_NAME"
         ibmcloud ce registry delete --name "$_CR_REGISTRY_SECRET_NAME" --force >&2
     elif ce_resource_exists secret "$_CR_REGISTRY_SECRET_NAME"; then
         warn_unowned_collision secret "$_CR_REGISTRY_SECRET_NAME"
@@ -191,11 +251,11 @@ build_and_push_images() {
     run docker image push "$backend_image"
     if [[ "$HAS_FRONTEND" == true ]]; then
         local frontend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_FRONTEND_IMAGE_NAME:latest" line name value
-        local build_args=()
+        local build_args=("--build-arg=VITE_API_URL=$BACKEND_URL")
         while IFS= read -r line || [[ -n "$line" ]]; do
             [[ "$line" =~ ^(VITE_[A-Za-z0-9_]+)=(.*)$ ]] || continue
             name=${BASH_REMATCH[1]}; value=${!name-}
-            [[ "$name" != VITE_API_URL ]] || value=$BACKEND_URL
+            [[ "$name" != VITE_API_URL ]] || continue
             build_args+=("--build-arg=$name=$value")
         done < "$ENV_FILE"
         run docker image build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
@@ -270,15 +330,41 @@ reconcile_obsolete_ce_resources() {
 }
 
 set_deployment_urls() {
+    local generated_origin=''
     if [[ "$OAUTH_ENABLED" == true ]]; then
         OAUTH_PROXY_URL="https://oauth-proxy.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
         BACKEND_URL=$OAUTH_PROXY_URL; FRONTEND_URL=$OAUTH_PROXY_URL
+        generated_origin=$OAUTH_PROXY_URL
     else
         BACKEND_URL="https://${_CE_BACKEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
         FRONTEND_URL="https://${_CE_FRONTEND_APPLICATION_NAME}.${CLUSTER_ID}.${_IBM_CLOUD_REGION}.codeengine.appdomain.cloud"
+        [[ "$HAS_FRONTEND" != true ]] || generated_origin=$FRONTEND_URL
     fi
-    if [[ "$HAS_FRONTEND" == true ]]; then BACKEND_CORS_ORIGINS=$FRONTEND_URL; else BACKEND_CORS_ORIGINS='*'; fi
+    BACKEND_CORS_ORIGINS=$(merge_cors_origin "${BACKEND_CORS_ORIGINS:-}" "$generated_origin") || return 1
     if [[ "$OAUTH_ENABLED" == true ]]; then OAUTH2_PROXY_WELL_KNOWN_URL="${OAUTH2_PROXY_OIDC_ISSUER_URL%/}/.well-known/openid-configuration"; fi
+}
+
+persist_code_engine_urls() {
+    persist_env_value VITE_API_URL "$BACKEND_URL"
+    persist_env_value BACKEND_CORS_ORIGINS "$BACKEND_CORS_ORIGINS"
+    if [[ "$OAUTH_ENABLED" == true ]]; then
+        persist_env_value OAUTH2_PROXY_REDIRECT_URL "$OAUTH_PROXY_URL/oauth2/callback"
+        persist_env_value OAUTH2_PROXY_WELL_KNOWN_URL "$OAUTH2_PROXY_WELL_KNOWN_URL"
+        add_deployment_output oauth_redirect_url "$OAUTH_PROXY_URL/oauth2/callback"
+    fi
+}
+
+collect_code_engine_outputs() {
+    local value
+    [[ "$OAUTH_ENABLED" != true ]] || return 0
+    value=$(ce_application_url "$_CE_BACKEND_APPLICATION_NAME")
+    [[ -n "$value" ]] || value=$BACKEND_URL
+    add_deployment_output backend_url "${value#https://}"
+    if [[ "$HAS_FRONTEND" == true && "$OAUTH_ENABLED" != true ]]; then
+        value=$(ce_application_url "$_CE_FRONTEND_APPLICATION_NAME")
+        [[ -n "$value" ]] || value=$FRONTEND_URL
+        add_deployment_output frontend_url "${value#https://}"
+    fi
 }
 
 dry_run_plan() {
@@ -296,7 +382,8 @@ main() {
     validate_mock_commands
     resolve_app_name "${_APP_NAME:-${_CE_PROJECT_NAME:-cen-app}}"
     validate_runtime_env
-    : "${_IBM_CLOUD_RESOURCE_GROUP:?}" "${_IBM_CLOUD_REGION:?}" "${_CE_PROJECT_NAME:?}" "${_CR_REGISTRY:?}"
+    validate_code_engine_env
+    ensure_oauth_upstream_password
     _CE_FRONTEND_IMAGE_NAME=${_CE_FRONTEND_IMAGE_NAME:-"${APP_NAME}-frontend"}
     _CE_FRONTEND_APPLICATION_NAME=${_CE_FRONTEND_APPLICATION_NAME:-"${_CE_PROJECT_NAME}-frontend"}
     _CE_BACKEND_IMAGE_NAME=${_CE_BACKEND_IMAGE_NAME:-"${APP_NAME}-backend"}
@@ -307,16 +394,15 @@ main() {
 
     print_section_header 'Code Engine deployment'
     if [[ "$DEPLOY_DRY_RUN" == true ]]; then dry_run_plan; return 0; fi
+    check_nginx_config
+    check_vite_vars_in_dockerfile
     check_code_engine_preconditions
     confirm_target 'Code Engine deployment' "$_CE_PROJECT_NAME"
     target_code_engine_project
     reconcile_oauth_visibility
     preflight_ce_collisions
     set_deployment_urls
-    if [[ "$HAS_DATABASE" == true && "$POSTGRES_SERVER" == postgresql ]]; then
-        print_error 'Code Engine requires an external POSTGRES_SERVER'
-        return 1
-    fi
+    persist_code_engine_urls
     target_registry
     ensure_registry_secret
     build_and_push_images
@@ -327,6 +413,7 @@ main() {
     fi
     ensure_oauth_proxy
     reconcile_obsolete_ce_resources
+    collect_code_engine_outputs
     print_deployment_summary
 }
 

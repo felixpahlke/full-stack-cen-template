@@ -14,9 +14,19 @@ Node/npm, Python, and uv are host prerequisites. Docker is no longer needed for 
 checks, or tests. Root `API_PORT` is preflighted before startup. There are intentionally no
 database, migration, frontend, generated-client, or Playwright commands.
 
+## Adopting an old OpenShift deployment
+
+Run `./scripts/oc-deploy.sh --adopt-legacy-resources` against the existing project. The deployer
+fingerprints and prints the exact backend-only legacy set, refuses ambiguity or partial labels, and
+changes ownership only after `adopt <PROJECT_NAME>/<APP_NAME>`. It does not adopt database or
+frontend resources.
+
 Breaking changes: the old Compose application loop is removed; npm is the only JavaScript tool;
 the unused persistence/password/JWT packages and token-printer residue are removed; the root
 command facade is canonical. Production image behavior is otherwise unchanged.
+
+Blank OpenShift branch filters now resolve to `backend-only-no-db` and must exist remotely before
+the BuildConfig is created. Legacy resources require the verified adoption flow above.
 
 Rollback tag: `pre-modernization/backend-only-no-db`.
 
