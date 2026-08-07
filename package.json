@@ -17,9 +17,10 @@
     "format:backend:check": "uv run --project backend ruff format --check backend",
     "generate-client": "node scripts/generate-client.mjs",
     "lint:backend": "uv run --project backend ruff check backend",
-    "test": "npm run test:backend",
+    "test": "npm run test:scripts && npm run test:backend",
     "test:backend": "uv run --project backend pytest backend/app/tests",
     "test:e2e": "npm --prefix frontend exec playwright test",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "typecheck": "npm --prefix frontend run typecheck",
     "verify": "npm run check && npm run test && npm run build"
   },

@@ -5,7 +5,8 @@
 - Node.js 20.19 or newer with npm
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- A running Docker runtime with the Docker Compose plugin, such as Docker Desktop or Colima
+- A running Docker runtime with either the `docker compose` plugin or standalone
+  `docker-compose`, such as Docker Desktop or Colima
 
 Bootstrap a fresh checkout with exactly these four commands:
 
@@ -39,10 +40,18 @@ If a backend edit temporarily breaks imports, client generation reports the erro
 retries until the source is valid again. Supervisor output interleaves child logs with
 `[backend]`, `[frontend]`, `[client]`, `[compose]`, `[migrations]`, and `[seed]` prefixes.
 
-Press Ctrl-C once to stop Uvicorn, Vite, the watcher, and the Compose services. Shutdown
-does not remove `app-db-data`, so the existing developer database survives. Application
-code no longer runs in Compose during development; Compose contains only `db` and
-`adminer`.
+Values from the repository `.env` override inherited shell exports for the entire stack.
+The supervisor refuses to migrate or seed a non-local `POSTGRES_SERVER`; set
+`DEV_ALLOW_REMOTE_DB=1` only when using that remote database is intentional.
+
+Press Ctrl-C once to forward SIGINT to Uvicorn, Vite, the watcher, and any active child.
+After at most five seconds, remaining children receive SIGKILL; Compose then runs `down`
+with a one-second service timeout and a five-second supervisor cap. Including the final
+kill allowance, worst-case shutdown is about 12 seconds. Press Ctrl-C a second time to
+send SIGKILL immediately and start a zero-timeout Compose teardown with a two-second cap.
+Shutdown does not remove `app-db-data`, so the existing developer database survives.
+Application code no longer runs in Compose during development; Compose contains only
+`db` and `adminer`.
 
 ## Ports and URLs
 
@@ -75,12 +84,13 @@ npm run test:e2e
 ```
 
 To use an existing PostgreSQL test database instead of Testcontainers, set
-`TEST_DATABASE_URL`. Its database name must contain `test`; set
-`TEST_DATABASE_ALLOW_UNSAFE_NAME=1` only when you intentionally accept the suite's
-migration and data-deletion behavior.
+`TEST_DATABASE_URL`. Its database name must be exactly `test`, start with `test_` or
+`test-`, or end with `_test` or `-test`. Set `TEST_DATABASE_ALLOW_UNSAFE_NAME=1` only
+when you intentionally accept the suite's migration and data-deletion behavior.
 
 ## Troubleshooting
 
 Port conflicts are reported before Compose starts. Either stop the named process or
 container, or update all affected port values in `.env`, then rerun `npm run dev`.
-Backing-service logs remain available through `docker compose logs db adminer`.
+Backing-service logs remain available through `docker compose logs db adminer` or
+`docker-compose logs db adminer`, matching the command detected by the supervisor.

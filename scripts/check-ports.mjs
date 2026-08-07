@@ -1,20 +1,20 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { connect } from "node:net";
-import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { parseEnv } from "node:util";
+
+import { detectComposeCommand, withComposeArgs } from "./compose-command.mjs";
+import { buildEffectiveEnvironment } from "./dev-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const envFile = path.join(root, ".env");
-let envFileValues;
+let environment;
+let compose;
 
 try {
-  envFileValues = parseEnv(readFileSync(envFile, "utf8"));
-  process.loadEnvFile(envFile);
+  environment = buildEffectiveEnvironment(root);
+  compose = detectComposeCommand({ cwd: root, env: environment });
 } catch (error) {
-  fail(`Could not parse .env. Copy .env.example to .env and fix its syntax. (${error.message})`);
+  fail(error.message);
 }
 
 const ports = [
@@ -45,10 +45,7 @@ if (postgresPort !== database.value) {
   fail(
     `DB_PORT=${database.value} does not match POSTGRES_PORT=${postgresPort}.\n${recoveryAdvice([
       database,
-      {
-        env: "POSTGRES_PORT",
-        environmentOverride: isEnvironmentOverride("POSTGRES_PORT"),
-      },
+      { env: "POSTGRES_PORT" },
     ])}`,
   );
 }
@@ -85,31 +82,16 @@ function port(env, label, fallback, composeService, containerPort) {
     value: portValue(env, fallback),
     composeService,
     containerPort,
-    environmentOverride: isEnvironmentOverride(env),
   };
 }
 
-function isEnvironmentOverride(env) {
-  return process.env[env] !== undefined && process.env[env] !== envFileValues[env];
-}
-
 function recoveryAdvice(entries) {
-  const overrides = [
-    ...new Set(
-      entries.filter(({ environmentOverride }) => environmentOverride).map(({ env }) => env),
-    ),
-  ];
-  if (!overrides.length) return "Update the affected values in .env, then run npm run dev again.";
-
-  const noun = overrides.length === 1 ? "variable" : "variables";
-  return (
-    `Unset ${overrides.join(", ")} from the process environment (it overrides .env), or set the ` +
-    `${noun} to available values there; then run npm run dev again.`
-  );
+  void entries;
+  return "Update the affected values in .env, then run npm run dev again.";
 }
 
 function portValue(env, fallback) {
-  const raw = process.env[env] || String(fallback);
+  const raw = environment[env] || String(fallback);
   const value = Number(raw);
   if (!Number.isInteger(value) || value < 1 || value > 65535) {
     fail(`${env} must be an integer between 1 and 65535 (received ${JSON.stringify(raw)}).`);
@@ -119,8 +101,10 @@ function portValue(env, fallback) {
 
 function ownsPort({ value, composeService, containerPort }) {
   if (!composeService) return false;
-  const result = spawnSync("docker", ["compose", "port", composeService, String(containerPort)], {
+  const [command, args] = withComposeArgs(compose, ["port", composeService, String(containerPort)]);
+  const result = spawnSync(command, args, {
     cwd: root,
+    env: environment,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   });
@@ -137,6 +121,7 @@ function ownsPort({ value, composeService, containerPort }) {
 // conflicts first, then use a connection probe for native processes.
 function dockerPublishedPorts() {
   const result = spawnSync("docker", ["ps", "--format", "{{.Names}}\t{{.Ports}}"], {
+    env: environment,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
   });

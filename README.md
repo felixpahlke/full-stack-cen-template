@@ -156,7 +156,8 @@ git merge --continue
 ### Quick start
 
 Prerequisites are Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker
-runtime with Docker Compose. Bootstrap a fresh checkout with these four commands:
+runtime with either `docker compose` or standalone `docker-compose`. Bootstrap a fresh
+checkout with these four commands:
 
 ```bash
 cp .env.example .env
@@ -175,6 +176,10 @@ This starts PostgreSQL 12 and Adminer in Compose, applies migrations, seeds the
 initial superuser, and runs reload-enabled Uvicorn and strict-port Vite natively.
 Backend API changes regenerate the frontend client automatically. See
 [development.md](./.docs/development.md) for ports, logs, tests, and troubleshooting.
+
+On Ctrl-C, the supervisor gives children up to five seconds after SIGINT, then uses
+SIGKILL and tears down Compose; worst-case shutdown is about 12 seconds. A second Ctrl-C
+escalates immediately to SIGKILL and a zero-timeout Compose teardown.
 
 ## Deployment
 
