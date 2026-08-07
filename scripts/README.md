@@ -19,8 +19,9 @@ mode-0600 files and never command arguments.
 Blank branch filters resolve to `backend-only` and must exist remotely before BuildConfig creation.
 Legacy resources can be labeled only with `--adopt-legacy-resources`, matching fingerprints, and
 the separate `adopt <PROJECT_NAME>/<APP_NAME>` phrase. PostgreSQL drift stops before secret
-replacement. OpenShift reconciles webhook RBAC, fails webhook API errors, and skips registry
-readiness only for missing read permissions.
+replacement. OpenShift disables webhooks without failing application deployment when permission to
+create their RoleBinding or bind `system:webhook` is missing; other RoleBinding apply failures and
+GitHub API failures remain fatal. Registry readiness skips only for missing read permissions.
 
 Code Engine persists CORS without adding `*`, reports the backend URL, waits for fresh-project
 readiness, and reuses an owned registry secret without `_IAM_API_KEY`. App-scoped image names are
