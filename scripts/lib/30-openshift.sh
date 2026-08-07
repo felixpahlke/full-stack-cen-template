@@ -1,113 +1,63 @@
 #!/usr/bin/env bash
-#
-# OpenShift Helper Functions Library
-#
-# This library provides:
-# - Resource existence checking
-# - Resource creation/update
-# - OpenShift client version checking
-# - Login status verification
-# - Project setup
-#
-#############################################
-# OpenShift Helper Functions
-#############################################
 
-# Function to check if a resource exists
-resource_exists() {
-    local resource_type=$1
-    local resource_name=$2
-    
-    oc get "$resource_type" "$resource_name" &>/dev/null
-    return $?
+resource_exists() { oc get "$1" "$2" >/dev/null 2>&1; }
+
+oc_resource_is_owned() {
+    local kind=$1 name=$2 managed instance
+    managed=$(oc get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)
+    instance=$(oc get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/instance}' 2>/dev/null || true)
+    resource_is_owned_by_this_deployment "$managed" "$instance"
 }
 
-# Function to create or update a resource from a heredoc
+ensure_oc_resource_owned_or_absent() {
+    local kind=$1 name=$2
+    if resource_exists "$kind" "$name" && ! oc_resource_is_owned "$kind" "$name"; then
+        warn_unowned_collision "$kind" "$name"
+        return 1
+    fi
+}
+
+delete_owned_oc_resource() {
+    local kind=$1 name=$2
+    resource_exists "$kind" "$name" || { print_status "$kind/$name is absent; nothing to delete"; return 0; }
+    if ! oc_resource_is_owned "$kind" "$name"; then warn_unowned_collision "$kind" "$name"; return 0; fi
+    print_warning "Deleting owned $kind/$name"
+    run oc delete "$kind/$name" --ignore-not-found
+}
+
 apply_resource() {
-    local resource_content=$1
-    local resource_type
-    local resource_name
-    
-    # Extract resource type and name from the content
-    resource_type=$(echo "$resource_content" | grep -E "^kind:" | awk '{print $2}' | tr '[:upper:]' '[:lower:]')
-    resource_name=$(echo "$resource_content" | grep -E "^  name:" | head -1 | awk '{print $2}')
-    
-    if [[ -z "$resource_type" || -z "$resource_name" ]]; then
-        print_error "Could not determine resource type or name" "openshift"
-        return 1
-    fi
-    
-    print_status "Applying $resource_type/$resource_name..." "openshift"
-    echo "$resource_content" | oc apply -f -
-    return $?
+    local description=${1:-generated}
+    if [[ "$DEPLOY_DRY_RUN" == true ]]; then print_status "Would apply $description resources"; return 0; fi
+    oc apply -f - >&2
 }
 
-# Check OpenShift client version
 check_oc_version() {
-    print_status "Checking OpenShift client version..." "openshift"
-    local oc_version
-    oc_version=$(oc version 2>/dev/null | grep "Client Version:" | awk '{print $3}' | cut -d'.' -f2)
-    
-    if [ -z "$oc_version" ] || [ "$oc_version" -lt "14" ]; then
-        print_error "OpenShift client version 4.14 or higher is required" "openshift"
-        print_error "Current version: $(oc version 2>/dev/null | grep "Client Version:")" "openshift"
-        return 1
-    fi
-    
-    print_success "OpenShift client version is compatible" "openshift"
-    return 0
+    local version minor
+    need_command oc
+    version=$(oc version --client 2>/dev/null || true)
+    minor=$(printf '%s\n' "$version" | awk '/Client Version:/ {split($3, p, "."); print p[2]; exit}')
+    [[ -n "$minor" && "$minor" -ge 14 ]] || { print_error 'OpenShift CLI 4.14 or newer is required'; return 1; }
 }
 
-# Check OpenShift login status
 check_oc_login() {
-    print_status "Checking OpenShift instance and login status..." "openshift"
-    
-    if ! oc whoami --show-server &>/dev/null || ! oc whoami &>/dev/null; then
-        print_error "Not logged into OpenShift. Please login first using:" "openshift"
-        echo "oc login --token=<token> --server=<server-url>"
-        return 1
-    fi
-    
-    OPENSHIFT_SERVER=$(oc whoami --show-server)
-    echo -e "${TEAL}You are about to deploy to:${NC}"
-    echo -e "${TEAL}$OPENSHIFT_SERVER${NC}"
-    read -p "Do you want to continue? (y/n): " CONTINUE
-    
-    if [[ ! $CONTINUE =~ ^[Yy]$ ]]; then
-        print_error "Deployment cancelled" "openshift"
-        return 1
-    fi
-    
-    return 0
+    oc whoami >/dev/null 2>&1 || { print_error "log in with 'oc login' before deploying"; return 1; }
+    OPENSHIFT_SERVER=$(oc whoami --show-server) || return 1
+    print_status "OpenShift target: $OPENSHIFT_SERVER / $PROJECT_NAME"
 }
 
-#############################################
-# Project Setup Functions
-#############################################
-
-# Function to handle project creation or selection
 setup_project() {
-    # Check if project exists
-    if resource_exists "project" "$PROJECT_NAME"; then
-        print_status "Project '$PROJECT_NAME' already exists." "openshift"
-        read -p "Do you want to switch to this project and continue deployment? (y/n): " USE_EXISTING
-        if [[ $USE_EXISTING =~ ^[Yy]$ ]]; then
-            oc project "$PROJECT_NAME" || {
-                print_error "Failed to switch to project" "openshift"
-                return 1
-            }
-        else
-            print_error "Deployment cancelled" "openshift"
-            return 1
-        fi
+    if resource_exists project "$PROJECT_NAME"; then
+        run oc project "$PROJECT_NAME"
     else
-        # Create new project
-        print_status "Creating new project '$PROJECT_NAME'..." "openshift"
-        oc new-project "$PROJECT_NAME" || {
-            print_error "Failed to create project" "openshift"
-            return 1
-        }
+        run oc new-project "$PROJECT_NAME"
+        run oc label namespace "$PROJECT_NAME" "$CEN_MANAGED_BY_LABEL" "$CEN_INSTANCE_KEY=$APP_NAME" --overwrite
     fi
-    
-    return 0
+}
+
+capture_route_host() {
+    oc get route "$1" -o jsonpath='{.spec.host}' 2>/dev/null || true
+}
+
+openshift_apps_domain() {
+    oc get ingress.config.openshift.io cluster -o jsonpath='{.spec.domain}' 2>/dev/null
 }
