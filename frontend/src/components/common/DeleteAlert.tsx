@@ -61,7 +61,7 @@ const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
         <DialogHeader>
           <DialogTitle>Delete {type}</DialogTitle>
           <DialogDescription>
-            <p>Are you sure? You will not be able to undo this action.</p>
+            Are you sure? You will not be able to undo this action.
           </DialogDescription>
         </DialogHeader>
 

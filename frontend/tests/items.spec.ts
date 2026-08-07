@@ -3,8 +3,18 @@ import { expect, test } from "@playwright/test";
 test("authenticated OIDC subject can create, list, read, update, and delete an item", async ({
   page,
 }) => {
+  const diagnostics: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      diagnostics.push(`${message.type()}: ${message.text()}`);
+    }
+  });
+  page.on("pageerror", (error) => diagnostics.push(`pageerror: ${error.message}`));
+
   const title = `OAuth item ${Date.now()}`;
   const updatedTitle = `${title} updated`;
+  await page.goto("/");
+  await expect(page.getByText("Welcome back, nice to see you again!")).toBeVisible();
   await page.goto("/items");
   await page.getByRole("button", { name: "Add Item" }).click();
   await page.getByLabel("Title").fill(title);
@@ -24,4 +34,5 @@ test("authenticated OIDC subject can create, list, read, update, and delete an i
   await page.getByRole("menuitem", { name: "Delete Item" }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(updatedRow).not.toBeVisible();
+  expect(diagnostics).toEqual([]);
 });
