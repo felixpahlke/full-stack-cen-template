@@ -1,7 +1,8 @@
 import asyncio
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from time import perf_counter
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -9,7 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from sqlalchemy import Engine
 from starlette.middleware.cors import CORSMiddleware
-from starlette.types import Receive, Scope, Send
+from starlette.responses import Response
 
 from app.api.main import api_router
 from app.core.config import Settings, get_settings
@@ -22,7 +23,8 @@ logger = get_logger(__name__)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    tags = getattr(route, "tags", ())
+    return f"{tags[0]}-{route.name}" if tags else route.name
 
 
 def create_app(
@@ -32,7 +34,7 @@ def create_app(
     setup_logging(app_settings.EFFECTIVE_LOG_LEVEL)
 
     @asynccontextmanager
-    async def lifespan(_app: FastAPI):
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         logger.info("Starting %s application", app_settings.PROJECT_NAME)
         logger.info("Environment: %s", app_settings.ENVIRONMENT)
         logger.info("API version: %s", app_settings.API_V1_STR)
@@ -94,7 +96,10 @@ def create_app(
         )
 
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Log one summary line for each completed request."""
         start_time = perf_counter()
         response = await call_next(request)
@@ -121,18 +126,14 @@ def create_app(
     return app
 
 
-class FactoryBackedFastAPI(FastAPI):
-    """Keep the Dockerfile's file-based FastAPI entrypoint lazy and factory-backed."""
-
-    def __init__(self, factory: Callable[[], FastAPI]) -> None:
-        super().__init__()
-        self._factory = factory
-        self._delegate: FastAPI | None = None
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if self._delegate is None:
-            self._delegate = self._factory()
-        await self._delegate(scope, receive, send)
+if TYPE_CHECKING:
+    app: FastAPI
 
 
-app = FactoryBackedFastAPI(create_app)
+def __getattr__(name: str) -> FastAPI:
+    """Resolve the legacy app export lazily without wrapping the application."""
+    if name != "app":
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    application = create_app()
+    globals()[name] = application
+    return application

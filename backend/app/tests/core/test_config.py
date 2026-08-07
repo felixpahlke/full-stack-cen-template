@@ -1,6 +1,5 @@
 import subprocess
 import sys
-from pathlib import Path
 
 from app.core.config import API_V1_STR, ENV_FILE, REPO_ROOT, Settings
 from app.core.db import create_db_engine, get_engine
@@ -8,19 +7,19 @@ from app.main import create_app
 
 
 def factory_settings(**overrides: object) -> Settings:
-    values = {
+    values: dict[str, object] = {
         "PROJECT_NAME": "Factory test",
         "API_KEY": "factory-test-api-key",
         "POSTGRES_SERVER": "unused",
         "POSTGRES_USER": "unused",
     }
     values.update(overrides)
-    return Settings(_env_file=None, **values)  # type: ignore[arg-type]
+    return Settings(_env_file=None, **values)  # type: ignore[call-arg,arg-type]
 
 
 def test_env_file_is_anchored_to_repo_root() -> None:
     assert ENV_FILE == REPO_ROOT / ".env"
-    assert Path(Settings.model_config["env_file"]) == ENV_FILE
+    assert Settings.model_config["env_file"] == ENV_FILE
 
 
 def test_factories_accept_injected_settings_and_database_url() -> None:

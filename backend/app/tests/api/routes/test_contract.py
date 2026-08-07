@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
@@ -9,6 +11,7 @@ def business_routes(app: FastAPI) -> set[tuple[str, str]]:
     routes: set[tuple[str, str]] = set()
     for route in app.routes:
         if isinstance(route, APIRoute):
+            assert route.methods is not None
             routes.update((method, route.path) for method in route.methods)
             continue
         contexts = getattr(route, "effective_route_contexts", None)
@@ -19,7 +22,7 @@ def business_routes(app: FastAPI) -> set[tuple[str, str]]:
 
 
 def test_route_contract(client: TestClient) -> None:
-    assert business_routes(client.app) == {
+    assert business_routes(cast(FastAPI, client.app)) == {
         ("GET", "/api/v1/items/"),
         ("GET", "/api/v1/items/{id}"),
         ("POST", "/api/v1/items/"),

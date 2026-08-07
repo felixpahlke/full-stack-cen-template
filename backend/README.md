@@ -13,6 +13,10 @@ user table, ownership field, bearer authentication, frontend, or generated brows
 Install with `uv sync --project backend`; run with root `npm run dev`. Keep database work in CRUD,
 routes thin, and settings mirrored in `.env.example`.
 
+Use `create_app`, `get_settings`, and `get_engine` for injected code. Historical module-level
+`app`, `settings`, and `engine` imports remain lazy compatibility exports. The production image
+serves the factory directly with Uvicorn; never wrap it in an ASGI-only forwarding shell.
+
 Use root `db:revision` and `db:migrate`; never rewrite shipped revisions. Startup always verifies
 exact bundled heads and optionally migrates under an advisory lock. Tests use a disposable
 Testcontainers PostgreSQL instance:
@@ -20,3 +24,5 @@ Testcontainers PostgreSQL instance:
 ```bash
 npm run verify
 ```
+
+The verification gate includes strict mypy, Ruff linting, and Ruff formatting checks.

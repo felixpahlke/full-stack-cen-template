@@ -18,7 +18,6 @@ from app.tables import Item
 
 TEST_DATABASE_URL = "TEST_DATABASE_URL"
 TEST_DATABASE_ALLOW_UNSAFE_NAME = "TEST_DATABASE_ALLOW_UNSAFE_NAME"
-TEST_DATABASE_CREDENTIALS = {"username": "test", "password": "test", "dbname": "test"}
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -43,7 +42,11 @@ def guard_test_database_url(database_url: str) -> None:
 
 def create_postgres_container() -> PostgresContainer:
     return PostgresContainer(
-        "postgres:12", driver="psycopg", **TEST_DATABASE_CREDENTIALS
+        "postgres:12",
+        driver="psycopg",
+        username="test",
+        password="test",
+        dbname="test",
     )
 
 
@@ -83,7 +86,7 @@ def database_url() -> Generator[str, None, None]:
 @pytest.fixture(scope="session")
 def settings(database_url: str) -> Settings:
     url = make_url(database_url)
-    return Settings(
+    return Settings(  # type: ignore[call-arg]
         _env_file=None,
         PROJECT_NAME="Backend tests",
         API_KEY="backend-test-api-key",
