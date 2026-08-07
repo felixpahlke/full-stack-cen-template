@@ -91,7 +91,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
             <FormField
               control={form.control}
               name="email"
@@ -162,12 +162,12 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
               )}
             />
 
-            <div className="flex space-x-8">
+            <div className="flex gap-8">
               <FormField
                 control={form.control}
                 name="is_superuser"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start gap-3 [&>label]:leading-none">
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
@@ -180,7 +180,7 @@ const AddUser = ({ isOpen, onClose }: AddUserProps) => {
                 control={form.control}
                 name="is_active"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start gap-3 [&>label]:leading-none">
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>

@@ -16,7 +16,7 @@ const DeleteAccount = () => {
         <CardTitle>Delete Account</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <p className="text-muted-foreground text-sm">
             Permanently delete your data and everything associated with your account.
           </p>

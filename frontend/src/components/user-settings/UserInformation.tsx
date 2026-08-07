@@ -75,7 +75,7 @@ const UserInformation = () => {
         <h3 className="mb-4 text-lg font-medium">User Information</h3>
         <Form {...form}>
           {editMode ? (
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6 py-4">
               <FormField
                 control={form.control}
                 name="full_name"
@@ -108,7 +108,7 @@ const UserInformation = () => {
                 )}
               />
 
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button
                   type="submit"
                   disabled={isPending || !form.formState.isValid || !form.formState.isDirty}
@@ -121,14 +121,14 @@ const UserInformation = () => {
               </div>
             </form>
           ) : (
-            <div className="space-y-6 py-4">
-              <div className="space-y-1">
+            <div className="flex flex-col gap-6 py-4">
+              <div className="flex flex-col gap-1 [&>label]:leading-6">
                 <FormLabel>Full name</FormLabel>
                 <p className={`py-2 ${!currentUser?.full_name ? "text-muted-foreground" : ""}`}>
                   {currentUser?.full_name || "N/A"}
                 </p>
               </div>
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1 [&>label]:leading-6">
                 <FormLabel>Email</FormLabel>
                 <p className="py-2">{currentUser?.email}</p>
               </div>

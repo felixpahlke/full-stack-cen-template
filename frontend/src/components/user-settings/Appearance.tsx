@@ -15,8 +15,12 @@ const Appearance = () => {
     <Card className="max-w-md">
       <CardContent className="pt-6">
         <h3 className="mb-4 text-lg font-medium">Appearance</h3>
-        <RadioGroup className="mt-4 space-y-3" value={theme} onValueChange={handleThemeChange}>
-          <div className="flex items-center space-x-2">
+        <RadioGroup
+          className="mt-4 flex flex-col gap-3"
+          value={theme}
+          onValueChange={handleThemeChange}
+        >
+          <div className="flex items-center gap-2">
             <RadioGroupItem value="light" id="light" />
             <Label htmlFor="light" className="flex items-center">
               <span className="mr-2">Light Mode</span>
@@ -27,11 +31,11 @@ const Appearance = () => {
               )}
             </Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <RadioGroupItem value="dark" id="dark" />
             <Label htmlFor="dark">Dark Mode</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <RadioGroupItem value="system" id="system" />
             <Label htmlFor="system">System Default</Label>
           </div>

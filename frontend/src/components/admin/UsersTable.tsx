@@ -87,7 +87,7 @@ export default function UsersTable() {
                       {user.full_name || "N/A"}
                     </span>
                     {currentUser?.id === user.id && (
-                      <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      <span className="rounded-sm bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                         You
                       </span>
                     )}

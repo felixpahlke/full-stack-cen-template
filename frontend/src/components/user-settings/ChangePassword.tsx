@@ -56,7 +56,7 @@ const ChangePassword = () => {
       <CardContent className="pt-6">
         <h3 className="mb-4 text-lg font-medium">Change Password</h3>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6 py-4">
             <FormField
               control={form.control}
               name="current_password"

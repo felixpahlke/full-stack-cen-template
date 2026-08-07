@@ -55,8 +55,8 @@ function Login() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center p-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Logo className="mb-3 w-full" />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+          <Logo className="w-full" />
 
           <FormField
             control={form.control}
