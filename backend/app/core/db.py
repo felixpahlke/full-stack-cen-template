@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, make_url
 from sqlmodel import Session, create_engine, select
 
 from app import crud
@@ -8,9 +8,14 @@ from app.core.config import Settings, get_settings
 from app.models import UserCreate
 from app.tables import User
 
+DATABASE_CONNECT_TIMEOUT_SECONDS = 10
+
 
 def create_db_engine(database_url: str) -> Engine:
-    return create_engine(database_url)
+    connect_args = {}
+    if make_url(database_url).get_backend_name() == "postgresql":
+        connect_args["connect_timeout"] = DATABASE_CONNECT_TIMEOUT_SECONDS
+    return create_engine(database_url, connect_args=connect_args)
 
 
 @lru_cache

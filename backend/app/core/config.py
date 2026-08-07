@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Environment = Environment.LOCAL
     LOG_LEVEL: LogLevel | None = None  # Optional override for log level
+    MIGRATE_ON_START: bool = True
+    MIGRATION_LOCK_TIMEOUT_SECONDS: float = 60
 
     @computed_field  # type: ignore[prop-decorator]
     @property
