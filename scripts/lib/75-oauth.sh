@@ -8,10 +8,12 @@ ensure_oauth_upstream_password() {
     is_oauth_enabled || return 0
     local value=${OAUTH2_PROXY_UPSTREAM_PASSWORD:-} first_character
     first_character=${value:0:1}
-    if [[ -z "$value" || "$value" == generate-on-first-dev-run || "$value" == replace-me || "$value" =~ ^\<.*\>$ ]]; then
+    if [[ -z "$value" || "$value" == generate-on-first-dev-run || "$value" == replace-me || \
+        "$value" == '<generate-a-random-upstream-password>' ]]; then
+        need_command openssl
         OAUTH2_PROXY_UPSTREAM_PASSWORD=$(openssl rand -hex 32) || return 1
         print_success 'Generated the private OAuth proxy/backend seam credential without printing it.'
-    elif [[ ${#value} -lt 32 || -z "${value//$first_character/}" ]]; then
+    elif is_placeholder_value "$value" || [[ ${#value} -lt 32 || -z "${value//$first_character/}" ]]; then
         print_error 'OAUTH2_PROXY_UPSTREAM_PASSWORD must be a non-placeholder random value of at least 32 characters.'
         return 1
     fi

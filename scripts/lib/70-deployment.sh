@@ -1,9 +1,100 @@
 #!/usr/bin/env bash
 
+legacy_resource_candidates() {
+    local resources=(
+        secret/git-secret "secret/$APP_NAME-env" secret/github-webhook-secret
+        imagestream/backend buildconfig/backend deployment/backend service/backend route/backend
+        rolebinding/webhook-access-unauthenticated
+    )
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        resources+=(imagestream/frontend buildconfig/frontend deployment/frontend service/frontend route/frontend)
+    fi
+    if [[ "$HAS_DATABASE" == true && "${POSTGRES_SERVER:-}" == postgresql ]]; then
+        resources+=(pvc/postgresql-data deployment/postgresql service/postgresql)
+    fi
+    if [[ "$OAUTH_ENABLED" == true ]]; then
+        resources+=("secret/$APP_NAME-oauth-proxy-secret" deployment/oauth-proxy service/oauth-proxy route/oauth-proxy)
+    fi
+    printf '%s\n' "${resources[@]}"
+}
+
+legacy_resource_matches_application() {
+    local kind=$1 name=$2 json
+    json=$(oc get "$kind" "$name" -o json) || return 1
+    LEGACY_KIND=$kind LEGACY_NAME=$name LEGACY_APP_NAME=$APP_NAME LEGACY_GIT_URL=$GIT_SSH_URL \
+        LEGACY_HAS_DATABASE=$HAS_DATABASE LEGACY_FLAVOR=$CEN_DEPLOY_FLAVOR node -e '
+      const fs=require("node:fs"), x=JSON.parse(fs.readFileSync(0,"utf8"));
+      const kind=process.env.LEGACY_KIND,name=process.env.LEGACY_NAME,app=process.env.LEGACY_APP_NAME;
+      const data=x.data??{}, spec=x.spec??{};
+      const container=(n)=>(spec.template?.spec?.containers??[]).find(c=>c.name===n);
+      const port=(n)=>(spec.ports??[]).some(p=>Number(p.port)===n||Number(p.targetPort)===n);
+      let ok=x.metadata?.name===name;
+      if(kind==="secret"&&name==="git-secret") ok&&=x.type==="kubernetes.io/ssh-auth"&&!!data["ssh-privatekey"];
+      else if(kind==="secret"&&name.endsWith("-env")) ok&&=!!data.PROJECT_NAME;
+      else if(kind==="secret"&&name==="github-webhook-secret") ok&&=!!data.WebHookSecretKey;
+      else if(kind==="secret"&&name.endsWith("-oauth-proxy-secret")) ok&&=!!data.OAUTH2_PROXY_CLIENT_ID;
+      else if(kind==="buildconfig") {
+        const component=name, context=component;
+        ok&&=spec.source?.git?.uri===process.env.LEGACY_GIT_URL&&spec.source?.contextDir===context&&spec.source?.sourceSecret?.name==="git-secret";
+        ok&&=spec.output?.to?.name===`${component}:latest`;
+      } else if(kind==="imagestream") ok&&=["backend","frontend"].includes(name);
+      else if(kind==="deployment") {
+        if(name==="postgresql") ok&&=!!container("postgresql")&&String(container("postgresql").image??"").startsWith("postgres:")&&
+          (spec.template?.spec?.volumes??[]).some(v=>v.persistentVolumeClaim?.claimName==="postgresql-data");
+        else if(name==="oauth-proxy") ok&&=!!container("oauth-proxy")&&String(container("oauth-proxy").image??"").includes("oauth2-proxy");
+        else ok&&=!!container(name);
+      } else if(kind==="service") {
+        const expected={backend:8000,frontend:8080,postgresql:5432,"oauth-proxy":4180}[name]; ok&&=port(expected);
+      } else if(kind==="route") ok&&=spec.to?.name===name;
+      else if(kind==="pvc") ok&&=(spec.accessModes??[]).includes("ReadWriteOnce")&&!!spec.resources?.requests?.storage;
+      else if(kind==="rolebinding") ok&&=spec.roleRef?.kind==="ClusterRole"&&spec.roleRef?.name==="system:webhook"&&
+        (spec.subjects??[]).some(s=>s.kind==="Group"&&s.name==="system:unauthenticated");
+      else ok=false;
+      process.exit(ok?0:1);' <<< "$json"
+}
+
+adopt_legacy_resources() {
+    [[ "${ADOPT_LEGACY_RESOURCES:-false}" == true ]] || return 0
+    local resource kind name managed instance confirmation
+    local candidates=() adoptable=()
+    while IFS= read -r resource; do [[ -z "$resource" ]] || candidates+=("$resource"); done < <(legacy_resource_candidates)
+    for resource in buildconfig/backend deployment/backend service/backend; do
+        resource_exists "${resource%%/*}" "${resource#*/}" || {
+            print_error "legacy adoption refused: required application anchor $resource is absent"
+            return 1
+        }
+    done
+    for resource in "${candidates[@]}"; do
+        kind=${resource%%/*}; name=${resource#*/}
+        resource_exists "$kind" "$name" || continue
+        managed=$(oc get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)
+        instance=$(oc get "$kind" "$name" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/instance}' 2>/dev/null || true)
+        if resource_is_owned_by_this_deployment "$managed" "$instance"; then continue; fi
+        if [[ -n "$managed" || -n "$instance" ]] || ! legacy_resource_matches_application "$kind" "$name"; then
+            print_error "legacy adoption refused: $resource is ambiguous or does not match this application"
+            return 1
+        fi
+        adoptable+=("$resource")
+    done
+    ((${#adoptable[@]})) || { print_error 'legacy adoption refused: no unlabeled matching resources were found'; return 1; }
+    print_warning 'Verified the following unlabeled legacy resources for adoption:'
+    printf '  %s\n' "${adoptable[@]}" >&2
+    read -r -p "Type 'adopt $PROJECT_NAME/$APP_NAME' to apply both ownership labels: " confirmation
+    [[ "$confirmation" == "adopt $PROJECT_NAME/$APP_NAME" ]] || { print_error 'legacy adoption cancelled; no labels were changed'; return 1; }
+    for resource in "${adoptable[@]}"; do
+        run oc label "$resource" "$CEN_MANAGED_BY_LABEL" "$CEN_INSTANCE_KEY=$APP_NAME" --overwrite
+        oc_resource_is_owned "${resource%%/*}" "${resource#*/}" || {
+            print_error "legacy adoption could not verify both labels on $resource"
+            return 1
+        }
+        print_success "Adopted $resource"
+    done
+}
+
 preflight_deploy_collisions() {
     local resource kind name resources=(
         'secret/git-secret' "secret/$APP_NAME-env" 'secret/github-webhook-secret' 'imagestream/backend' 'buildconfig/backend'
-        'deployment/backend' 'service/backend'
+        'deployment/backend' 'service/backend' 'rolebinding/webhook-access-unauthenticated'
     )
     if [[ "$HAS_FRONTEND" == true ]]; then
         resources+=(imagestream/frontend buildconfig/frontend deployment/frontend service/frontend)
@@ -42,7 +133,7 @@ spec:
   runPolicy: SerialLatestOnly
   source:
     type: Git
-    git: {uri: "$GIT_SSH_URL", ref: "${DEPLOYMENT_BRANCH_FILTER:-main}"}
+    git: {uri: "$GIT_SSH_URL", ref: "$DEPLOYMENT_BRANCH_FILTER"}
     contextDir: $context_dir
     sourceSecret: {name: git-secret}
   strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
