@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps) => {
-  const { activeTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
@@ -19,7 +19,9 @@ export const Logo = ({ className, logoSize = "md", logoOnly = false }: LogoProps
           "w-16": logoSize === "lg",
         })}
         src={
-          activeTheme === "dark" ? "/assets/images/logo-light.png" : "/assets/images/logo-dark.png"
+          resolvedTheme === "dark"
+            ? "/assets/images/logo-light.png"
+            : "/assets/images/logo-dark.png"
         }
         alt="IBM-Client-Engineering"
       />
