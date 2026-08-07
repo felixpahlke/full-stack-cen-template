@@ -1,96 +1,115 @@
 # Development
 
-## Prerequisites
+## Prerequisites and first run
 
 - Node.js 20.19 or newer with npm
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- A running Docker runtime with either the `docker compose` plugin or standalone
-  `docker-compose`, such as Docker Desktop or Colima
+- Docker Desktop, Colima, or native Linux Docker
+- Either the `docker compose` plugin or standalone `docker-compose`
 
-Bootstrap a fresh checkout with exactly these four commands:
+From a fresh checkout, run in this order:
 
 ```bash
-cp .env.example .env
 npm ci
-npm --prefix frontend ci
+npm ci --prefix frontend
 uv sync --project backend
-```
-
-The example values are suitable for local development. Replace every `changethis`
-value before deploying.
-
-## Native development loop
-
-Start all development processes from the repository root:
-
-```bash
+cp .env.example .env
 npm run dev
 ```
 
-The supervisor checks `.env`, required tools, installed dependencies, and all four
-ports before it changes local state. It then:
+Do not omit the root `npm ci`: the root command facade and Biome live there. Do not use
+`npm install` for a clean setup; `npm ci` verifies the lockfiles. The backend environment is
+`backend/.venv`; activate it only when an editor or an ad-hoc command requires activation.
 
-1. starts PostgreSQL and Adminer in Docker Compose and waits for both;
-2. applies pending Alembic migrations and idempotently creates the initial superuser;
-3. starts reload-enabled Uvicorn and strict-port Vite as native processes; and
-4. watches `backend/app` and atomically regenerates the OpenAPI client and route tree.
+## What development starts
 
-If a backend edit temporarily breaks imports, client generation reports the error and
-retries until the source is valid again. Supervisor output interleaves child logs with
-`[backend]`, `[frontend]`, `[client]`, `[compose]`, `[migrations]`, and `[seed]` prefixes.
+`npm run dev` validates `.env`, tools, dependencies, and ports before changing state. It:
 
-Values from the repository `.env` override inherited shell exports for the entire stack.
-The supervisor refuses to migrate or seed a non-local `POSTGRES_SERVER`; set
-`DEV_ALLOW_REMOTE_DB=1` only when using that remote database is intentional.
+1. starts PostgreSQL 12 and Adminer in Compose;
+2. starts native reload-enabled Uvicorn and Vite;
+3. lets backend startup serialize migration/seeding through a PostgreSQL advisory lock; and
+4. watches backend source and atomically regenerates the OpenAPI client and route tree.
 
-Press Ctrl-C once to forward SIGINT to Uvicorn, Vite, the watcher, and any active child.
-After at most five seconds, remaining children receive SIGKILL; Compose then runs `down`
-with a one-second service timeout and a five-second supervisor cap. Including the final
-kill allowance, worst-case shutdown is about 12 seconds. Press Ctrl-C a second time to
-send SIGKILL immediately and start a zero-timeout Compose teardown with a two-second cap.
-Shutdown does not remove `app-db-data`, so the existing developer database survives.
-Application code no longer runs in Compose during development; Compose contains only
-`db` and `adminer`.
+Application code does not run in Compose. Repository `.env` values override inherited shell
+values. A non-local `POSTGRES_SERVER` is refused unless `DEV_ALLOW_REMOTE_DB=1` is set
+deliberately.
 
-## Ports and URLs
+On the first Ctrl-C, children receive SIGINT and get up to five seconds. Remaining children
+are killed, then Compose is stopped with bounded timeouts. The worst case is about 12 seconds.
+A second Ctrl-C forces immediate child termination and a short Compose teardown. The named
+database volume is not removed.
 
-| `.env` key | Default | Service |
+## Ports, URLs, and required environment
+
+| Key | Default | Meaning |
 | --- | ---: | --- |
-| `WEB_PORT` | 5173 | Web app: `http://localhost:5173` |
-| `API_PORT` | 8000 | API: `http://localhost:8000` |
-| `ADMINER_PORT` | 8080 | Adminer: `http://localhost:8080` |
-| `DB_PORT` / `POSTGRES_PORT` | 5432 | PostgreSQL on localhost |
+| `WEB_PORT` | 5173 | Web app |
+| `API_PORT` | 8000 | FastAPI and `/docs` |
+| `ADMINER_PORT` | 8080 | Adminer |
+| `DB_PORT` | 5432 | Host-side PostgreSQL port |
+| `POSTGRES_PORT` | 5432 | Backend database port; must match `DB_PORT` locally |
 
-Swagger UI is at `http://localhost:8000/docs`; ReDoc is at
-`http://localhost:8000/redoc`. `DB_PORT` and `POSTGRES_PORT` must match because the
-native backend connects through the Compose-published database port.
+Required non-empty settings are `CEN_FLAVOR`, `ENVIRONMENT`, `PROJECT_NAME`, `SECRET_KEY`,
+`FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`, `SIGNUP_ACCESS_PASSWORD`,
+`BACKEND_CORS_ORIGINS`, and the five `POSTGRES_*` settings. `VITE_TELEMETRY_ENABLED` controls
+flavor telemetry. Replace all `changethis` values before deployment.
 
-## Tests
+## Migrate on start
 
-Run the branch-appropriate suite with:
+`MIGRATE_ON_START=true` makes every backend process acquire advisory lock `7461001`, upgrade
+to the Alembic heads bundled in this checkout, verify that the database is at exactly those
+heads, and seed the initial user before serving. `MIGRATION_LOCK_TIMEOUT_SECONDS` limits how
+long a replica waits for another migrator; the default is 60 seconds.
+
+With `MIGRATE_ON_START=false`, no upgrade runs, but exact-head verification still does. A
+timeout, broken migration, unreachable database, or extra/missing database revision aborts
+startup. Readiness never becomes healthy; fix the schema or configuration instead of bypassing
+the check.
+
+Use the root migration commands:
 
 ```bash
+npm run db:revision -- -m "Describe the schema change"
+npm run db:migrate
+```
+
+Commit generated revisions. Never rewrite existing revision history.
+
+## Testing and generation
+
+```bash
+npm run check
 npm run test
+npm run build
+npm run verify
+npm run test:deploy
 ```
 
-Backend tests provision a disposable PostgreSQL 12 container for each pytest session,
-apply all Alembic migrations, and inject isolated settings and an isolated engine into
-the application factory. They do not read or modify `.env` and do not depend on the
-development Compose database. Browser tests remain separate:
+Backend pytest uses Testcontainers to create a disposable PostgreSQL 12 database, applies all
+migrations, and injects isolated settings. It does not read `.env` or touch the development
+database. `TEST_DATABASE_URL` may replace Testcontainers only when the database name is clearly
+test-only (`test`, `test_*`, `test-*`, `*_test`, or `*-test`).
 
-```bash
-npm run test:e2e
-```
+Generated code is checked by `npm run check:generated`. Use `npm run generate-client` after an
+API surface change; it derives OpenAPI without a running server and updates
+`frontend/src/client` and `frontend/src/routeTree.gen.ts` atomically. Never edit either output.
 
-To use an existing PostgreSQL test database instead of Testcontainers, set
-`TEST_DATABASE_URL`. Its database name must be exactly `test`, start with `test_` or
-`test-`, or end with `_test` or `-test`. Set `TEST_DATABASE_ALLOW_UNSAFE_NAME=1` only
-when you intentionally accept the suite's migration and data-deletion behavior.
+Playwright is intentionally separate from `verify`. Start `npm run dev`, then follow the native
+or containerized command in `frontend/README.md`. A local macOS sandbox may block native browser
+launch even when the application is healthy.
 
 ## Troubleshooting
 
-Port conflicts are reported before Compose starts. Either stop the named process or
-container, or update all affected port values in `.env`, then rerun `npm run dev`.
-Backing-service logs remain available through `docker compose logs db adminer` or
-`docker-compose logs db adminer`, matching the command detected by the supervisor.
+- **Occupied port:** the preflight names every occupied port before Compose starts. Stop the
+  process/container or change the paired values in `.env`.
+- **Docker command mismatch:** the supervisor prefers `docker compose` and falls back to
+  `docker-compose`. Docker Desktop and native Linux use `host.docker.internal` differently;
+  this branch does not need host-to-container application routing. With Colima, ensure the
+  Docker context points at the running VM.
+- **Missing uv environment:** rerun `uv sync --project backend`; do not create a root venv.
+- **Stale generated client:** run `npm run generate-client`, then `npm run check:generated`.
+- **Backing-service logs:** use `docker compose logs db adminer` or the equivalent standalone
+  command reported by the supervisor.
+- **Stale services after interruption:** run the detected Compose command with `down`, then
+  confirm no containers with this checkout's directory prefix remain.
