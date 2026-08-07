@@ -51,6 +51,10 @@ and injects normalized identity plus a per-checkout upstream credential. FastAPI
 accepts identity only when that credential is present and binds to loopback in the
 native runner. Direct bearer tokens and forwarded headers are not authentication.
 
+Dex is pinned to the v2.45.1 distroless multi-architecture image by digest. This was
+the current stable upstream release reviewed on August 7, 2026; the tag documents the
+release while the digest prevents an unreviewed image change.
+
 Deployments continue to support an external OIDC provider through the standard
 `OAUTH2_PROXY_CLIENT_ID`, `OAUTH2_PROXY_CLIENT_SECRET`, and
 `OAUTH2_PROXY_OIDC_ISSUER_URL` environment values used by the deployment assets.

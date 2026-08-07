@@ -37,6 +37,14 @@ def test_compose_has_only_backing_auth_services_and_a_digest_pinned_proxy() -> N
         "dex",
         "oauth2-proxy",
     }
+    dex_image = re.search(
+        r"^    image: (dexidp/dex[^\n]+)$", services_text, re.MULTILINE
+    )
+    assert dex_image is not None
+    assert re.fullmatch(
+        r"dexidp/dex:v2\.45\.1-distroless@sha256:[0-9a-f]{64}",
+        dex_image.group(1),
+    )
     image = re.search(
         r"^    image: (quay\.io/oauth2-proxy/[^\n]+)$", services_text, re.MULTILINE
     )

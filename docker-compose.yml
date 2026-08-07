@@ -29,7 +29,7 @@ services:
       - "${ADMINER_PORT:-8080}:8080"
 
   dex:
-    image: dexidp/dex:latest-distroless
+    image: dexidp/dex:v2.45.1-distroless@sha256:8bfd667b384c2a2555c355c58c167e11127d2ea1a3711f1c246e4d7c5528eb2a
     restart: "no"
     environment:
       DEX_PORT: ${DEX_PORT:-5556}
