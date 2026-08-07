@@ -119,12 +119,12 @@ class Settings(BaseSettings):
         var_name: str,
         value: str,
         *,
-        reject_locally: bool = False,
         minimum_length: int = 32,
     ) -> None:
         normalized = value.strip()
         weak = (
             normalized.lower() in PUBLIC_SECRET_VALUES
+            or (normalized.startswith("<") and normalized.endswith(">"))
             or len(normalized) < minimum_length
             or len(set(normalized)) == 1
         )
@@ -134,9 +134,6 @@ class Settings(BaseSettings):
             f"{var_name} must be a non-placeholder random value of at least "
             f"{minimum_length} characters. Run `npm run dev` to generate local values."
         )
-        if self.ENVIRONMENT == Environment.LOCAL and not reject_locally:
-            warnings.warn(message, stacklevel=1)
-            return
         raise ValueError(message)
 
     @model_validator(mode="after")
@@ -150,7 +147,6 @@ class Settings(BaseSettings):
         self._check_secret(
             "OAUTH2_PROXY_UPSTREAM_PASSWORD",
             self.OAUTH2_PROXY_UPSTREAM_PASSWORD,
-            reject_locally=True,
         )
         self._check_secret(
             "OAUTH2_PROXY_COOKIE_SECRET", self.OAUTH2_PROXY_COOKIE_SECRET

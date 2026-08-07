@@ -1,7 +1,13 @@
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import Environment, Settings
+from app.core.config import REPO_ROOT, Environment, Settings
+
+OAUTH_SECRET_NAMES = (
+    "OAUTH2_PROXY_UPSTREAM_PASSWORD",
+    "OAUTH2_PROXY_COOKIE_SECRET",
+    "OAUTH2_PROXY_CLIENT_SECRET",
+)
 
 
 def settings_values(**overrides: object) -> dict[str, object]:
@@ -30,25 +36,42 @@ def test_settings_use_the_repository_env_path_independent_of_working_directory(
 
 @pytest.mark.parametrize(
     "name",
-    [
-        "OAUTH2_PROXY_UPSTREAM_PASSWORD",
-        "OAUTH2_PROXY_COOKIE_SECRET",
-        "OAUTH2_PROXY_CLIENT_SECRET",
-    ],
+    OAUTH_SECRET_NAMES,
 )
-def test_non_local_runtime_rejects_placeholder_or_weak_oauth_secrets(name: str) -> None:
+@pytest.mark.parametrize("environment", Environment)
+def test_every_runtime_rejects_placeholder_or_weak_oauth_secrets(
+    name: str, environment: Environment
+) -> None:
+    with pytest.raises(
+        ValidationError,
+        match=rf"{name}.*Run `npm run dev` to generate local values",
+    ):
+        Settings(**settings_values(ENVIRONMENT=environment, **{name: "replace-me"}))
+
+
+def example_secret_placeholders() -> list[tuple[str, str, str]]:
+    placeholders = []
+    for filename in (".env.example", ".env.production.example"):
+        values = {}
+        for line in (REPO_ROOT / filename).read_text().splitlines():
+            if "=" in line and not line.lstrip().startswith("#"):
+                name, value = line.split("=", 1)
+                values[name] = value.strip().strip('"').strip("'")
+        placeholders.extend(
+            (filename, name, values[name]) for name in OAUTH_SECRET_NAMES
+        )
+    return placeholders
+
+
+@pytest.mark.parametrize(
+    ("_filename", "name", "placeholder"),
+    example_secret_placeholders(),
+)
+def test_every_example_oauth_secret_placeholder_is_refused(
+    _filename: str, name: str, placeholder: str
+) -> None:
+    assert placeholder
     with pytest.raises(ValidationError, match=name):
         Settings(
-            **settings_values(
-                ENVIRONMENT=Environment.PRODUCTION, **{name: "replace-me"}
-            )
-        )
-
-
-def test_local_backend_also_requires_the_private_upstream_credential() -> None:
-    with pytest.raises(ValidationError, match="OAUTH2_PROXY_UPSTREAM_PASSWORD"):
-        Settings(
-            **settings_values(
-                OAUTH2_PROXY_UPSTREAM_PASSWORD="generate-on-first-dev-run"
-            )
+            **settings_values(ENVIRONMENT=Environment.LOCAL, **{name: placeholder})
         )
