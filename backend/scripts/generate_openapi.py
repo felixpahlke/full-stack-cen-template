@@ -1,11 +1,12 @@
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from pydantic_settings import PydanticBaseSettingsSource
 
-from app.core.config import REPO_ROOT, Settings
+from app.core.config import API_V1_STR, REPO_ROOT, Settings
 from app.main import create_app
 
 
@@ -44,6 +45,7 @@ def main() -> None:
     args = parser.parse_args()
 
     settings = CodegenSettings(
+        API_V1_STR=os.environ.get("API_V1_STR", API_V1_STR),
         PROJECT_NAME="Full Stack FastAPI Project",
         SECRET_KEY="codegen-only-secret",
         POSTGRES_SERVER="localhost",

@@ -49,7 +49,25 @@ def test_app_factory_builds_engine_from_injected_settings() -> None:
         settings.SQLALCHEMY_DATABASE_URI
     )
     assert app.openapi_url == f"{API_V1_STR}/openapi.json"
-    assert "API_V1_STR" not in Settings.model_fields
+    assert Settings.model_fields["API_V1_STR"].default == API_V1_STR
+    engine.dispose()
+
+
+def test_app_factory_uses_injected_api_prefix_everywhere() -> None:
+    settings = factory_settings(API_V1_STR="/custom")
+    engine = create_db_engine("sqlite://")
+    app = create_app(settings=settings, engine=engine)
+
+    schema = app.openapi()
+
+    assert app.openapi_url == "/custom/openapi.json"
+    assert "/custom/users/me" in schema["paths"]
+    assert (
+        schema["components"]["securitySchemes"]["OAuth2PasswordBearer"]["flows"][
+            "password"
+        ]["tokenUrl"]
+        == "/custom/login/access-token"
+    )
     engine.dispose()
 
 

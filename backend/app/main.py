@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.types import Receive, Scope, Send
 
 from app.api.main import api_router
-from app.core.config import API_V1_STR, Settings, get_settings
+from app.core.config import Settings, get_settings
 from app.core.db import create_db_engine, get_engine
 from app.core.logger import get_logger, setup_logging
 
@@ -32,13 +32,13 @@ def create_app(
     async def lifespan(_app: FastAPI):
         logger.info("Starting %s application", app_settings.PROJECT_NAME)
         logger.info("Environment: %s", app_settings.ENVIRONMENT)
-        logger.info("API version: %s", API_V1_STR)
+        logger.info("API version: %s", app_settings.API_V1_STR)
         yield
         logger.info("Shutting down %s application", app_settings.PROJECT_NAME)
 
     app = FastAPI(
         title=app_settings.PROJECT_NAME,
-        openapi_url=f"{API_V1_STR}/openapi.json",
+        openapi_url=f"{app_settings.API_V1_STR}/openapi.json",
         generate_unique_id_function=custom_generate_unique_id,
         swagger_ui_parameters={"persistAuthorization": True},
         lifespan=lifespan,
@@ -105,7 +105,24 @@ def create_app(
             allow_headers=["*"],
         )
 
-    app.include_router(api_router, prefix=API_V1_STR)
+    app.include_router(api_router, prefix=app_settings.API_V1_STR)
+
+    original_openapi = app.openapi
+
+    def openapi() -> dict:
+        schema = original_openapi()
+        security_scheme = (
+            schema.get("components", {})
+            .get("securitySchemes", {})
+            .get("OAuth2PasswordBearer")
+        )
+        if security_scheme:
+            security_scheme["flows"]["password"]["tokenUrl"] = (
+                f"{app_settings.API_V1_STR}/login/access-token"
+            )
+        return schema
+
+    app.openapi = openapi  # type: ignore[method-assign]
     return app
 
 
