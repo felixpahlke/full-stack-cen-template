@@ -87,7 +87,7 @@ npm create cen-app@latest
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone -b local-auth git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git my-full-stack
+git clone -b local-auth-custom-ui git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git my-full-stack
 ```
 
 - Enter into the new directory:
@@ -138,7 +138,7 @@ upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.g
 - Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
 
 ```bash
-git pull --no-commit upstream local-auth
+git pull --no-commit upstream local-auth-custom-ui
 ```
 
 This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
@@ -153,7 +153,33 @@ git merge --continue
 
 ## Development
 
-General development docs: [development.md](./.docs/development.md).
+### Quick start
+
+Prerequisites are Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker
+runtime with either `docker compose` or standalone `docker-compose`. Bootstrap a fresh
+checkout with these four commands:
+
+```bash
+cp .env.example .env
+npm ci
+npm --prefix frontend ci
+uv sync --project backend
+```
+
+Then start the development stack:
+
+```bash
+npm run dev
+```
+
+This starts PostgreSQL 12 and Adminer in Compose, applies migrations, seeds the
+initial superuser, and runs reload-enabled Uvicorn and strict-port Vite natively.
+Backend API changes regenerate the frontend client automatically. See
+[development.md](./.docs/development.md) for ports, logs, tests, and troubleshooting.
+
+On Ctrl-C, the supervisor gives children up to five seconds after SIGINT, then uses
+SIGKILL and tears down Compose; worst-case shutdown is about 12 seconds. A second Ctrl-C
+escalates immediately to SIGKILL and a zero-timeout Compose teardown.
 
 ## Deployment
 
