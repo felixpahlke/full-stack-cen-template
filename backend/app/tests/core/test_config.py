@@ -50,7 +50,7 @@ def test_every_runtime_rejects_placeholder_or_weak_oauth_secrets(
     ):
         Settings(
             **settings_values(  # type: ignore[arg-type]
-                ENVIRONMENT=environment, **{name: "replace-me"}
+                ENVIRONMENT=environment, **{name: "changethis"}
             )
         )
 

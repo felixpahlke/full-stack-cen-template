@@ -19,9 +19,9 @@ REPO_ROOT = BACKEND_ROOT.parent if BACKEND_ROOT.name == "backend" else BACKEND_R
 ENV_FILE = REPO_ROOT / ".env"
 API_V1_STR = "/api/v1"
 
-UPSTREAM_PASSWORD_PLACEHOLDER = "generate-on-first-dev-run"
-COOKIE_SECRET_PLACEHOLDER = "generate-on-first-dev-run"
-CLIENT_SECRET_PLACEHOLDER = "generate-on-first-dev-run"
+UPSTREAM_PASSWORD_PLACEHOLDER = "changethis"
+COOKIE_SECRET_PLACEHOLDER = "changethis"
+CLIENT_SECRET_PLACEHOLDER = "changethis"
 PUBLIC_SECRET_VALUES = {
     "",
     "changethis",
