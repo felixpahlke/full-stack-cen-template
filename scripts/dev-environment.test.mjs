@@ -54,9 +54,9 @@ test("repo .env values override inherited database, credential, and port values"
 test("checkout OAuth secrets are generated once and then remain stable", () => {
   withEnvironment(
     {
-      OAUTH2_PROXY_CLIENT_SECRET: "generate-on-first-dev-run",
-      OAUTH2_PROXY_COOKIE_SECRET: "generate-on-first-dev-run",
-      OAUTH2_PROXY_UPSTREAM_PASSWORD: "generate-on-first-dev-run",
+      OAUTH2_PROXY_CLIENT_SECRET: "changethis",
+      OAUTH2_PROXY_COOKIE_SECRET: "changethis",
+      OAUTH2_PROXY_UPSTREAM_PASSWORD: "changethis",
     },
     (root) => {
       const envFile = path.join(root, ".env");

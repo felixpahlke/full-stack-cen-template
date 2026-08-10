@@ -38,7 +38,7 @@ Required runtime keys are `CEN_FLAVOR`, `ENVIRONMENT`, `PROJECT_NAME`, all port 
 `DEX_TEST_USER_*` fields, `PLAYWRIGHT_EXTERNAL_SERVER`, and telemetry. `VITE_API_URL` and
 `BACKEND_CORS_ORIGINS` remain empty for same-origin proxy routing.
 
-The marker values `generate-on-first-dev-run` are intentionally invalid. On the first
+The marker values `changethis` are intentionally invalid. On the first
 `npm run dev`, strong `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, and
 `OAUTH2_PROXY_UPSTREAM_PASSWORD` values are generated into that checkout's ignored `.env`.
 Missing, example, or weak secrets are refused in every environment. Each checkout therefore has
