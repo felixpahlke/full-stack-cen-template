@@ -6,17 +6,27 @@
 
 # Node
 node_modules/
+*.tsbuildinfo
+.vite/
 /.generate-client.lock/
+
+# Python
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
 
 # Environment files
 *.env*
 !.env*.example
 
-/test-results/
-/playwright-report/
-/blob-report/
+test-results/
+playwright-report/
+blob-report/
 git-push.sh
-/playwright/.cache/
+playwright/.cache/
 
 # Local misc folder
 /local
