@@ -187,34 +187,8 @@ git push -u origin my-template-branch
 
 ## Update From the Original Template
 
-After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
-
-- Make sure you added the original repository as a remote, you can check it with:
-
-```bash
-git remote -v
-
-origin    git@github.ibm.com:my-username/my-full-stack.git (fetch)
-origin    git@github.ibm.com:my-username/my-full-stack.git (push)
-upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (fetch)
-upstream    git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git (push)
-```
-
-- Pull the latest changes without merging (commands may vary by flavour - check the specific branch):
-
-```bash
-git pull --no-commit upstream oauth-proxy-custom-ui
-```
-
-This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
-
-- If there are conflicts, solve them in your editor.
-
-- Once you are done, commit the changes:
-
-```bash
-git merge --continue
-```
+Follow [the update-from-template skill](./.agents/skills/update-from-template/SKILL.md) for the
+upstream pull, conflict handling, regeneration, and verification before completing the merge.
 
 ## Development
 
