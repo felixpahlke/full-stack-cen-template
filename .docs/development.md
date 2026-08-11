@@ -33,8 +33,8 @@ npm run test:deploy
 ```
 
 The explicit invalid `DOCKER_HOST` is an optional proof that tests are Docker-free, not a setup
-requirement. `npm run build` is deliberately outside `verify` because image building needs Docker.
-No migration or Playwright instructions exist for this branch.
+requirement. `npm run build` is deliberately outside `verify` because image building needs Docker
+or Podman. No migration or Playwright instructions exist for this branch.
 
 If the API port is occupied, stop the reported process or change `API_PORT`. If the uv environment
 is missing, rerun `uv sync --project backend`. If settings appear stale, verify commands are run

@@ -13,8 +13,8 @@ npm run dev
 ```
 
 Supported root vocabulary is `dev`, `check`, `fix`, `test`, `build`, `verify`, and
-`test:deploy`. `build` needs Docker; the rest are Docker-free. Database and frontend commands do
-not exist by design.
+`test:deploy`. `build` needs Docker or Podman; the rest are container-free. Database and frontend
+commands do not exist by design.
 
 Keep schemas in `backend/app/models.py`, routes in `backend/app/api/routes`, registration in
 `backend/app/api/main.py`, and environment-backed settings in `backend/app/core/config.py`. Keep
