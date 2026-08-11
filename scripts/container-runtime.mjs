@@ -7,11 +7,20 @@ export function detectContainerRuntime({
   cwd,
   env = process.env,
   platform = process.platform,
-  execute = runDocker,
+  execute = runContainer,
 } = {}) {
-  const contextResult = execute(["context", "show"], { cwd, env });
-  const infoResult = execute(["info", "--format", "{{json .}}"], { cwd, env });
-  if (contextResult.status !== 0 || infoResult.status !== 0) {
+  const infoArgs = ["info", "--format", "{{json .}}"];
+  let command = "docker";
+  let infoResult = execute(command, infoArgs, { cwd, env });
+  if (infoResult.status !== 0) {
+    command = "podman";
+    infoResult = execute(command, infoArgs, { cwd, env });
+  }
+  if (infoResult.status !== 0) {
+    throw failure("No running Docker, Rancher Desktop, or Podman runtime was found.");
+  }
+  const contextResult = execute(command, ["context", "show"], { cwd, env });
+  if (command === "docker" && contextResult.status !== 0) {
     throw failure("Docker is not running. Start Docker Desktop or your Docker-compatible runtime.");
   }
 
@@ -20,13 +29,27 @@ export function detectContainerRuntime({
     info = JSON.parse(infoResult.stdout.trim());
   } catch {
     throw failure(
-      "Docker returned unreadable daemon information; cannot select the Vite upstream.",
+      "The container runtime returned unreadable daemon information; cannot select the Vite upstream.",
     );
   }
-  return selectContainerRuntime({ context: contextResult.stdout.trim(), info, platform });
+  return selectContainerRuntime({
+    command,
+    context: contextResult.status === 0 ? contextResult.stdout.trim() : "",
+    info,
+    platform,
+  });
 }
 
-export function selectContainerRuntime({ context, info, platform }) {
+export function selectContainerRuntime({ command = "docker", context, info, platform }) {
+  if (command === "podman" && info.host && info.store && info.version && info.Client) {
+    return {
+      id: "podman",
+      displayName: "Podman",
+      upstreamHost: "host.containers.internal",
+      extraHosts: [],
+      command,
+    };
+  }
   const identity = [context, info.Name, info.OperatingSystem, ...(info.Labels || [])]
     .filter(Boolean)
     .join(" ")
@@ -38,6 +61,7 @@ export function selectContainerRuntime({ context, info, platform }) {
       displayName: "Colima",
       upstreamHost: "host.lima.internal",
       extraHosts: [],
+      command,
     };
   }
   if (/docker desktop|desktop-linux|docker-desktop|linuxkit/.test(identity)) {
@@ -46,6 +70,16 @@ export function selectContainerRuntime({ context, info, platform }) {
       displayName: "Docker Desktop",
       upstreamHost: "host.docker.internal",
       extraHosts: [],
+      command,
+    };
+  }
+  if (/rancher desktop|rancher-desktop/.test(identity)) {
+    return {
+      id: "rancher-desktop",
+      displayName: "Rancher Desktop",
+      upstreamHost: "host.docker.internal",
+      extraHosts: [],
+      command,
     };
   }
   if (platform === "linux") {
@@ -54,16 +88,23 @@ export function selectContainerRuntime({ context, info, platform }) {
       displayName: "native Linux Docker",
       upstreamHost: "host.docker.internal",
       extraHosts: ["host.docker.internal:host-gateway"],
+      command,
     };
   }
 
   throw failure(
     `Unsupported Docker runtime for native host services (context ${JSON.stringify(context)}). ` +
-      "Use Docker Desktop, Colima, or native Docker on Linux.",
+      "Use Docker Desktop, Rancher Desktop with dockerd, Podman, or native Docker on Linux.",
   );
 }
 
-export function probeViteUpstream({ runtime, port, cwd, env = process.env, execute = runDocker }) {
+export function probeViteUpstream({
+  runtime,
+  port,
+  cwd,
+  env = process.env,
+  execute = runContainer,
+}) {
   const args = ["run", "--rm", "--pull=never", "--entrypoint", "bash"];
   for (const mapping of runtime.extraHosts) args.push("--add-host", mapping);
   args.push(
@@ -86,7 +127,7 @@ export function probeViteUpstream({ runtime, port, cwd, env = process.env, execu
     String(port),
   );
 
-  const result = execute(args, { cwd, env, timeout: 15_000 });
+  const result = execute(runtime.command, args, { cwd, env, timeout: 15_000 });
   if (result.status === 0) return;
   throw failure(
     `Vite is not reachable from a ${runtime.displayName} container at ` +
@@ -94,8 +135,8 @@ export function probeViteUpstream({ runtime, port, cwd, env = process.env, execu
   );
 }
 
-function runDocker(args, options) {
-  return spawnSync("docker", args, { ...options, encoding: "utf8" });
+function runContainer(command, args, options) {
+  return spawnSync(command, args, { ...options, encoding: "utf8" });
 }
 
 function failure(message) {

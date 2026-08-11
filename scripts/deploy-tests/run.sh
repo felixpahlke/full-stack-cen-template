@@ -107,8 +107,9 @@ make_mocks() {
     cat > "$bin/docker" <<'EOF'
 #!/usr/bin/env bash
 # cen-deploy-mock-command
-if env | grep -Eq '^(GITHUB_TOKEN|IAM_API_KEY|POSTGRES_PASSWORD|OAUTH2_PROXY_CLIENT_SECRET|OAUTH2_PROXY_COOKIE_SECRET|OAUTH2_PROXY_UPSTREAM_PASSWORD)='; then printf 'ENV_LEAK docker\n' >> "$MOCK_LOG"; fi
-printf 'docker' >> "$MOCK_LOG"; printf ' %q' "$@" >> "$MOCK_LOG"; printf '\n' >> "$MOCK_LOG"
+command_name=${0##*/}
+if env | grep -Eq '^(GITHUB_TOKEN|IAM_API_KEY|POSTGRES_PASSWORD|OAUTH2_PROXY_CLIENT_SECRET|OAUTH2_PROXY_COOKIE_SECRET|OAUTH2_PROXY_UPSTREAM_PASSWORD)='; then printf 'ENV_LEAK %s\n' "$command_name" >> "$MOCK_LOG"; fi
+printf '%s' "$command_name" >> "$MOCK_LOG"; printf ' %q' "$@" >> "$MOCK_LOG"; printf '\n' >> "$MOCK_LOG"
 EOF
     cat > "$bin/git" <<'EOF'
 #!/usr/bin/env bash
@@ -341,7 +342,10 @@ assert_temp_cleanup() {
 }
 
 run_ce_success() {
+    local container_cli=${1:-docker} build_command
     prepare_case ce-success
+    if [[ "$container_cli" == podman ]]; then mv "$STATE/bin/docker" "$STATE/bin/podman"; fi
+    if [[ "$container_cli" == docker ]]; then build_command='docker image build'; else build_command='podman build'; fi
     put_resource "$STATE" secret mock-project-registry-secret app-a; touch "$STATE/registries/mock-project-registry-secret"
     put_resource "$STATE" secret mock-project-backend-config app-a
     printf 'STALE_KEY=must-disappear\n' > "$STATE/secrets/mock-project-backend-config.env"
@@ -361,7 +365,7 @@ run_ce_success() {
     assert_absent "$STATE/secrets/mock-project-backend-config.env" IAM_API_KEY
     assert_absent "$STATE/secrets/mock-project-backend-config.env" OAUTH2_PROXY_CLIENT_SECRET
     assert_contains "$STATE/secrets/mock-project-backend-config.env" "CEN_FLAVOR=$FLAVOR"
-    if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc 'docker image build' "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
+    if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc "$build_command" "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
         if [[ "$OAUTH" == true ]]; then
             assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
             assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
@@ -369,7 +373,11 @@ run_ce_success() {
             assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
             assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://mock-project-backend.mockcluster.eu-de.codeengine.appdomain.cloud'
         fi
-    else [[ $(grep -Fc 'docker image build' "$STATE/calls.log") == 1 ]] || fail 'expected one Code Engine image'; fi
+    else [[ $(grep -Fc "$build_command" "$STATE/calls.log") == 1 ]] || fail 'expected one Code Engine image'; fi
+    if [[ "$container_cli" == podman ]]; then
+        assert_absent "$STATE/calls.log" '--load'
+        assert_contains "$STATE/calls.log" 'podman push'
+    fi
     assert_contains "$PROJECT/.env.production" 'BACKEND_CORS_ORIGINS=https://admin.example.com'
     if [[ "$HAS_FRONTEND" == true && "$OAUTH" != true ]]; then assert_contains "$PROJECT/.env.production" 'mock-project-frontend.mockcluster.eu-de.codeengine.appdomain.cloud'; fi
     if [[ "$OAUTH" == true ]]; then assert_contains "$PROJECT/.env.production" 'oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'; fi
@@ -380,7 +388,7 @@ run_ce_success() {
     fi
     if [[ "$OAUTH" == true ]]; then
         assert_before "$STATE/calls.log" 'ce application update --name mock-project-backend --visibility project' 'cr login'
-        assert_before "$STATE/calls.log" 'ce application update --name mock-project-frontend --visibility project' 'docker image build'
+        assert_before "$STATE/calls.log" 'ce application update --name mock-project-frontend --visibility project' "$build_command"
         assert_contains "$STATE/calls.log" 'oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
         assert_contains "$STATE/calls.log" '--argument=--cookie-secure=true'
         assert_contains "$PROJECT/.env.production" 'OAUTH2_PROXY_REDIRECT_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud/oauth2/callback'
@@ -774,6 +782,7 @@ run_predicate_unit() {
 }
 
 run_ce_success
+run_ce_success podman
 run_ce_collision
 run_ce_confirmation
 run_ce_preflight_cases

@@ -16,6 +16,7 @@ readonly CEN_MANAGED_BY_LABEL="$CEN_MANAGED_BY_KEY=$CEN_MANAGED_BY_VALUE"
 DEPLOY_DRY_RUN=false
 DEPLOY_MOCK=false
 DEPLOY_TMP_FILES=()
+CONTAINER_CLI=
 
 print_status() { printf '%b\n' "${TEAL}==>${NC} $1"; }
 print_success() { printf '%b\n' "${GREEN}==>${NC} $1"; }
@@ -108,6 +109,18 @@ need_command() {
     }
 }
 
+select_container_cli() {
+    [[ -z "$CONTAINER_CLI" ]] || return 0
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        CONTAINER_CLI=docker
+    elif command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
+        CONTAINER_CLI=podman
+    else
+        print_error 'a running Docker, Rancher Desktop, or Podman runtime is required'
+        return 1
+    fi
+}
+
 is_mock_command() {
     local command_name=$1 resolved mock_bin
     resolved=$(command -v "$command_name" 2>/dev/null || true)
@@ -120,12 +133,20 @@ is_mock_command() {
 validate_mock_commands() {
     [[ "$DEPLOY_MOCK" == true ]] || return 0
     local command_name
-    for command_name in oc kubectl ibmcloud curl docker git; do
+    for command_name in oc kubectl ibmcloud curl git; do
         is_mock_command "$command_name" || {
             print_error "mock deploy refused: $command_name is not a marked, non-symlink mock inside CEN_DEPLOY_MOCK_BIN"
             return 1
         }
     done
+    if is_mock_command docker; then
+        CONTAINER_CLI=docker
+    elif is_mock_command podman; then
+        CONTAINER_CLI=podman
+    else
+        print_error 'mock deploy refused: a marked docker or podman command is required'
+        return 1
+    fi
 }
 
 enable_mock_mode() {

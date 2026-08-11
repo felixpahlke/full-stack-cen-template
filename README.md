@@ -47,8 +47,11 @@ nginx frontend images plus the proxy.
 
 ### Quick start
 
-Prerequisites: Node.js 20.19+ with npm, Python 3.10–3.12, uv, and Docker Desktop, Colima, or
-native Linux Docker with either Compose command.
+Prerequisites: Node.js 20.19 or newer with npm, Python 3.10–3.12, uv, and a running
+container runtime. Supported choices are Docker Desktop, Rancher Desktop with the dockerd/moby
+backend, native Linux Docker, and Podman. Docker requires the Compose plugin or standalone
+`docker-compose`; Podman requires `podman compose` with a provider (`podman-compose` or standalone
+`docker-compose`), or the `podman-compose` command. Start `podman machine` first where required.
 
 ```bash
 npm ci

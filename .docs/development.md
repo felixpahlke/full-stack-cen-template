@@ -4,8 +4,10 @@
 
 - Node.js 20.19+ with npm
 - Python 3.10–3.12 and uv
-- Docker Desktop, Colima, or native Linux Docker
-- `docker compose` or standalone `docker-compose`
+- Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
+- Docker: `docker compose` or standalone `docker-compose`
+- Podman: `podman compose` with `podman-compose` or standalone `docker-compose` as its provider,
+  or the `podman-compose` command; start `podman machine` first where required
 
 ```bash
 npm ci
@@ -15,9 +17,9 @@ cp .env.example .env
 npm run dev
 ```
 
-The supervisor detects Docker Desktop, Colima, or native Linux and selects the correct
-container-to-host Vite address. It refuses missing tools, dependencies, environment values,
-unsafe remote databases, or occupied ports before starting services.
+The supervisor detects Docker Desktop, Rancher Desktop, native Linux Docker, or Podman and selects
+the correct container-to-host Vite address. It refuses missing tools, dependencies, environment
+values, unsafe remote databases, or occupied ports before starting services.
 
 ## Topology, ports, and environment
 
@@ -108,5 +110,5 @@ Use `npm run generate-client` after API changes and never edit generated client/
 Occupied ports are reported up front. For missing `backend/.venv`, rerun
 `uv sync --project backend`; for missing frontend packages, rerun `npm ci --prefix frontend`.
 Use the detected Compose command for logs. If proxy startup reports that Vite is unreachable,
-check the active Docker context: Docker Desktop uses `host.docker.internal`, Colima uses
-`host.lima.internal`, and native Linux uses the host-gateway mapping.
+check the detected runtime: Docker Desktop and Rancher Desktop use `host.docker.internal`, Podman
+uses `host.containers.internal`, and native Linux Docker uses the host-gateway mapping.

@@ -5,8 +5,8 @@ external to Code Engine. Backend and frontend applications are project-private f
 
 ## Configure and deploy
 
-Install Docker, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`; log in to
-the intended account. Then:
+Install Docker or Podman, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`;
+log in to the intended account. Then:
 
 ```bash
 cp .env.production.example .env.production

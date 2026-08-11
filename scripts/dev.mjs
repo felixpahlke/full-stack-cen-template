@@ -172,7 +172,6 @@ function checkEnvironment() {
     `[runtime] Detected ${containerRuntime.displayName}; proxy upstream host ` +
       `${containerRuntime.upstreamHost}`,
   );
-
   const venvPython =
     process.platform === "win32"
       ? path.join(root, "backend", ".venv", "Scripts", "python.exe")
