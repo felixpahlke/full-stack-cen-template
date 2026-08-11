@@ -92,11 +92,14 @@ test("Podman is detected from its real info shape when context show is unsupport
   });
 });
 
+// Rancher Desktop is Lima-based on macOS and reports a daemon name containing
+// `lima`, so this fixture must keep that substring: with the Lima branch checked
+// first, Rancher Desktop was misdetected as Colima and given host.lima.internal.
 test("Rancher Desktop dockerd uses host.docker.internal", () => {
   assert.deepEqual(
     selectContainerRuntime({
       context: "rancher-desktop",
-      info: { Name: "rancher-desktop", OperatingSystem: "Rancher Desktop moby" },
+      info: { Name: "lima-rancher-desktop", OperatingSystem: "Alpine Linux v3.20" },
       platform: "darwin",
     }),
     {
