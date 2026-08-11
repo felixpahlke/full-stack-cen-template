@@ -6,8 +6,8 @@ PostgreSQL; provide a reachable production database. Local development remains d
 
 ## Prerequisites and configuration
 
-Install Docker, `ibmcloud`, the Code Engine and Container Registry plugins, and `kubectl`. Log in
-to the intended IBM Cloud account. Copy and edit the production example:
+Install Docker or Podman, `ibmcloud`, the Code Engine and Container Registry plugins, and
+`kubectl`. Log in to the intended IBM Cloud account. Copy and edit the production example:
 
 ```bash
 cp .env.production.example .env.production

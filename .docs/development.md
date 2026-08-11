@@ -5,8 +5,10 @@
 - Node.js 20.19 or newer with npm
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- Docker Desktop, Colima, or native Linux Docker
-- Either the `docker compose` plugin or standalone `docker-compose`
+- Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
+- Docker: `docker compose` or standalone `docker-compose`
+- Podman: `podman compose` with `podman-compose` or standalone `docker-compose` as its provider,
+  or the `podman-compose` command; start `podman machine` first where required
 
 From a fresh checkout, run in this order:
 
@@ -103,13 +105,12 @@ launch even when the application is healthy.
 
 - **Occupied port:** the preflight names every occupied port before Compose starts. Stop the
   process/container or change the paired values in `.env`.
-- **Docker command mismatch:** the supervisor prefers `docker compose` and falls back to
-  `docker-compose`. Docker Desktop and native Linux use `host.docker.internal` differently;
-  this branch does not need host-to-container application routing. With Colima, ensure the
-  Docker context points at the running VM.
+- **Container command mismatch:** the supervisor prefers a working Docker runtime, then Podman,
+  and selects that runtime's Compose form. This branch does not need host-to-container application
+  routing.
 - **Missing uv environment:** rerun `uv sync --project backend`; do not create a root venv.
 - **Stale generated client:** run `npm run generate-client`, then `npm run check:generated`.
-- **Backing-service logs:** use `docker compose logs db adminer` or the equivalent standalone
-  command reported by the supervisor.
+- **Backing-service logs:** use the Compose command reported by the supervisor with
+  `logs db adminer`.
 - **Stale services after interruption:** run the detected Compose command with `down`, then
   confirm no containers with this checkout's directory prefix remain.

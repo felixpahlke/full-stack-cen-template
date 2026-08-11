@@ -18,8 +18,8 @@ npm run dev
 
 `npm run dev` runs PostgreSQL/Adminer in Compose and Uvicorn/Vite natively. Use Ctrl-C; do not
 manually leave backing services running. Check container names against the current directory
-prefix before stopping anything. The supervisor supports Docker Desktop, Colima, native Linux,
-the Compose plugin, and standalone `docker-compose`.
+prefix before stopping anything. The supervisor supports Docker Desktop, Rancher Desktop with
+the dockerd/moby backend, native Linux Docker, and Podman with an available Compose provider.
 
 Supported root vocabulary: `dev`, `check`, `fix`, `test`, `build`, `verify`, `db:migrate`,
 `db:revision`, and `test:deploy`. Playwright and generation have dedicated commands documented

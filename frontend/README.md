@@ -48,6 +48,8 @@ docker run --rm --network host --ipc=host \
   npx playwright test
 ```
 
+Use `podman` instead of `docker` in that command when Podman is the active runtime.
+
 The image version must match `@playwright/test` in `frontend/package-lock.json`.
 `PLAYWRIGHT_CONTAINER=true` enables the container-only mapping from `localhost` to the host
 application; native runs deliberately do not rewrite the hostname. The suite covers login/logout,
