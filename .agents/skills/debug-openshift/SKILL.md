@@ -1,0 +1,38 @@
+---
+name: debug-openshift
+description: Triage OpenShift failures produced by scripts/oc-deploy.sh using resource state, events, build logs, pod logs, and rollouts.
+---
+
+# Debug an OpenShift deployment
+
+> Cluster path note: this runbook is derived from `scripts/oc-deploy.sh` and its sourced libraries;
+> it has not yet been verified against a live cluster.
+
+Read `.docs/oc-deployment.md` and confirm the current project before inspecting anything:
+
+```bash
+oc project
+oc get pods,buildconfigs,builds,deployments,services,routes
+oc get events --sort-by=.lastTimestamp
+oc rollout status deployment/backend
+```
+
+Follow the first failed stage reported by the deployer:
+
+- Preflight refusal: fix missing/weak `.env.production` values, wrong branch/ref, unowned name
+  collisions, or OAuth/topology mismatch; do not bypass ownership labels.
+- Build failure: `oc describe build/<build>` and `oc logs build/<build>`. The script builds the
+  backend image from the verified Git ref; no frontend build should exist.
+- Pending/crashing pod: `oc describe pod/<pod>`, `oc logs deployment/<name>`, and, for a restart,
+  `oc logs deployment/<name> --previous`. Check environment validation and the backend probe at
+  `/api/v1/utils/health-check/`; there is no migration or database stage.
+- Route failure: inspect `oc describe route/backend` plus its Service endpoints. This flavor
+  exposes only the backend Route.
+- Push does not build: inspect the BuildConfig webhook and the script-owned
+  `webhook-access-unauthenticated` RoleBinding. The deploy summary reports inactive webhooks when
+  required RBAC or a GitHub token is unavailable.
+- Any PostgreSQL, PVC, or migration resource is outside this flavor; do not create one while
+  troubleshooting.
+
+Stay read-only until the evidence identifies a fix. Apply the smallest change, rerun the command
+that exposed the failure, then rerun `./scripts/oc-deploy.sh` to reconcile.
