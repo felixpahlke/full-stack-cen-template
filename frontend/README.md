@@ -32,11 +32,11 @@ or use the verified container wrapper when native browsers are missing/blocked:
 npm run test:e2e:container
 ```
 
-The wrapper derives the exact Playwright image version from the lockfile, mounts the checkout,
-sets `PLAYWRIGHT_CONTAINER=true`, and traverses Dex, oauth2-proxy, secure cookies, logout, and
-protected pages. Only container mode maps `localhost` to `host.docker.internal`; native runs do
-not rewrite the hostname. A direct Vite or backend-only browser test is not an acceptable OAuth
-check.
+The wrapper selects the running Docker or Podman runtime, derives the exact Playwright image
+version from the lockfile, mounts the checkout, sets `PLAYWRIGHT_CONTAINER=true`, and traverses
+Dex, oauth2-proxy, secure cookies, logout, and protected pages. Only container mode maps
+`localhost` to the host alias; native runs do not rewrite the hostname. A direct Vite or
+backend-only browser test is not an acceptable OAuth check.
 
 Run `npm run check`, `npm run build`, and `npm --prefix frontend audit` for frontend quality.
 Biome covers the available ESLint equivalents; the remaining React Hooks 7 gaps are listed in

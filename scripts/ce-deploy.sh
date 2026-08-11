@@ -60,7 +60,7 @@ delete_owned_ce_resource() {
 }
 
 check_code_engine_preconditions() {
-    need_command ibmcloud; need_command kubectl; need_command docker
+    need_command ibmcloud; need_command kubectl; select_container_cli
     if ! ibmcloud plugin show container-registry >/dev/null 2>&1; then run ibmcloud plugin install -f container-registry; fi
     if ! ibmcloud plugin show code-engine >/dev/null 2>&1; then run ibmcloud plugin install -f code-engine; fi
     ibmcloud account show >/dev/null 2>&1 || { print_error "log in with 'ibmcloud login --sso'"; return 1; }
@@ -248,8 +248,13 @@ ensure_backend_secret() {
 
 build_and_push_images() {
     local backend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_BACKEND_IMAGE_NAME:latest"
-    run docker image build --platform linux/amd64 -t "$backend_image" --load "$PROJECT_ROOT/backend"
-    run docker image push "$backend_image"
+    if [[ "$CONTAINER_CLI" == docker ]]; then
+        run docker image build --platform linux/amd64 -t "$backend_image" --load "$PROJECT_ROOT/backend"
+        run docker image push "$backend_image"
+    else
+        run podman build --platform linux/amd64 -t "$backend_image" "$PROJECT_ROOT/backend"
+        run podman push "$backend_image"
+    fi
     if [[ "$HAS_FRONTEND" == true ]]; then
         local frontend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_FRONTEND_IMAGE_NAME:latest" line name value
         local build_args=("--build-arg=VITE_API_URL=$BACKEND_URL")
@@ -259,9 +264,15 @@ build_and_push_images() {
             [[ "$name" != VITE_API_URL ]] || continue
             build_args+=("--build-arg=$name=$value")
         done < "$ENV_FILE"
-        run docker image build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
-            --build-arg "NODE_ENV=${NODE_ENV:-production}" --load "$PROJECT_ROOT/frontend"
-        run docker image push "$frontend_image"
+        if [[ "$CONTAINER_CLI" == docker ]]; then
+            run docker image build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
+                --build-arg "NODE_ENV=${NODE_ENV:-production}" --load "$PROJECT_ROOT/frontend"
+            run docker image push "$frontend_image"
+        else
+            run podman build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
+                --build-arg "NODE_ENV=${NODE_ENV:-production}" "$PROJECT_ROOT/frontend"
+            run podman push "$frontend_image"
+        fi
     fi
 }
 

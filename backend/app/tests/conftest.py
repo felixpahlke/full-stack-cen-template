@@ -1,4 +1,8 @@
+import json
 import os
+import shutil
+import subprocess
+import sys
 from base64 import b64encode
 from collections.abc import Callable, Generator
 from contextlib import suppress
@@ -23,6 +27,50 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 TEST_DATABASE_URL = "TEST_DATABASE_URL"
 TEST_DATABASE_ALLOW_UNSAFE_NAME = "TEST_DATABASE_ALLOW_UNSAFE_NAME"
 TEST_UPSTREAM_PASSWORD = "test-only-upstream-password-0123456789abcdef"
+
+
+def configure_testcontainers_runtime() -> None:
+    if os.getenv(TEST_DATABASE_URL) or os.getenv("DOCKER_HOST"):
+        return
+    docker = shutil.which("docker")
+    if (
+        docker
+        and subprocess.run(
+            [docker, "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode
+        == 0
+    ):
+        return
+    podman = shutil.which("podman")
+    if not podman:
+        return
+    info_result = subprocess.run(
+        [podman, "info", "--format", "{{json .}}"], capture_output=True, text=True
+    )
+    if info_result.returncode != 0:
+        return
+    info = json.loads(info_result.stdout)
+    if sys.platform == "linux":
+        socket = info["host"]["remoteSocket"]["path"]
+    else:
+        inspect_result = subprocess.run(
+            [
+                podman,
+                "machine",
+                "inspect",
+                "--format",
+                "{{.ConnectionInfo.PodmanSocket.Path}}",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if inspect_result.returncode != 0:
+            return
+        socket = inspect_result.stdout.strip()
+    os.environ["DOCKER_HOST"] = (
+        socket if socket.startswith("unix://") else f"unix://{socket}"
+    )
+    os.environ.setdefault("TESTCONTAINERS_RYUK_DISABLED", "true")
 
 
 def guard_test_database_url(database_url: str) -> None:
@@ -64,6 +112,7 @@ def database_url() -> Generator[str, None, None]:
         yield existing_url
         return
 
+    configure_testcontainers_runtime()
     postgres = None
     try:
         postgres = create_postgres_container()
@@ -73,7 +122,7 @@ def database_url() -> Generator[str, None, None]:
             with suppress(Exception):
                 postgres.stop()
         pytest.fail(
-            "Could not start disposable PostgreSQL. Start Docker, or set "
+            "Could not start disposable PostgreSQL. Start Docker or Podman, or set "
             f"{TEST_DATABASE_URL} to an existing strict test database. ({error})",
             pytrace=False,
         )

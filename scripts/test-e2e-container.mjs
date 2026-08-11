@@ -3,13 +3,16 @@ import { readFileSync } from "node:fs";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { detectContainerRuntime } from "./container-runtime.mjs";
+
 const root = fileURLToPath(new URL("..", import.meta.url));
 const lock = JSON.parse(readFileSync(new URL("../frontend/package-lock.json", import.meta.url)));
 const version = lock.packages["node_modules/@playwright/test"].version;
 const image = process.env.PLAYWRIGHT_IMAGE || `mcr.microsoft.com/playwright:v${version}-noble`;
+const runtime = detectContainerRuntime({ cwd: root, env: process.env });
 
 const result = spawnSync(
-  "docker",
+  runtime.command,
   [
     "run",
     "--rm",
@@ -28,6 +31,7 @@ const result = spawnSync(
     "npx",
     "playwright",
     "test",
+    ...process.argv.slice(2),
   ],
   { cwd: root, stdio: "inherit" },
 );

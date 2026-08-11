@@ -3,7 +3,11 @@ import { connect } from "node:net";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { detectComposeCommand, withComposeArgs } from "./compose-command.mjs";
+import {
+  containerCommandForCompose,
+  detectComposeCommand,
+  withComposeArgs,
+} from "./compose-command.mjs";
 import { buildEffectiveEnvironment } from "./dev-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -55,7 +59,7 @@ if (postgresPort !== database.value) {
   );
 }
 
-const published = dockerPublishedPorts();
+const published = containerPublishedPorts();
 const availability = await Promise.all(
   ports.map(async (entry) => {
     if (ownsPort(entry)) return { ...entry, available: true };
@@ -124,12 +128,16 @@ function ownsPort({ value, composeService, containerPort }) {
 
 // Binding is unreliable with Docker Desktop on macOS. Name published-container
 // conflicts first, then use a connection probe for native processes.
-function dockerPublishedPorts() {
-  const result = spawnSync("docker", ["ps", "--format", "{{.Names}}\t{{.Ports}}"], {
-    env: environment,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
+function containerPublishedPorts() {
+  const result = spawnSync(
+    containerCommandForCompose(compose),
+    ["ps", "--format", "{{.Names}}\t{{.Ports}}"],
+    {
+      env: environment,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    },
+  );
   const map = new Map();
   if (result.status !== 0) return map;
   for (const line of result.stdout.trim().split("\n")) {

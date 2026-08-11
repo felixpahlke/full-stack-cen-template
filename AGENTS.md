@@ -15,8 +15,9 @@ npm run dev
 
 The root vocabulary is `dev`, `check`, `fix`, `test`, `build`, `verify`, `db:migrate`,
 `db:revision`, and `test:deploy`. `npm run test:e2e:container` is the OAuth browser gate.
-Docker Desktop, Colima, native Linux, and both Compose command forms are supported. Use Ctrl-C
-and verify containers for this checkout are gone before switching branches.
+Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, and Podman
+with an available Compose provider are supported. Use Ctrl-C and verify containers for this
+checkout are gone before switching branches.
 
 ## Backend and OAuth boundary
 
