@@ -2,6 +2,16 @@
 
 ## Prerequisites and first run
 
+- Node.js 20.19 or newer with npm
+- Python 3.10–3.12
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
+- Docker: `docker compose` or standalone `docker-compose`
+- Podman: `podman compose` with `podman-compose` or standalone `docker-compose` as its provider,
+  or the `podman-compose` command; start `podman machine` first where required
+
+From a fresh checkout, run in this order:
+
 ```bash
 npm ci
 uv sync --project backend
@@ -9,9 +19,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Node.js 20.19+, npm, Python 3.10–3.12, uv, and a running Docker-compatible runtime are required.
-The supervisor supports Docker Desktop, Colima, native Linux Docker, `docker compose`, and
-standalone `docker-compose`. There is no frontend install step.
+There is no frontend install step.
 
 ## Runtime and ports
 
@@ -54,7 +62,13 @@ and ignore `.env` and the development database. No Playwright test exists becaus
 
 ## Troubleshooting
 
-Occupied ports are reported before startup. Stop the process/container or update paired `.env`
-ports. If `backend/.venv` is missing, rerun `uv sync --project backend`. Use the detected Compose
-command for `logs db adminer`. On Colima, verify the active Docker context. After interruption,
-run Compose `down` and check that no container with this checkout's directory prefix remains.
+- **Occupied port:** the preflight names every occupied port before Compose starts. Stop the
+  process/container or change the paired values in `.env`.
+- **Container command mismatch:** the supervisor prefers a working Docker runtime, then Podman,
+  and selects that runtime's Compose form. This branch does not need host-to-container application
+  routing.
+- **Missing uv environment:** rerun `uv sync --project backend`; do not create a root venv.
+- **Backing-service logs:** use the Compose command reported by the supervisor with
+  `logs db adminer`.
+- **Stale services after interruption:** run the detected Compose command with `down`, then
+  confirm no containers with this checkout's directory prefix remain.

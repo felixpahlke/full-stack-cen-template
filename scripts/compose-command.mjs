@@ -1,26 +1,48 @@
 import { spawnSync } from "node:child_process";
 
-const selectionKey = "DEV_COMPOSE_COMMAND";
+import { detectContainerCommand } from "./container-command.mjs";
 
-export function detectComposeCommand({ cwd, env = process.env, probe = available } = {}) {
+const selectionKey = "DEV_COMPOSE_COMMAND";
+const selections = {
+  "docker compose": { command: "docker", args: ["compose"], display: "docker compose" },
+  "docker-compose": { command: "docker-compose", args: [], display: "docker-compose" },
+  "podman compose": { command: "podman", args: ["compose"], display: "podman compose" },
+  "podman-compose": { command: "podman-compose", args: [], display: "podman-compose" },
+};
+
+export function detectComposeCommand({
+  cwd,
+  env = process.env,
+  probe = available,
+  containerCommand,
+} = {}) {
   const inherited = deserializeComposeCommand(env[selectionKey]);
   if (inherited) return inherited;
 
-  if (probe("docker", ["compose", "version"], cwd, env)) {
-    return { command: "docker", args: ["compose"], display: "docker compose" };
-  }
-  if (probe("docker-compose", ["version"], cwd, env)) {
-    return { command: "docker-compose", args: [], display: "docker-compose" };
+  const runtime = containerCommand ?? detectContainerCommand({ cwd, env, probe });
+  const candidates =
+    runtime === "docker"
+      ? ["docker compose", "docker-compose"]
+      : ["podman compose", "podman-compose"];
+  for (const candidate of candidates) {
+    const selection = selections[candidate];
+    if (probe(selection.command, [...selection.args, "version"], cwd, env)) return selection;
   }
   const error = new Error(
-    "Docker Compose was not found. Install either the `docker compose` plugin or standalone `docker-compose`.",
+    runtime === "docker"
+      ? "Docker Compose was not found. Install either the `docker compose` plugin or standalone `docker-compose`."
+      : "Podman Compose was not found. Install a provider for `podman compose` (podman-compose or standalone docker-compose), or install `podman-compose`.",
   );
   error.exitCode = 1;
   throw error;
 }
 
 export function serializeComposeCommand(selection) {
-  return selection.args.length ? "docker compose" : "docker-compose";
+  return selection.display;
+}
+
+export function containerCommandForCompose(selection) {
+  return selection.command.startsWith("podman") ? "podman" : "docker";
 }
 
 export function withComposeArgs(selection, args) {
@@ -28,10 +50,7 @@ export function withComposeArgs(selection, args) {
 }
 
 function deserializeComposeCommand(value) {
-  if (value === "docker compose") {
-    return { command: "docker", args: ["compose"], display: value };
-  }
-  if (value === "docker-compose") return { command: value, args: [], display: value };
+  return selections[value];
 }
 
 function available(command, args, cwd, env) {

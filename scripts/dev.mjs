@@ -7,6 +7,7 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
 import {
+  containerCommandForCompose,
   detectComposeCommand,
   serializeComposeCommand,
   withComposeArgs,
@@ -36,6 +37,9 @@ let exitCode = 0;
 try {
   effectiveEnv = checkEnvironment();
   composeCommand = detectComposeCommand({ cwd: root, env: effectiveEnv });
+  console.log(
+    `[runtime] Detected ${containerCommandForCompose(composeCommand) === "podman" ? "Podman" : "Docker"}`,
+  );
   effectiveEnv.DEV_COMPOSE_COMMAND = serializeComposeCommand(composeCommand);
   await required(process.execPath, ["scripts/check-ports.mjs"], "ports");
 
@@ -104,11 +108,6 @@ function checkEnvironment() {
     "Install uv, then run `uv sync --project backend`.",
     environment,
   );
-
-  const docker = spawnSync("docker", ["info"], { env: environment, stdio: "ignore" });
-  if (docker.status !== 0) {
-    fail("Docker is not running. Start Docker Desktop or your Docker-compatible runtime.");
-  }
 
   const venvPython =
     process.platform === "win32"

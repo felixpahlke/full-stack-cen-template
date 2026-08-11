@@ -5,8 +5,8 @@ provide a reachable production database.
 
 ## Configure and deploy
 
-Install Docker, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`; log in to
-the intended account.
+Install Docker or Podman, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`;
+log in to the intended account.
 
 ```bash
 cp .env.production.example .env.production

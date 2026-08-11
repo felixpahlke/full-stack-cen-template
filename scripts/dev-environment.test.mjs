@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { detectComposeCommand } from "./compose-command.mjs";
+import { detectComposeCommand, serializeComposeCommand } from "./compose-command.mjs";
 import { buildEffectiveEnvironment, requiredDevEnv } from "./dev-environment.mjs";
 
 function withEnvironment(values, callback) {
@@ -61,6 +61,7 @@ test("Compose detection falls back once to standalone docker-compose", () => {
   const probes = [];
   const selection = detectComposeCommand({
     env: {},
+    containerCommand: "docker",
     probe(command, args) {
       probes.push([command, ...args].join(" "));
       return command === "docker-compose";
@@ -73,4 +74,26 @@ test("Compose detection falls back once to standalone docker-compose", () => {
     args: [],
     display: "docker-compose",
   });
+});
+
+test("every Compose selection round-trips through DEV_COMPOSE_COMMAND", () => {
+  const selections = [
+    { command: "docker", args: ["compose"], display: "docker compose" },
+    { command: "docker-compose", args: [], display: "docker-compose" },
+    { command: "podman", args: ["compose"], display: "podman compose" },
+    { command: "podman-compose", args: [], display: "podman-compose" },
+  ];
+
+  for (const selection of selections) {
+    const serialized = serializeComposeCommand(selection);
+    assert.deepEqual(
+      detectComposeCommand({
+        env: { DEV_COMPOSE_COMMAND: serialized },
+        probe() {
+          assert.fail("an inherited Compose selection must not be probed again");
+        },
+      }),
+      selection,
+    );
+  }
 });

@@ -14,7 +14,9 @@ npm run dev
 
 `npm run dev` runs PostgreSQL/Adminer in Compose and Uvicorn natively. Supported root vocabulary:
 `dev`, `check`, `fix`, `test`, `build`, `verify`, `db:migrate`, `db:revision`, and `test:deploy`.
-Frontend install, generated-client, and Playwright commands intentionally do not exist.
+Frontend install, generated-client, and Playwright commands intentionally do not exist. The
+supervisor supports Docker Desktop, Rancher Desktop with
+the dockerd/moby backend, native Linux Docker, and Podman with an available Compose provider.
 
 ## Backend rules
 
