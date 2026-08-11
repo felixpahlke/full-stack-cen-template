@@ -1,26 +1,23 @@
 # Working conventions
 
-This is the stateless backend-only, API-key branch. Preserve the absence of frontend, database,
-Compose, migrations, persistence packages, users, and bearer authentication.
+This is the stateless backend-only, API-key flavor of the FastAPI template. Preserve its
+container-free development path and backend-only production image.
 
-## Setup and commands
+## Invariants
 
-```bash
-npm ci
-uv sync --project backend
-cp .env.example .env
-npm run dev
-```
+- Preserve API-key authentication. Do not add browser bearer-token or proxy identity surfaces.
+- Keep the branch free of frontend, database, Compose, Alembic, persistence packages, local users,
+  and ownership models.
+- Keep API models in `backend/app/models.py`, thin routes in `backend/app/api/routes/`, registration
+  in `backend/app/api/main.py`, and reusable business logic outside routes.
+- Keep example and weak secrets unusable in every environment; never hardcode credentials.
+- Only health checks belong outside the API-key-protected router.
+- Do not introduce generated-client, route-tree, Playwright, or frontend files.
+- Use npm only and exact-pin direct dependencies.
 
-Supported root vocabulary is `dev`, `check`, `fix`, `test`, `build`, `verify`, and
-`test:deploy`. `build` needs Docker or Podman; the rest are container-free. Database and frontend
-commands do not exist by design.
+## Working guides
 
-Keep schemas in `backend/app/models.py`, routes in `backend/app/api/routes`, registration in
-`backend/app/api/main.py`, and environment-backed settings in `backend/app/core/config.py`. Keep
-routes thin, reuse helpers for real business logic, mirror `.env` keys in `.env.example`, and
-never hardcode secrets.
-
-Finish normal work with `DOCKER_HOST=unix:///nonexistent npm run verify` and
-`npm run test:deploy`. Build the image only when relevant. See `.docs/development.md`,
-`.docs/maintenance.md`, and the maintenance skill for cross-branch work.
+Use the task checklists in `.agents/skills/`. Start with `prepare-workstation`, `add-resource`, the
+deploy/debug pair for the target, or `update-from-template`; database/page skills do not apply.
+Key references are `.docs/development.md`, `.docs/maintenance.md`, and the deployment guides in
+`.docs/`; cross-flavor maintainers must also read `cen-template-maintenance`.
