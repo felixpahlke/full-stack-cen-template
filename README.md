@@ -48,8 +48,10 @@ separate backend image and nginx frontend image.
 ### Quick start
 
 Prerequisites: Node.js 20.19 or newer with npm, Python 3.10–3.12, uv, and a running
-Docker-compatible runtime. Docker Desktop, Colima, native Linux Docker, the Compose plugin,
-and standalone `docker-compose` are supported.
+container runtime. Supported choices are Docker Desktop, Rancher Desktop with the dockerd/moby
+backend, native Linux Docker, and Podman. Docker requires the Compose plugin or standalone
+`docker-compose`; Podman requires `podman compose` with a provider (`podman-compose` or standalone
+`docker-compose`), or the `podman-compose` command. Start `podman machine` first where required.
 
 Run this exact sequence from a fresh checkout:
 
