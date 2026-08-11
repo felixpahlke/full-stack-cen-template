@@ -106,6 +106,11 @@ Backend tests use a disposable Testcontainers PostgreSQL instance and ignore `.e
 must traverse real Dex and oauth2-proxy; use the commands in `frontend/README.md`. Native browser
 launch may be blocked locally, so the container command is the supported fallback.
 
+On Podman, give the machine more memory than the 2 GiB default before running the containerized
+Playwright suite: several parallel Chromium workers alongside PostgreSQL can exhaust it, and the
+kernel then OOM-kills the database mid-run. Either `podman machine set --memory 8192` (stop and
+restart the machine afterwards) or run the suite with `-- --workers=1`.
+
 Use `npm run generate-client` after API changes and never edit generated client/route files.
 Occupied ports are reported up front. For missing `backend/.venv`, rerun
 `uv sync --project backend`; for missing frontend packages, rerun `npm ci --prefix frontend`.
