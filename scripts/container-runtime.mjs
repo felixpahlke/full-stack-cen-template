@@ -55,6 +55,17 @@ export function selectContainerRuntime({ command = "docker", context, info, plat
     .join(" ")
     .toLowerCase();
 
+  // Rancher Desktop runs on Lima on macOS, so its daemon reports names like
+  // `lima-rancher-desktop`. It must be matched before the Lima branch below.
+  if (/rancher desktop|rancher-desktop/.test(identity)) {
+    return {
+      id: "rancher-desktop",
+      displayName: "Rancher Desktop",
+      upstreamHost: "host.docker.internal",
+      extraHosts: [],
+      command,
+    };
+  }
   if (/\b(colima|lima)\b/.test(identity)) {
     return {
       id: "colima",
@@ -68,15 +79,6 @@ export function selectContainerRuntime({ command = "docker", context, info, plat
     return {
       id: "docker-desktop",
       displayName: "Docker Desktop",
-      upstreamHost: "host.docker.internal",
-      extraHosts: [],
-      command,
-    };
-  }
-  if (/rancher desktop|rancher-desktop/.test(identity)) {
-    return {
-      id: "rancher-desktop",
-      displayName: "Rancher Desktop",
       upstreamHost: "host.docker.internal",
       extraHosts: [],
       command,
