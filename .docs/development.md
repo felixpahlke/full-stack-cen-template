@@ -101,6 +101,11 @@ Playwright is intentionally separate from `verify`. Start `npm run dev`, then fo
 or containerized command in `frontend/README.md`. A local macOS sandbox may block native browser
 launch even when the application is healthy.
 
+On Podman, give the machine more memory than the 2 GiB default before running the containerized
+Playwright suite: several parallel Chromium workers alongside PostgreSQL can exhaust it, and the
+kernel then OOM-kills the database mid-run. Either `podman machine set --memory 8192` (stop and
+restart the machine afterwards) or run the suite with `-- --workers=1`.
+
 ## Troubleshooting
 
 - **Occupied port:** the preflight names every occupied port before Compose starts. Stop the
