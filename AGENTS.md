@@ -1,33 +1,25 @@
 # Working conventions
 
-This is the backend-only, PostgreSQL, API-key branch. Do not add frontend, user/auth, ownership,
-or bearer-token surfaces.
+This is the backend-only, PostgreSQL, API-key flavor of the FastAPI/SQLModel template. Preserve its
+frontend-free API and backend-only production image.
 
-## Setup
+## Invariants
 
-```bash
-npm ci
-uv sync --project backend
-cp .env.example .env
-npm run dev
-```
+- Preserve API-key authentication. Do not add frontend, local users, ownership, proxy identity, or
+  browser bearer-token surfaces.
+- Keep SQLModel tables, API schemas, CRUD, routes, and settings in their existing modules. Use
+  dependency injection and keep database logic out of routes.
+- Keep example and weak secrets unusable in every environment; never hardcode credentials.
+- Schema startup must reach the exact bundled Alembic head, including when
+  `MIGRATE_ON_START=false`.
+- Keep backend tests hermetic: disposable Testcontainers PostgreSQL or an explicitly safe test
+  database, never the developer `.env` database.
+- Do not introduce generated-client, route-tree, Playwright, or frontend files.
+- Use npm only and exact-pin direct dependencies.
 
-`npm run dev` runs PostgreSQL/Adminer in Compose and Uvicorn natively. Supported root vocabulary:
-`dev`, `check`, `fix`, `test`, `build`, `verify`, `db:migrate`, `db:revision`, and `test:deploy`.
-Frontend install, generated-client, and Playwright commands intentionally do not exist. The
-supervisor supports Docker Desktop, Rancher Desktop with
-the dockerd/moby backend, native Linux Docker, and Podman with an available Compose provider.
+## Working guides
 
-## Backend rules
-
-- SQLModel tables in `backend/app/tables.py`; API schemas in `models.py`; database work in
-  `crud.py`; thin dependency-injected routes in `api/routes`.
-- Preserve API-key auth and the unowned item shape. Do not revive deleted user fixtures/helpers.
-- Mirror `.env` keys in `.env.example` and settings. Never hardcode secrets.
-- Use new Alembic revisions and root `db:*` commands; never edit existing history.
-- Exact-head checking remains mandatory when `MIGRATE_ON_START=false`.
-- Backend tests must remain hermetic Testcontainers tests and must not read developer `.env`.
-
-Finish with `npm run verify`, `npm run test:deploy`, and `npm run build` when image behavior is in
-scope. Check container name prefixes before stopping services. See `.docs/development.md` and the
-maintenance skill/docs for cross-branch work.
+Use the task checklists in `.agents/skills/`. Start with `prepare-workstation`, `add-resource`,
+`db-migrations`, the deploy/debug pair for the target, or `update-from-template`.
+Key references are `.docs/development.md`, `.docs/maintenance.md`, and the deployment guides in
+`.docs/`; cross-flavor maintainers must also read `cen-template-maintenance`.
