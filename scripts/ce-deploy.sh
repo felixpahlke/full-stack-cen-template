@@ -408,7 +408,7 @@ main() {
     check_code_engine_preconditions
     target_code_engine_project
     reconcile_oauth_visibility
-    preflight_ce_collisions
+    run_with_spinner 'Checking resource ownership' preflight_ce_collisions
     set_deployment_urls
     persist_code_engine_urls
     target_registry
