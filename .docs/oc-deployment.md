@@ -14,15 +14,17 @@ cp .env.production.example .env.production
 ```
 
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, `BACKEND_CORS_ORIGINS`, all five
-`POSTGRES_*` values, `_APP_NAME`, and `_GIT_SSH_URL`. GitHub host/token and branch filter are
-optional. Keep migrate-on-start enabled; migration lock timeout or exact-head mismatch prevents
-readiness.
+`POSTGRES_*` values, `_APP_NAME`, and `_GIT_SSH_URL`. The GitHub token and branch filter are
+optional; the host is derived from `_GIT_SSH_URL`. Keep migrate-on-start enabled; migration lock
+timeout or exact-head mismatch prevents readiness.
 
 A blank branch filter resolves to `backend-only`, is printed, and must resolve through the deploy
 key before the backend BuildConfig is created.
 
-The deployer requires exact target confirmation. `--reset-prod-db` requires a second confirmation
-and deletes only the exact owned PostgreSQL resource set. `--regenerate-ssh-key` rotates the key.
+When the configured project already exists, the deployer asks for a single `y/N` confirmation; a
+fresh project is created directly from the environment configuration. `--reset-prod-db` requires
+a second confirmation and deletes only the exact owned PostgreSQL resource set.
+`--regenerate-ssh-key` rotates the key.
 
 Running PostgreSQL database, user, and password values are compared before the shared secret is
 replaced. Drift requires typed destructive confirmation and an owned PVC reset.

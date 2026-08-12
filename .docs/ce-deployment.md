@@ -26,7 +26,8 @@ existing correctly owned secret can be reused without it. Keep migrate-on-start 
 its lock timeout: each replica must verify exact bundled Alembic heads before readiness.
 
 The deployer builds only the backend image and asserts that no frontend resources are created.
-It requires exact target confirmation.
+When the configured project already exists, it asks for a single `y/N` confirmation; a fresh
+project is created directly from the environment configuration.
 
 The generated backend URL and configured `BACKEND_CORS_ORIGINS` are persisted without introducing
 `*`, and the final summary always prints the backend URL. Fresh projects are created automatically

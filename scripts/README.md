@@ -10,6 +10,9 @@ cp .env.production.example .env.production
 pnpm run test:deploy
 ```
 
+An existing deployment project requires a single `y/N` confirmation; a fresh project is created
+directly from the environment configuration.
+
 Ownership requires both `app.kubernetes.io/managed-by=cen-template` and
 `app.kubernetes.io/instance=<APP_NAME>`. Same-name unowned resources are never adopted. Cleanup
 rechecks labels immediately before deletion, preserves the PostgreSQL PVC during normal
