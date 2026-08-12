@@ -2,7 +2,8 @@
 
 ## Prerequisites and first run
 
-- Node.js 20.19 or newer with Corepack and pnpm
+- Node.js 20.19 or newer
+- [pnpm](https://pnpm.io/installation) (the repository pins the supported version)
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
@@ -13,7 +14,6 @@
 From a fresh checkout, run in this order:
 
 ```bash
-corepack enable pnpm
 pnpm install
 uv sync --project backend
 cp .env.example .env
