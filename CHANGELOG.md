@@ -1,14 +1,14 @@
 # Changelog
 
-## Unreleased — development modernization
+## Unreleased — modernization
 
-- Added a native Uvicorn/Vite supervisor with Compose-hosted PostgreSQL, Adminer, Dex, and
-  oauth2-proxy.
-- Replaced browser token forwarding with a private, per-checkout Basic Auth identity seam and
-  pinned Dex/oauth2-proxy images by digest.
-- Added hermetic Testcontainers tests and real-proxy containerized Playwright.
-- Added serialized migrate-on-start with exact Alembic-head verification.
-- Added the root pnpm command facade and zero-vulnerability frontend lock/overrides.
-- Hardened Code Engine/OpenShift ownership, secrets, and staged OAuth ingress.
+- Moved JavaScript tooling to one pnpm workspace with a root lockfile and pinned dependencies.
+- Replaced the Compose application loop with `pnpm dev`: Uvicorn and Vite run natively while
+  Compose provides PostgreSQL, Adminer, Dex, and oauth2-proxy.
+- Strengthened the OAuth boundary with a private backend credential, opaque identity subjects, and
+  pinned local authentication images.
+- Made tests reproducible with disposable PostgreSQL and a real-proxy containerized Playwright flow.
+- Serialized startup migrations across replicas and hardened Code Engine and OpenShift rollouts.
 
-See [.docs/migration-guide.md](.docs/migration-guide.md).
+The OAuth/OIDC boundary, shadcn/ui, and separate production images remain. Existing projects
+should follow the [migration guide](.docs/migration-guide.md).
