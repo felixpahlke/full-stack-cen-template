@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — modernization
+## 2026-08-12 — Modernization
 
 - Moved JavaScript tooling to one pnpm workspace with a root lockfile and pinned dependencies.
 - Updated React 19.1 → 19.2, Carbon React 1.85 → 1.113, Carbon Icons 11.62 → 11.85,
