@@ -69,6 +69,7 @@ check_code_engine_preconditions() {
         current_account=$(ibmcloud account show | awk -F': ' '/Account Name:/ {print $2; exit}')
         [[ -z "$current_account" || "$current_account" == "$_IBM_CLOUD_ACCOUNT_NAME" ]] || {
             print_error "IBM Cloud account mismatch: '$current_account' != '$_IBM_CLOUD_ACCOUNT_NAME'"
+            print_error "Switch with 'ibmcloud login --sso', or correct _IBM_CLOUD_ACCOUNT_NAME in .env.production."
             return 1
         }
     fi
