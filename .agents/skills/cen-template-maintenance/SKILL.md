@@ -1,20 +1,24 @@
 ---
 name: cen-template-maintenance
-description: Use when maintaining this repository across its flavor branches, propagating changes from local-auth into the other flavors, resolving flavor-specific merge conflicts, or deciding which UI/auth/backend behavior each branch must preserve.
+description: Use when maintaining this repository across its flavor branches, propagating shared commits from local-auth into the other flavors, resolving flavor-specific conflicts, or deciding which UI/auth/backend behavior each branch must preserve.
 ---
 
 # CEN Template Maintenance
 
-Use this skill for template maintenance, flavor-branch merges, and branch-specific conflict
+Use this skill for template maintenance, cross-flavor propagation, and branch-specific conflict
 resolution in this repository.
 
 ## Required Workflow
 
 - Start on `local-auth` for the canonical template change.
 - Commit on `local-auth` before propagating the change.
-- Merge into each target flavor with `git merge local-auth --no-commit`.
+- Propagate only the intended canonical commit(s) to each target flavor, normally with
+  `git cherry-pick`.
+- Do not merge `local-auth` wholesale: the long-lived flavors were modernized independently, so a
+  broad merge pulls unrelated UI and authentication history into the target.
 - Use flavor-branch commit messages that keep the actual change summary visible.
-  - Prefer `fix: deploy custom-ui frontend on openshift flavors (backend-only)` over `merge local-auth into backend-only`.
+  - When conflict resolution changes the patch materially, amend the commit message with the
+    target flavor.
 - Resolve conflicts by preserving the target flavor, not by taking `local-auth` wholesale.
 - Validate the target branch before committing.
 

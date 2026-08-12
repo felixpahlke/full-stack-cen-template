@@ -40,6 +40,10 @@ Review the plan, then deploy:
 ./scripts/ce-deploy.sh
 ```
 
+If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
+An existing session for a different configured account is never logged out or replaced
+automatically; switch it explicitly and rerun the deployment.
+
 The script asks for the exact target name before mutating cloud state. It builds and pushes
 separate images and creates the backend/frontend applications. Run `pnpm run test:deploy` before
 changing deployment code.

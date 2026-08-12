@@ -24,6 +24,10 @@ print_warning() { printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
 print_error() { printf '%b\n' "${RED}error:${NC} $1" >&2; }
 print_section_header() { printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
 
+has_interactive_terminal() {
+    [[ "$DEPLOY_MOCK" == true && -n "${CEN_DEPLOY_TERMINAL_FILE:-}" ]] || [[ -t 0 && -t 1 ]]
+}
+
 print_terminal() {
     if [[ -n "${CEN_DEPLOY_TERMINAL_FILE:-}" && "$DEPLOY_MOCK" == true ]]; then
         printf '%s\n' "$1" >> "$CEN_DEPLOY_TERMINAL_FILE"
