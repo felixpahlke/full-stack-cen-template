@@ -30,8 +30,8 @@ timeout, or failed migration deliberately prevents the backend from becoming rea
 ## Deploy
 
 ```bash
-./scripts/oc-deploy.sh --dry-run
-./scripts/oc-deploy.sh
+pnpm deploy:oc --dry-run
+pnpm deploy:oc
 ```
 
 When the configured OpenShift project already exists, the script shows it and requires a single
