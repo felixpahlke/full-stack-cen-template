@@ -117,7 +117,9 @@ EOF
 deploy_oauth_proxy() {
     is_oauth_enabled || return 0
     apply_oauth_workload
-    if declare -F run >/dev/null; then run oc rollout status deployment/oauth-proxy --timeout=15m
+    if declare -F run_quiet_with_spinner >/dev/null; then
+        run_quiet_with_spinner 'Waiting for OAuth proxy rollout' run oc rollout status deployment/oauth-proxy --timeout=15m
+    elif declare -F run >/dev/null; then run oc rollout status deployment/oauth-proxy --timeout=15m
     else oc rollout status deployment/oauth-proxy --timeout=15m
     fi
     declare -F apply_resource >/dev/null || return 0
