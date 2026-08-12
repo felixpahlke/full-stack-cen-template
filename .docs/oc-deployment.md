@@ -14,9 +14,12 @@ cp .env.production.example .env.production
 ```
 
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, `BACKEND_CORS_ORIGINS`, `_APP_NAME`,
-and `_GIT_SSH_URL`. GitHub host/token and branch filter are optional. Database and migration
-settings are intentionally absent. The script requires exact target confirmation and refuses a
+and `_GIT_SSH_URL`. The GitHub token and branch filter are optional; the host is derived from
+`_GIT_SSH_URL`. Database and migration settings are intentionally absent. The script refuses a
 topology override.
+
+When the configured project already exists, the deployer asks for a single `y/N` confirmation; a
+fresh project is created directly from the environment configuration.
 
 A blank branch filter resolves to `backend-only-no-db`, is printed, and must resolve through the
 deploy key before the backend BuildConfig is created.

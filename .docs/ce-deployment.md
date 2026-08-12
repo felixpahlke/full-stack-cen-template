@@ -24,6 +24,9 @@ requires `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`, `_CE_PRO
 create or rotate the registry secret; an existing correctly owned secret can be reused without it.
 There are no `POSTGRES_*`, migration, or frontend values.
 
+When the configured project already exists, the deployer asks for a single `y/N` confirmation; a
+fresh project is created directly from the environment configuration.
+
 The configured CORS value is persisted without introducing `*`, and the final summary always
 prints the backend URL. Fresh projects are created automatically and polled until readable before
 selection. Default image names remain application-scoped intentionally. `--show-env-values` is
