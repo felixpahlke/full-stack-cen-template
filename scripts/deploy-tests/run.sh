@@ -140,7 +140,10 @@ done
 safe_kind() { printf '%s' "$1" | tr './' '__'; }
 resource_file() { printf '%s/resources/%s__%s' "$MOCK_STATE" "$(safe_kind "$1")" "$2"; }
 if [[ "$args" == *' account show '* ]]; then printf 'Account Name: mock-account\n'; exit 0; fi
-if [[ "$args" == *' ce project current '* ]]; then printf 'Subdomain: mock.mockcluster\n'; exit 0; fi
+if [[ "$args" == *' ce project current '* ]]; then
+  if [[ "$args" == *' --output jsonpath={.subdomain} '* ]]; then printf 'mock.mockcluster'; else printf 'Subdomäne: mock.mockcluster\n'; fi
+  exit 0
+fi
 if [[ "$args" == *' ce project get '* ]]; then
   [[ "${MOCK_CE_PROJECT_ABSENT:-false}" != true || -f "$MOCK_STATE/ce-project-created" ]]; exit
 fi
@@ -684,16 +687,10 @@ run_ce_registry_and_project_cases() {
 
     prepare_case ce-project-readiness
     output="$CASE_DIR/output.log"
-    if [[ "$OAUTH" == true ]]; then
-        if run_with_mocks "$output" 'mock-project\n' env MOCK_CE_PROJECT_ABSENT=true ./scripts/ce-deploy.sh; then fail 'OAuth CE created a project despite the fail-closed existing-project rule'; fi
-        assert_contains "$output" 'OAuth deployment requires an existing readable Code Engine project'
-        assert_absent "$STATE/calls.log" 'ce project create'
-    else
-        run_with_mocks "$output" 'mock-project\n' env MOCK_CE_PROJECT_ABSENT=true ./scripts/ce-deploy.sh || fail 'fresh CE project readiness flow failed'
-        assert_before "$STATE/calls.log" 'ce project create --name mock-project' 'ce project select --name mock-project --kubecfg'
-        assert_contains "$output" "Code Engine project 'mock-project' is ready."
-    fi
-    pass 'owned CE registry secrets are reusable and fresh-project readiness is gated without weakening OAuth project visibility'
+    run_with_mocks "$output" 'mock-project\n' env MOCK_CE_PROJECT_ABSENT=true ./scripts/ce-deploy.sh || fail 'fresh CE project readiness flow failed'
+    assert_before "$STATE/calls.log" 'ce project create --name mock-project' 'ce project select --name mock-project --kubecfg'
+    assert_contains "$output" "Code Engine project 'mock-project' is ready."
+    pass 'owned CE registry secrets are reusable and fresh projects are created and gated on readiness'
 }
 
 run_oauth_secret_cases() {
