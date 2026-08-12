@@ -19,10 +19,12 @@ to that flavor:
 
 ## Propagating Shared Changes
 
-After a shared change is merged into `local-auth`, propagate it into the other flavor
-branches with merge commits.
+After a shared change is committed to `local-auth`, propagate only the relevant commit into the
+other flavor branches, normally with `git cherry-pick`. The flavour histories were modernized
+independently, so do not merge `local-auth` wholesale.
 
-Use descriptive flavor merge commit messages that name the actual change:
+If target-specific conflict resolution materially changes the patch, use a descriptive commit
+message that names the actual change:
 
 ```text
 fix: quote shell variables in deployment scripts (oauth-proxy)

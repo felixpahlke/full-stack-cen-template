@@ -1,9 +1,10 @@
 # Maintaining the branch variants
 
 The six long-lived branches are product variants. Shared changes start on `local-auth`, are
-committed there, and are then merged with `git merge local-auth --no-commit` into each target.
-Resolve conflicts by preserving the target's UI, authentication, route, database, and deployment
-topology. Use descriptive target commits rather than generic merge messages.
+committed there, and are then propagated as targeted commits into each flavour, normally with
+`git cherry-pick`. The flavours were modernized independently, so do not merge `local-auth`
+wholesale. Resolve conflicts by preserving the target's UI, authentication, route, database, and
+deployment topology.
 
 | Branch | UI | Authentication | Database |
 | --- | --- | --- | --- |
