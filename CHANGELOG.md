@@ -1,14 +1,15 @@
 # Changelog
 
-## Unreleased — development modernization
+## Unreleased — modernization
 
-- Replaced the Compose application-process loop with `pnpm run dev`: PostgreSQL/Adminer stay in
-  Compose while Uvicorn/Vite run natively with reload.
-- Added a consistent root pnpm facade for development, quality, tests, builds, migrations, client
-  generation, and deployment mocks.
-- Made backend tests hermetic with Testcontainers and added container-compatible Playwright.
-- Added serialized migrate-on-start with exact Alembic-head verification.
-- Updated and pinned the frontend toolchain; `pnpm audit` reports zero vulnerabilities.
-- Hardened Code Engine and OpenShift reconciliation with two-label ownership and staged ingress.
+- Moved JavaScript tooling to one pnpm workspace with a root lockfile and pinned dependencies.
+- Replaced the Compose application loop with `pnpm dev`: Uvicorn and Vite run natively while
+  Compose provides PostgreSQL and Adminer.
+- Made generated-code checks and tests reproducible with offline generation, disposable PostgreSQL,
+  and container-compatible Playwright.
+- Serialized startup migrations across replicas and require the database to match the bundled
+  Alembic revision before serving.
+- Hardened Code Engine and OpenShift deployment ownership, secrets, cleanup, and rollouts.
 
-See [.docs/migration-guide.md](.docs/migration-guide.md) for consumer steps and rollback.
+The local-auth boundary, shadcn/ui, and separate backend/frontend production images remain.
+Existing projects should follow the [migration guide](.docs/migration-guide.md).
