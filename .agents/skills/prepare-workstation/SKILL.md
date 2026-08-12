@@ -32,9 +32,8 @@ ibmcloud plugin show container-registry
 kubectl version --client
 ```
 
-Node must satisfy `package.json` (20.19 or newer), Corepack must provision the exact pnpm version
-in its `packageManager` field, and
-uv must find a Python satisfying `backend/pyproject.toml` (3.10 through 3.12); the system
+Node must satisfy `package.json` (20.19 or newer), pnpm must satisfy its `packageManager` field,
+and uv must find a Python satisfying `backend/pyproject.toml` (3.10 through 3.12); the system
 `python3` may differ. Only one supported container
 runtime must work: Docker Desktop, Rancher Desktop with dockerd/moby, native Linux Docker, or
 Podman with an available Compose provider. A CLI-only install is insufficient: its `info` and
@@ -43,13 +42,15 @@ Compose checks must succeed.
 Use official platform installers for missing tools. The executable and IBM Cloud plugin names
 above are canonical. Do not log in to OpenShift or IBM Cloud during workstation preparation.
 
-Enable pnpm with `corepack enable pnpm`. If Corepack reports a pnpm signature error, run
-`npm install --global corepack@latest`, then retry `corepack enable pnpm`.
+Corepack is optional and may not be installed. If pnpm is missing, use an approved method from
+the [official pnpm installation guide](https://pnpm.io/installation). When Corepack is available,
+`corepack enable pnpm` can provision the pinned version. If it reports a signature error, update
+Corepack with approval and
+retry.
 
 ## Prepare this checkout
 
 ```bash
-corepack enable pnpm
 pnpm install
 uv sync --project backend
 uv run --project backend python --version
