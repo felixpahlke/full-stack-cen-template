@@ -126,15 +126,11 @@ target_code_engine_project() {
     if ibmcloud ce project get --name "$_CE_PROJECT_NAME" >/dev/null 2>&1; then
         run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     else
-        if [[ "$OAUTH_ENABLED" == true ]]; then
-            print_error "OAuth deployment requires an existing readable Code Engine project '$_CE_PROJECT_NAME' so visibility narrowing can be the first cloud mutation"
-            return 1
-        fi
         run ibmcloud ce project create --name "$_CE_PROJECT_NAME"
         wait_for_code_engine_project
         run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     fi
-    CE_SUBDOMAIN=$(ibmcloud ce project current | awk '/Subdomain:/ {print $2; exit}')
+    CE_SUBDOMAIN=$(ibmcloud ce project current --output 'jsonpath={.subdomain}')
     [[ -n "$CE_SUBDOMAIN" ]] || { print_error 'could not read Code Engine project subdomain'; return 1; }
     CLUSTER_ID=${CE_SUBDOMAIN#*.}
     CLUSTER_ID=${CLUSTER_ID%%.*}

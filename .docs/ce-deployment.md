@@ -51,11 +51,11 @@ persists `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, and OAuth redirect/well-
 mode-0600 `.env.production`. Configured CORS entries are retained; backend-only deployment never
 adds `*` unless it was explicitly configured.
 
-Fresh non-OAuth projects are polled until readable before selection. OAuth intentionally requires
-an existing readable project so visibility narrowing can precede registry, build, and secret
-mutation. The summary reports every public application URL and the OAuth redirect where relevant;
-private OAuth workload URLs remain hidden. `--show-env-values` is terminal-only and refuses
-non-interactive use.
+Fresh projects are created automatically and polled until readable before selection. For OAuth,
+existing workloads are made project-only before registry, build, and secret mutation, while fresh
+workloads are project-only from creation. The summary reports every public application URL and the
+OAuth redirect where relevant; private OAuth workload URLs remain hidden. `--show-env-values` is
+terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
