@@ -234,6 +234,7 @@ if [[ "$args" == *' get ingress.config.openshift.io cluster '* ]]; then printf '
 if [[ "$args" == *' get configs.imageregistry.operator.openshift.io cluster '*'.spec.managementState'* ]]; then [[ "${MOCK_REGISTRY_UNREADY:-false}" == true ]] && printf 'Removed' || printf 'Managed'; exit 0; fi
 if [[ "$args" == *' get configs.imageregistry.operator.openshift.io cluster '*'.spec.storage'* ]]; then [[ "${MOCK_REGISTRY_UNREADY:-false}" == true ]] && printf '{}' || printf '{"emptyDir":{}}'; exit 0; fi
 if [[ "$args" == *' get endpoints image-registry '* ]]; then [[ "${MOCK_REGISTRY_UNREADY:-false}" == true ]] || printf '10.0.0.1'; exit 0; fi
+if [[ "$args" == *' get endpoints '* && "$args" == *'.subsets[0].addresses[0].ip'* ]]; then printf '10.0.0.2'; exit 0; fi
 if [[ "$args" == *' registry info '* ]]; then printf 'registry.mock'; exit 0; fi
 if [[ "$args" == *' exec deployment/postgresql -- printenv '* ]]; then
   key=${*: -1}; file="$MOCK_STATE/postgres-$key"
@@ -411,8 +412,8 @@ run_ce_success() {
     if [[ "$OAUTH" == true ]]; then assert_contains "$PROJECT/.env.production" 'oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'; fi
     if [[ "$HAS_FRONTEND" != true ]]; then assert_absent "$PROJECT/.env.production" 'BACKEND_CORS_ORIGINS=*'; fi
     if [[ "$OAUTH" != true ]]; then
-        assert_contains "$output" 'Backend: https://mock-project-backend.mock.codeengine.example'
-        if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$output" 'Frontend: https://mock-project-frontend.mock.codeengine.example'; fi
+        assert_contains "$output" 'Backend:           https://mock-project-backend.mock.codeengine.example'
+        if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$output" 'Frontend:          https://mock-project-frontend.mock.codeengine.example'; fi
     fi
     if [[ "$OAUTH" == true ]]; then
         assert_before "$STATE/calls.log" 'ce application update --name mock-project-backend --visibility project' 'cr login'
@@ -421,7 +422,7 @@ run_ce_success() {
         assert_contains "$STATE/calls.log" '--argument=--cookie-secure=true'
         assert_contains "$PROJECT/.env.production" 'OAUTH2_PROXY_REDIRECT_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud/oauth2/callback'
         assert_contains "$PROJECT/.env.production" 'OAUTH2_PROXY_WELL_KNOWN_URL=https://idp.example.com/oidc/.well-known/openid-configuration'
-        assert_contains "$output" 'OAuth redirect URL: https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud/oauth2/callback'
+        assert_contains "$output" 'App ID callback:   https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud/oauth2/callback'
     fi
     assert_no_secret_leak "$output"; assert_no_secret_leak "$STATE/calls.log"; assert_temp_cleanup
     pass "Code Engine $FLAVOR topology, ownership, absence, exact secret sync, and trace leak probe"
@@ -484,6 +485,7 @@ run_oc_success() {
     if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$STATE/manifests.log" 'name: frontend'; else assert_absent "$STATE/manifests.log" 'name: frontend'; fi
     assert_contains "$STATE/manifests.log" 'contextDir: backend'
     assert_contains "$STATE/manifests.log" 'dockerfilePath: Dockerfile'
+    assert_contains "$STATE/manifests.log" 'path: /api/v1/utils/health-check/'
     if [[ "$HAS_FRONTEND" == true ]]; then
         assert_contains "$STATE/manifests.log" 'dockerfilePath: frontend/Dockerfile'
         assert_absent "$STATE/manifests.log" 'contextDir: frontend'
@@ -505,12 +507,17 @@ run_oc_success() {
         assert_before "$STATE/calls.log" 'MOCK_EVENT oauth-ingress-switched' 'delete route/weighted-direct --ignore-not-found'
         assert_contains "$STATE/manifests.log" 'oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
         assert_contains "$STATE/manifests.log" '--cookie-secure=true'
-        assert_contains "$output" 'OAuth redirect URL: https://oauth-proxy-mock-project.apps.mock.example/oauth2/callback'
+        assert_contains "$output" 'App ID callback:   https://oauth-proxy-mock-project.apps.mock.example/oauth2/callback'
         [[ -f "$STATE/direct-deleted" ]] || fail 'owned direct route was not removed'
     fi
-    assert_contains "$output" 'GitHub webhooks configured automatically: true'
-    if [[ "$OAUTH" != true ]]; then assert_contains "$output" 'Backend: https://backend-mock-project.apps.mock.example'; fi
-    if [[ "$HAS_FRONTEND" == true && "$OAUTH" != true ]]; then assert_contains "$output" 'Frontend: https://frontend-mock-project.apps.mock.example'; fi
+    assert_contains "$output" 'GitHub push builds: enabled'
+    assert_contains "$output" 'Running final deployment health checks.'
+    assert_contains "$STATE/calls.log" 'oc get endpoints backend'
+    if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$STATE/calls.log" 'oc get endpoints frontend'; fi
+    if [[ "$OAUTH" == true ]]; then assert_contains "$STATE/calls.log" 'oc get endpoints oauth-proxy'; fi
+    [[ ! -s "$STATE/terminal.log" ]] || fail 'successful automatic webhook setup must not print credential-bearing URLs'
+    if [[ "$OAUTH" != true ]]; then assert_contains "$output" 'Backend:           https://backend-mock-project.apps.mock.example'; fi
+    if [[ "$HAS_FRONTEND" == true && "$OAUTH" != true ]]; then assert_contains "$output" 'Frontend:          https://frontend-mock-project.apps.mock.example'; fi
     assert_no_secret_leak "$output"; assert_no_secret_leak "$STATE/calls.log"; assert_temp_cleanup
     pass "OpenShift $FLAVOR multi-image topology and stateful ownership reconciliation"
 }
@@ -584,9 +591,9 @@ run_oc_webhook_cases() {
     assert_contains "$output" 'app.kubernetes.io/managed-by: cen-template'
     assert_contains "$output" 'app.kubernetes.io/instance: app-a'
     assert_contains "$output" 'Until this RoleBinding exists, GitHub pushes will not trigger OpenShift builds.'
-    assert_contains "$output" 'GitHub webhooks active: false (current user cannot bind ClusterRole system:webhook in this project)'
+    assert_contains "$output" 'GitHub push builds: inactive (current user cannot bind ClusterRole system:webhook in this project)'
     assert_contains "$output" 'Deployment completed successfully.'
-    assert_contains "$STATE/terminal.log" "webhooks/$webhook_secret/github"
+    [[ ! -s "$STATE/terminal.log" ]] || fail 'RBAC fallback must not print credential-bearing webhook URLs'
     assert_absent "$output" "$webhook_secret"
     assert_absent "$STATE/calls.log" '/hooks'
     assert_absent "$STATE/manifests.log" 'kind: RoleBinding'
@@ -597,7 +604,7 @@ run_oc_webhook_cases() {
         sed -n '1,260p' "$output" >&2; fail 'OpenShift failed deployment after fallback-classified RoleBinding denial'
     }
     assert_contains "$output" 'OpenShift rejected the RoleBinding as forbidden'
-    assert_contains "$output" 'GitHub webhooks active: false (OpenShift rejected the RoleBinding as forbidden)'
+    assert_contains "$output" 'GitHub push builds: inactive (OpenShift rejected the RoleBinding as forbidden)'
     assert_contains "$output" 'Deployment completed successfully.'
     assert_absent "$STATE/calls.log" '/hooks'
 
@@ -623,10 +630,10 @@ run_oc_webhook_cases() {
     output="$CASE_DIR/output.log"
     run_with_mocks "$output" 'y\n\n' ./scripts/oc-deploy.sh || { sed -n '1,240p' "$output" >&2; fail 'manual webhook deployment failed'; }
     webhook_secret=$(<"$STATE/secrets/github-webhook-secret.WebHookSecretKey")
-    assert_contains "$STATE/terminal.log" "webhooks/$webhook_secret/github"
+    [[ ! -s "$STATE/terminal.log" ]] || fail 'manual webhook fallback must not print credential-bearing webhook URLs'
     assert_absent "$output" "$webhook_secret"
-    assert_contains "$output" 'GitHub webhooks configured automatically: false'
-    pass 'webhook RBAC permission fallback, genuine failures, POST failures, and terminal-only URLs are enforced'
+    assert_contains "$output" 'GitHub push builds: manual setup required'
+    pass 'webhook RBAC fallback, genuine failures, and credential-free output are enforced'
 }
 
 prepare_legacy_fixture() {
