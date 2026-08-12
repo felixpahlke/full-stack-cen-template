@@ -92,6 +92,42 @@ test("Podman is detected from its real info shape when context show is unsupport
   });
 });
 
+test("Podman behind Docker compatibility keeps the working Docker command", () => {
+  const calls = [];
+  const runtime = detectContainerRuntime({
+    platform: "darwin",
+    execute(command, args) {
+      calls.push([command, ...args].join(" "));
+      if (args[0] === "info") {
+        return {
+          status: 0,
+          stdout: JSON.stringify({ Name: "localhost.localdomain", OperatingSystem: "fedora" }),
+        };
+      }
+      if (args[0] === "context") return { status: 0, stdout: "default\n" };
+      return {
+        status: 0,
+        stdout: JSON.stringify({
+          Components: [{ Name: "Podman Engine", Version: "5.7.1" }],
+        }),
+      };
+    },
+  });
+
+  assert.deepEqual(calls, [
+    "docker info --format {{json .}}",
+    "docker context show",
+    "docker version --format {{json .Server}}",
+  ]);
+  assert.deepEqual(runtime, {
+    id: "podman",
+    displayName: "Podman",
+    upstreamHost: "host.containers.internal",
+    extraHosts: [],
+    command: "docker",
+  });
+});
+
 // Rancher Desktop is Lima-based on macOS and reports a daemon name containing
 // `lima`, so this fixture must keep that substring: with the Lima branch checked
 // first, Rancher Desktop was misdetected as Colima and given host.lima.internal.

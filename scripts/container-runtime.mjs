@@ -32,16 +32,44 @@ export function detectContainerRuntime({
       "The container runtime returned unreadable daemon information; cannot select the Vite upstream.",
     );
   }
+
+  let server = {};
+  if (command === "docker") {
+    const versionResult = execute(command, ["version", "--format", "{{json .Server}}"], {
+      cwd,
+      env,
+    });
+    if (versionResult.status === 0) {
+      try {
+        server = JSON.parse(versionResult.stdout.trim());
+      } catch {
+        // Docker info remains sufficient for native Docker-compatible runtimes.
+      }
+    }
+  }
   return selectContainerRuntime({
     command,
     context: contextResult.status === 0 ? contextResult.stdout.trim() : "",
     info,
+    server,
     platform,
   });
 }
 
-export function selectContainerRuntime({ command = "docker", context, info, platform }) {
-  if (command === "podman" && info.host && info.store && info.version && info.Client) {
+export function selectContainerRuntime({
+  command = "docker",
+  context,
+  info,
+  server = {},
+  platform,
+}) {
+  const podmanEngine = server?.Components?.some((component) =>
+    /podman engine/i.test(component?.Name ?? ""),
+  );
+  if (
+    (command === "podman" && info.host && info.store && info.version && info.Client) ||
+    podmanEngine
+  ) {
     return {
       id: "podman",
       displayName: "Podman",
@@ -96,7 +124,7 @@ export function selectContainerRuntime({ command = "docker", context, info, plat
 
   throw failure(
     `Unsupported Docker runtime for native host services (context ${JSON.stringify(context)}). ` +
-      "Use Docker Desktop, Rancher Desktop with dockerd, Podman, or native Docker on Linux.",
+      "Use Docker Desktop, Rancher Desktop with dockerd, Colima, Podman, or native Docker on Linux.",
   );
 }
 

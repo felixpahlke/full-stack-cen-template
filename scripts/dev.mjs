@@ -114,12 +114,17 @@ try {
       `${containerRuntime.upstreamHost}:${webPort}`,
   );
 
-  console.log(
-    `\nDevelopment ready: browser http://localhost:${effectiveEnv.OAUTH2_PROXY_PORT}, ` +
-      `API http://127.0.0.1:${apiPort}, Vite http://localhost:${webPort}, ` +
-      `issuer ${effectiveEnv.DEV_OIDC_ISSUER_URL}, ` +
-      `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
-  );
+  console.log(`
+Development ready
+
+  Application  http://localhost:${effectiveEnv.OAUTH2_PROXY_PORT}
+  API          http://127.0.0.1:${apiPort}
+  Vite         http://localhost:${webPort}
+  Adminer      http://localhost:${effectiveEnv.ADMINER_PORT}
+  OIDC issuer  ${effectiveEnv.DEV_OIDC_ISSUER_URL}
+
+  Press Ctrl+C to stop
+`);
 
   const first = await Promise.race(servers);
   exitCode = first.code ?? signalExitCodes[first.signal] ?? 1;
