@@ -75,6 +75,36 @@ run_with_spinner() {
     return "$status"
 }
 
+run_quiet_with_spinner() {
+    local message=$1 output_file status
+    shift
+    if [[ "$DEPLOY_DRY_RUN" == true || ! -t 1 ]]; then "$@"; return; fi
+    make_temp_file output_file
+    start_spinner "$message"
+    if "$@" >"$output_file" 2>&1; then status=0; else status=$?; fi
+    stop_spinner
+    if ((status != 0)) && [[ -s "$output_file" ]]; then cat "$output_file" >&2; fi
+    return "$status"
+}
+
+capture_with_spinner() {
+    local destination=$1 message=$2 result error_file status
+    shift 2
+    if [[ "$DEPLOY_DRY_RUN" == true || ! -t 1 ]]; then
+        result=$("$@") || return
+    else
+        make_temp_file error_file
+        start_spinner "$message"
+        if result=$("$@" 2>"$error_file"); then status=0; else status=$?; fi
+        stop_spinner
+        if ((status != 0)); then
+            [[ ! -s "$error_file" ]] || cat "$error_file" >&2
+            return "$status"
+        fi
+    fi
+    printf -v "$destination" '%s' "$result"
+}
+
 has_interactive_terminal() {
     [[ "$DEPLOY_MOCK" == true && -n "${CEN_DEPLOY_TERMINAL_FILE:-}" ]] || [[ -t 0 && -t 1 ]]
 }
