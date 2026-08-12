@@ -31,9 +31,7 @@ configure_component_webhook() {
     record_component_webhook_url "$component"
     url=$(get_deployment_output "${component}_webhook")
     if ! make_github_curl_config curl_config; then
-        print_warning "GITHUB_TOKEN is not set; configure the $component GitHub webhook manually."
-        print_terminal "Manual $component webhook URL: $url" || \
-            print_warning 'The credential-bearing URL is hidden because no interactive terminal is available.'
+        print_warning "GITHUB_TOKEN is not set; GitHub push builds for $component are inactive. Set it and rerun deployment to enable them."
         return 0
     fi
     make_temp_file response_file
@@ -112,8 +110,7 @@ print_webhook_rbac_admin_instructions() {
     webhook_rolebinding_manifest >&2
     printf '%s\n' \
         'EOF' \
-        'Until this RoleBinding exists, GitHub pushes will not trigger OpenShift builds.' \
-        'Credential-bearing webhook URLs will be printed to the interactive terminal for later setup.' >&2
+        'Until this RoleBinding exists, GitHub pushes will not trigger OpenShift builds. Apply it and rerun deployment.' >&2
 }
 
 ensure_webhook_rbac() {
@@ -150,8 +147,6 @@ setup_webhooks() {
     else
         rbac_status=$?
         [[ "$rbac_status" == 2 ]] || return "$rbac_status"
-        record_component_webhook_url backend
-        if [[ "$HAS_FRONTEND" == true ]]; then record_component_webhook_url frontend; fi
         add_deployment_output github_webhooks_configured false
         add_deployment_output github_webhooks_unavailable_reason "$WEBHOOK_RBAC_DENIAL_REASON"
         return 0

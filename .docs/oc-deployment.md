@@ -68,10 +68,10 @@ Apply that manifest with `oc -n <PROJECT_NAME> apply -f rolebinding.yaml`. This 
 unauthenticated GitHub POST requests reach OpenShift build webhooks; the random secret embedded in
 each BuildConfig webhook URL is what authenticates and protects the trigger. If the deployer lacks
 the required RBAC permission, application deployment continues but the summary reports webhooks as
-inactive and prints the credential-bearing URLs only on the interactive terminal. Until an
-administrator creates the binding, GitHub pushes do not trigger builds. Other RoleBinding apply
-errors and GitHub API failures remain fatal. Without a GitHub token, usable credential-bearing
-webhook URLs are likewise terminal-only.
+inactive. After an administrator creates the binding, rerun deployment to configure the hooks.
+Other RoleBinding apply errors and GitHub API failures remain fatal. Without a GitHub token, push
+builds remain inactive until a token is configured and deployment is rerun. Credential-bearing
+webhook URLs are never printed.
 
 ## Ownership and cleanup
 

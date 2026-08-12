@@ -115,8 +115,13 @@ preflight_deploy_collisions() {
 }
 
 component_manifest() {
-    local component=$1 port=$2 context_dir=$3 dockerfile_path=$4 env_from='' context=''
+    local component=$1 port=$2 context_dir=$3 dockerfile_path=$4 env_from='' context='' probes=''
     [[ "$component" != backend ]] || env_from="          envFrom: [{secretRef: {name: $APP_NAME-env}}]"
+    if [[ "$component" == backend ]]; then
+        probes=$'          readinessProbe: {httpGet: {path: /api/v1/utils/health-check/, port: http}, initialDelaySeconds: 2, periodSeconds: 5}\n          livenessProbe: {httpGet: {path: /api/v1/utils/health-check/, port: http}, initialDelaySeconds: 10, periodSeconds: 30}'
+    else
+        probes=$'          readinessProbe: {httpGet: {path: /healthz, port: http}, initialDelaySeconds: 2, periodSeconds: 5}\n          livenessProbe: {httpGet: {path: /healthz, port: http}, initialDelaySeconds: 10, periodSeconds: 30}'
+    fi
     [[ -z "$context_dir" ]] || context="    contextDir: $context_dir"
     cat <<EOF
 apiVersion: image.openshift.io/v1
@@ -158,6 +163,7 @@ spec:
         - name: $component
           image: image-registry.openshift-image-registry.svc:5000/$PROJECT_NAME/$component:latest
           ports: [{name: http, containerPort: $port}]
+$probes
 $env_from
 ---
 apiVersion: v1
@@ -190,8 +196,8 @@ start_component_build() {
 }
 
 wait_for_builds() {
-    local build_refs=("$@") build_ref phase summary all_complete
-    local deadline=$((SECONDS + 900)) last_report=$((SECONDS - 15))
+    local build_refs=("$@") build_ref phase summary all_complete last_summary=''
+    local deadline=$((SECONDS + 900)) last_report=$((SECONDS - 60))
     print_status "Waiting for builds: ${build_refs[*]}"
     while true; do
         summary=''; all_complete=true
@@ -211,9 +217,13 @@ wait_for_builds() {
             esac
         done
         if [[ "$all_complete" == true ]]; then print_success "Builds completed: $summary"; return 0; fi
-        if ((SECONDS - last_report >= 15)); then print_status "Build progress: $summary"; last_report=$SECONDS; fi
+        if [[ "$summary" != "$last_summary" ]] || ((SECONDS - last_report >= 60)); then
+            print_status "Build progress: $summary"
+            last_summary=$summary
+            last_report=$SECONDS
+        fi
         ((SECONDS < deadline)) || { print_error "timed out waiting for builds: $summary"; return 1; }
-        sleep 5
+        spinner_wait 5 "Building images — $summary"
     done
 }
 
@@ -222,6 +232,30 @@ rollout_component() {
     oc_resource_is_owned deployment "$component" || { warn_unowned_collision deployment "$component"; return 1; }
     run oc rollout restart "deployment/$component"
     run oc rollout status "deployment/$component" --timeout=15m
+}
+
+verify_service_endpoint() {
+    local component=$1 endpoint deadline=$((SECONDS + 60))
+    while true; do
+        endpoint=$(oc get endpoints "$component" -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
+        if [[ -n "$endpoint" ]]; then
+            print_success "$component service is healthy."
+            return 0
+        fi
+        ((SECONDS < deadline)) || {
+            print_error "$component service has no Ready endpoint"
+            oc get pods -l "deployment=$component" >&2 || true
+            return 1
+        }
+        spinner_wait 2 "Checking $component service health"
+    done
+}
+
+verify_deployment_health() {
+    print_status 'Running final deployment health checks.'
+    verify_service_endpoint backend
+    if [[ "$HAS_FRONTEND" == true ]]; then verify_service_endpoint frontend; fi
+    if [[ "$OAUTH_ENABLED" == true ]]; then verify_service_endpoint oauth-proxy; fi
 }
 
 configure_frontend() {

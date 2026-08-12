@@ -98,6 +98,7 @@ main() {
     fi
     setup_webhooks
     reconcile_obsolete_resources
+    verify_deployment_health
 
     if [[ "$OAUTH_ENABLED" != true ]]; then add_deployment_output backend_url "$(capture_route_host backend)"; fi
     if [[ "$HAS_FRONTEND" == true && "$OAUTH_ENABLED" != true ]]; then add_deployment_output frontend_url "$(capture_route_host frontend)"; fi
