@@ -69,13 +69,15 @@ main() {
     adopt_legacy_resources
 
     # These read-only checks precede SSH, registry, secret, database, and build mutations.
-    preflight_deploy_collisions
-    preflight_oauth_ingress
+    run_with_spinner 'Checking resource ownership' preflight_deploy_collisions
+    run_with_spinner 'Checking ingress safety' preflight_oauth_ingress
     protect_postgres_credential_change
 
     if [[ "$REGENERATE_SSH_KEY" == true ]]; then delete_ssh_keys; fi
+    print_status 'Preparing repository access.'
     setup_ssh_keys
-    validate_remote_branch_ref
+    run_with_spinner 'Verifying the source branch' validate_remote_branch_ref
+    print_status 'Checking the integrated image registry.'
     setup_image_registry
     if [[ "$OAUTH_ENABLED" == true ]]; then update_app_env_secret_with_urls; else create_initial_app_env_secret; fi
 
