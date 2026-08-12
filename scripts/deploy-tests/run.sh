@@ -182,7 +182,8 @@ if [[ " $* " == *' config current-context '* ]]; then printf 'mockcluster\n'; ex
 action=${1:-}; kind=${2:-}; name=${3:-}; file=$(resource_file "$kind" "$name")
 if [[ "$action" == label ]]; then printf 'cen-template|app-a\n' > "$file"; exit 0; fi
 if [[ "$action" != get || ! -f "$file" ]]; then
-  [[ "$action" != get ]] || printf 'Error from server (NotFound): %s/%s not found\n' "$kind" "$name" >&2
+  if [[ "$action" == get && " $* " == *' --ignore-not-found '* ]]; then exit 0; fi
+  [[ "$action" != get ]] || printf 'Fehler vom Server (Nicht gefunden): %s/%s wurde nicht gefunden\n' "$kind" "$name" >&2
   exit 1
 fi
 IFS='|' read -r managed instance < "$file"
@@ -416,8 +417,8 @@ run_ce_success() {
         if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$output" 'Frontend:          https://mock-project-frontend.mock.codeengine.example'; fi
     fi
     if [[ "$OAUTH" == true ]]; then
-        assert_before "$STATE/calls.log" 'ce application update --name mock-project-backend --visibility project' 'cr login'
-        assert_before "$STATE/calls.log" 'ce application update --name mock-project-frontend --visibility project' "$build_command"
+        assert_before "$STATE/calls.log" 'kubectl get services.serving.knative.dev mock-project-backend -o name --ignore-not-found' 'cr login'
+        assert_before "$STATE/calls.log" 'kubectl get services.serving.knative.dev mock-project-frontend -o name --ignore-not-found' "$build_command"
         assert_contains "$STATE/calls.log" 'oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561'
         assert_contains "$STATE/calls.log" '--argument=--cookie-secure=true'
         assert_contains "$PROJECT/.env.production" 'OAUTH2_PROXY_REDIRECT_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud/oauth2/callback'
@@ -776,6 +777,15 @@ run_oauth_secret_cases() {
     generated=$(sed -n 's/^OAUTH2_PROXY_UPSTREAM_PASSWORD=//p' "$STATE/secrets/mock-project-backend-config.env")
     [[ ${#generated} -ge 32 && "$generated" != \<*\> ]] || fail 'CE did not replace the OAuth seam marker with a strong value'
     assert_absent "$STATE/calls.log" '<generate-a-random-upstream-password>'
+    assert_before "$STATE/calls.log" 'ce application update --name mock-project-backend --visibility project' 'cr login'
+
+    prepare_case ce-visibility-failure
+    put_resource "$STATE" services.serving.knative.dev mock-project-backend app-a
+    put_resource "$STATE" services.serving.knative.dev mock-project-frontend app-a
+    output="$CASE_DIR/output.log"
+    if run_with_mocks "$output" 'y\n' env MOCK_VISIBILITY_UNKNOWN=true ./scripts/ce-deploy.sh; then fail 'CE ignored an existing application visibility failure'; fi
+    assert_contains "$output" 'could not make application/mock-project-backend project-only'
+    assert_absent "$STATE/calls.log" 'cr login'
 
     prepare_case ce-oauth-seam-placeholder
     sed -i.bak 's|^OAUTH2_PROXY_UPSTREAM_PASSWORD=.*|OAUTH2_PROXY_UPSTREAM_PASSWORD=<placeholder-secret-that-is-long-enough>|' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
@@ -783,7 +793,7 @@ run_oauth_secret_cases() {
     if run_with_mocks "$output" '' ./scripts/ce-deploy.sh; then fail 'CE accepted an arbitrary OAuth seam placeholder'; fi
     assert_contains "$output" 'must be a non-placeholder random value of at least 32 characters'
     assert_absent "$STATE/calls.log" 'ibmcloud target'
-    pass 'Code Engine generates the documented OAuth seam marker and refuses other placeholders before cloud work'
+    pass 'Code Engine handles localized absence, narrows existing apps, and validates the OAuth seam before cloud work'
 }
 
 run_validation_case() {
