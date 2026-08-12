@@ -470,6 +470,8 @@ run_oc_success() {
     assert_contains "$STATE/manifests.log" 'name: webhook-access-unauthenticated'
     assert_contains "$STATE/manifests.log" 'name: system:webhook'
     assert_contains "$STATE/manifests.log" 'name: system:unauthenticated'
+    assert_absent "$STATE/manifests.log" 'type: ConfigChange'
+    assert_absent "$STATE/manifests.log" 'type: ImageChange'
     assert_contains "$STATE/calls.log" 'oc auth can-i create rolebindings.rbac.authorization.k8s.io --namespace mock-project'
     assert_contains "$STATE/calls.log" 'oc auth can-i bind clusterroles.rbac.authorization.k8s.io/system:webhook --namespace mock-project'
     assert_absent "$STATE/secrets/app-a-env.env" GITHUB_TOKEN
@@ -488,6 +490,16 @@ run_oc_success() {
         [[ $(grep -Fc 'contextDir:' "$STATE/manifests.log") == 1 ]] || fail 'frontend BuildConfig must use the repository root context'
     fi
     if [[ "$HAS_DATABASE" == true ]]; then assert_contains "$STATE/manifests.log" 'kind: PersistentVolumeClaim'; else assert_absent "$STATE/manifests.log" 'kind: PersistentVolumeClaim'; fi
+    [[ $(grep -Fc 'oc start-build backend -o name' "$STATE/calls.log") == 1 ]] || fail 'backend build must start exactly once'
+    assert_contains "$output" 'Waiting for builds: build/backend-1'
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        [[ $(grep -Fc 'oc start-build frontend -o name' "$STATE/calls.log") == 1 ]] || fail 'frontend build must start exactly once'
+        assert_before "$STATE/calls.log" 'oc start-build backend -o name' 'oc start-build frontend -o name'
+        assert_before "$STATE/calls.log" 'oc start-build frontend -o name' 'oc rollout restart deployment/backend'
+        assert_before "$STATE/calls.log" 'oc rollout status deployment/backend --timeout=15m' 'oc rollout restart deployment/frontend'
+    else
+        assert_absent "$STATE/calls.log" 'oc start-build frontend -o name'
+    fi
     if [[ "$OAUTH" == true ]]; then
         assert_before "$STATE/calls.log" 'rollout status deployment/oauth-proxy --timeout=15m' 'MOCK_EVENT oauth-ingress-switched'
         assert_before "$STATE/calls.log" 'MOCK_EVENT oauth-ingress-switched' 'delete route/weighted-direct --ignore-not-found'
