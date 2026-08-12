@@ -13,7 +13,7 @@ ensure_webhook_secret() {
         make_temp_file secret_file
         printf '%s' "$WEBHOOK_SECRET_VALUE" > "$secret_file"
         oc create secret generic "$secret_name" --from-file="WebHookSecretKey=$secret_file" \
-            --labels "$(cen_ownership_labels)" --dry-run=client -o yaml | oc apply -f - >&2
+            --dry-run=client -o yaml | apply_owned_oc_manifest
     fi
     [[ -n "$WEBHOOK_SECRET_VALUE" ]] || { print_error 'empty webhook secret'; return 1; }
 }
