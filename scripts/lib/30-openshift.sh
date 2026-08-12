@@ -47,6 +47,7 @@ check_oc_login() {
 
 setup_project() {
     if resource_exists project "$PROJECT_NAME"; then
+        confirm_target 'OpenShift deployment' "$PROJECT_NAME"
         run oc project "$PROJECT_NAME"
     else
         if [[ "${ADOPT_LEGACY_RESOURCES:-false}" == true ]]; then

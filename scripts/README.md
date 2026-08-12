@@ -45,9 +45,8 @@ terminal-only.
 Code Engine always persists and supplies an absolute `VITE_API_URL`, validates nginx/Dockerfile
 compatibility before cloud mutation, preserves configured CORS, and reports all public application
 URLs. Existing owned registry secrets can be reused without `_IAM_API_KEY`; supplying the key
-rotates them. Application-scoped image names and the requirement that OAuth Code Engine projects
-already exist are intentional isolation properties. Fresh non-OAuth project creation waits for
-readiness.
+rotates them. Application-scoped image names prevent cross-application tag collisions. Fresh Code
+Engine projects are created automatically and wait for readiness before selection.
 
 Secrets are written through mode-0600 temporary files, never command arguments. Application
 secrets exclude deployment-only, registry, GitHub, and `VITE_*` values and are recreated to

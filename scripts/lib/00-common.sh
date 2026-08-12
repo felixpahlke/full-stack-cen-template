@@ -418,8 +418,8 @@ validate_runtime_env() {
 confirm_target() {
     local label=$1 expected=$2 confirmation
     print_warning "Deployment may replace or delete only resources owned by $(cen_ownership_labels)."
-    read -r -p "Type '$expected' to continue with $label: " confirmation
-    [[ "$confirmation" == "$expected" ]] || { print_error 'deployment cancelled'; return 1; }
+    read -r -p "Continue with $label for '$expected'? [y/N]: " confirmation
+    [[ "$confirmation" =~ ^[Yy]([Ee][Ss])?$ ]] || { print_error 'deployment cancelled'; return 1; }
 }
 
 show_help() {
