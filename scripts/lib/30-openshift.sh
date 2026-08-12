@@ -31,6 +31,11 @@ apply_resource() {
     oc apply -f - >&2
 }
 
+apply_owned_oc_manifest() {
+    oc label --local -f - "$CEN_MANAGED_BY_LABEL" "$CEN_INSTANCE_KEY=$APP_NAME" -o yaml \
+        | oc apply -f - >&2
+}
+
 check_oc_version() {
     local version minor
     need_command oc
