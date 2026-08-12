@@ -21,16 +21,11 @@ try {
   fail(error.message);
 }
 
-const usesDex =
-  environment.DEV_OIDC_USES_DEX === "true" ||
-  (!environment.DEV_OIDC_USES_DEX && !environment.OAUTH2_PROXY_OIDC_ISSUER_URL?.trim());
 const ports = [
   port("DB_PORT", "PostgreSQL", 5432, "db", 5432),
   port("ADMINER_PORT", "Adminer", 8080, "adminer", 8080),
   port("API_PORT", "API", 8000),
   port("WEB_PORT", "web app", 5173),
-  ...(usesDex ? [port("DEX_PORT", "Dex", 5556, "dex", 5556)] : []),
-  port("OAUTH2_PROXY_PORT", "oauth2-proxy", 4180, "oauth2-proxy", 4180),
 ];
 
 const byValue = new Map();
@@ -96,7 +91,7 @@ function port(env, label, fallback, composeService, containerPort) {
 
 function recoveryAdvice(entries) {
   void entries;
-  return "Update the affected values in .env, then run npm run dev again.";
+  return "Update the affected values in .env, then run pnpm run dev again.";
 }
 
 function portValue(env, fallback) {

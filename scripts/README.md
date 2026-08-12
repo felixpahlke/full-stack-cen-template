@@ -7,7 +7,7 @@ oauth2-proxy. `scripts/deploy-flavor.conf` is authoritative; topology overrides 
 cp .env.production.example .env.production
 ./scripts/oc-deploy.sh --dry-run
 ./scripts/ce-deploy.sh --dry-run
-npm run test:deploy
+pnpm run test:deploy
 ```
 
 Both deployers require exact target confirmation and own a resource only when both labels match:

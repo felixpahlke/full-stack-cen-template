@@ -31,7 +31,7 @@ direct Routes. Weighted alternate backends and numeric target ports are preserve
 transition. `/oauth2/sign_out` ends the proxy cookie but cannot terminate upstream IdP SSO.
 
 `--reset-prod-db` is separately confirmed and deletes only the exact owned PostgreSQL resource
-set. `--regenerate-ssh-key` rotates the deploy key. Run `npm run test:deploy` before script changes.
+set. `--regenerate-ssh-key` rotates the deploy key. Run `pnpm run test:deploy` before script changes.
 
 Running PostgreSQL `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` values are compared
 before the shared application secret changes. Drift requires typed destructive confirmation and an

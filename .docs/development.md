@@ -2,7 +2,7 @@
 
 ## Prerequisites and first run
 
-- Node.js 20.19+ with npm
+- Node.js 20.19+ with Corepack and pnpm
 - Python 3.10–3.12 and uv
 - Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
 - Docker: `docker compose` or standalone `docker-compose`
@@ -10,11 +10,11 @@
   or the `podman-compose` command; start `podman machine` first where required
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 The supervisor detects Docker Desktop, Rancher Desktop, native Linux Docker, or Podman and selects
@@ -41,7 +41,7 @@ Required runtime keys are `CEN_FLAVOR`, `ENVIRONMENT`, `PROJECT_NAME`, all port 
 `BACKEND_CORS_ORIGINS` remain empty for same-origin proxy routing.
 
 The marker values `changethis` are intentionally invalid. On the first
-`npm run dev`, strong `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, and
+`pnpm run dev`, strong `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, and
 `OAUTH2_PROXY_UPSTREAM_PASSWORD` values are generated into that checkout's ignored `.env`.
 Missing, example, or weak secrets are refused in every environment. Each checkout therefore has
 a different private proxy/backend credential.
@@ -98,8 +98,8 @@ preserved.
 ## Tests, generation, and troubleshooting
 
 ```bash
-npm run verify
-npm run test:deploy
+pnpm run verify
+pnpm run test:deploy
 ```
 
 Backend tests use a disposable Testcontainers PostgreSQL instance and ignore `.env`. Playwright
@@ -111,9 +111,9 @@ Playwright suite: several parallel Chromium workers alongside PostgreSQL can exh
 kernel then OOM-kills the database mid-run. Either `podman machine set --memory 8192` (stop and
 restart the machine afterwards) or run the suite with `-- --workers=1`.
 
-Use `npm run generate-client` after API changes and never edit generated client/route files.
+Use `pnpm run generate-client` after API changes and never edit generated client/route files.
 Occupied ports are reported up front. For missing `backend/.venv`, rerun
-`uv sync --project backend`; for missing frontend packages, rerun `npm ci --prefix frontend`.
+`uv sync --project backend`; for missing frontend packages, rerun `pnpm install`.
 Use the detected Compose command for logs. If proxy startup reports that Vite is unreachable,
 check the detected runtime: Docker Desktop and Rancher Desktop use `host.docker.internal`, Podman
 uses `host.containers.internal`, and native Linux Docker uses the host-gateway mapping.

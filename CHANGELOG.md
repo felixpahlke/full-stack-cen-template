@@ -8,7 +8,7 @@
   pinned Dex/oauth2-proxy images by digest.
 - Added hermetic Testcontainers tests and real-proxy containerized Playwright.
 - Added serialized migrate-on-start with exact Alembic-head verification.
-- Added the root npm command facade and zero-vulnerability frontend lock/overrides.
+- Added the root pnpm command facade and zero-vulnerability frontend lock/overrides.
 - Hardened Code Engine/OpenShift ownership, secrets, and staged OAuth ingress.
 
 See [.docs/migration-guide.md](.docs/migration-guide.md).

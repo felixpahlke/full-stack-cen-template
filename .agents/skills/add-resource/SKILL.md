@@ -10,7 +10,7 @@ singular/plural names, fields and constraints, whether records are identity-owne
 is required. Identity ownership is the default. Keep database work in `backend/app/crud.py`, not
 routes. Treat the proxy subject as an opaque string; it is not necessarily a UUID.
 
-If the checkout is not prepared, run `prepare-workstation`. Start `npm run dev` and keep it running
+If the checkout is not prepared, run `prepare-workstation`. Start `pnpm run dev` and keep it running
 before the migration step.
 
 ## Backend
@@ -26,8 +26,8 @@ before the migration step.
 
    ```bash
    uv run --project backend alembic -c backend/alembic.ini current --check-heads
-   npm run db:revision -- -m "add <resources>"
-   npm run db:migrate
+   pnpm run db:revision -- -m "add <resources>"
+   pnpm run db:migrate
    uv run --project backend alembic -c backend/alembic.ini current --check-heads
    ```
 
@@ -47,7 +47,7 @@ the API/OpenAPI inventories in `backend/app/tests/test_oauth_topology.py` and
 
 ## Generated client and shadcn UI
 
-1. Run `npm run generate-client`; commit its changes, but never edit `frontend/src/client` or
+1. Run `pnpm run generate-client`; commit its changes, but never edit `frontend/src/client` or
    `frontend/src/routeTree.gen.ts` by hand.
 2. Build the page under `frontend/src/routes/_layout/<resources>.tsx`. Follow the existing Items
    split: route file plus focused components under `frontend/src/components/<resources>/`.
@@ -60,4 +60,4 @@ the API/OpenAPI inventories in `backend/app/tests/test_oauth_topology.py` and
 During template maintenance, add the same page to the Carbon `oauth-proxy` twin; its parity gate
 deliberately keeps both route surfaces equal.
 
-Finish with `npm run generate-client` and `npm run verify`. Exercise one create/list round trip.
+Finish with `pnpm run generate-client` and `pnpm run verify`. Exercise one create/list round trip.

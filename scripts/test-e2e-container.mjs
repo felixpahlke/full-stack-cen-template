@@ -6,8 +6,10 @@ import { fileURLToPath } from "node:url";
 import { detectContainerRuntime } from "./container-runtime.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const lock = JSON.parse(readFileSync(new URL("../frontend/package-lock.json", import.meta.url)));
-const version = lock.packages["node_modules/@playwright/test"].version;
+const frontendPackage = JSON.parse(
+  readFileSync(new URL("../frontend/package.json", import.meta.url)),
+);
+const version = frontendPackage.devDependencies["@playwright/test"];
 const image = process.env.PLAYWRIGHT_IMAGE || `mcr.microsoft.com/playwright:v${version}-noble`;
 const runtime = detectContainerRuntime({ cwd: root, env: process.env });
 
@@ -28,8 +30,7 @@ const result = spawnSync(
     "-e",
     "PLAYWRIGHT_CONTAINER=true",
     image,
-    "npx",
-    "playwright",
+    "./node_modules/.bin/playwright",
     "test",
     ...process.argv.slice(2),
   ],

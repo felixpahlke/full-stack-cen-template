@@ -19,11 +19,11 @@ introduces a database entity or API surface, use `add-resource` before this skil
 4. Compose the existing shadcn/ui primitives under `frontend/src/components/ui`. Use semantic
    Tailwind theme classes such as `bg-background` and `text-muted-foreground`; avoid hardcoded
    colors and do not recreate owned primitives inline.
-5. Run `npm run generate-client` to regenerate the route tree. Never edit
+5. Run `pnpm run generate-client` to regenerate the route tree. Never edit
    `frontend/src/routeTree.gen.ts` or `frontend/src/client` manually.
 
 During template maintenance, add the same route to the Carbon `oauth-proxy` twin; that branch's
 parity gate deliberately keeps both route surfaces equal.
 
-Done means navigation works, loading/empty/error states are intentional, and `npm run verify`
+Done means navigation works, loading/empty/error states are intentional, and `pnpm run verify`
 passes.

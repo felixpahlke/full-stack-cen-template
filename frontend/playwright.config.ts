@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 try {
   process.loadEnvFile(path.resolve(import.meta.dirname, "../.env"));
 } catch {
-  // `npm run dev` provides the actionable missing-environment message.
+  // `pnpm run dev` provides the actionable missing-environment message.
 }
 
 const proxyPort = process.env.OAUTH2_PROXY_PORT || "4180";
@@ -41,7 +41,7 @@ export default defineConfig({
   webServer: externalServer
     ? undefined
     : {
-        command: "npm --prefix .. run dev",
+        command: "pnpm --dir .. run dev",
         url: `${proxyUrl}/ping`,
         timeout: 180_000,
         reuseExistingServer: !process.env.CI,

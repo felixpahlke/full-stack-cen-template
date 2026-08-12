@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "generate-client": "npm --prefix .. run generate-client",
+    "generate-client": "pnpm -w run generate-client",
     "generate-routes": "tsr generate"
   },
   "dependencies": {
@@ -53,10 +53,5 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "8.2.1"
-  },
-  "overrides": {
-    "@tanstack/router-core": "1.171.17",
-    "immutable": "5.1.9",
-    "js-yaml": "4.3.1"
   }
 }

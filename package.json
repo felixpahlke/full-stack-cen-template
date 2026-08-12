@@ -2,13 +2,13 @@
   "name": "full-stack-cen-template",
   "private": true,
   "type": "module",
-  "packageManager": "npm@10.9.8",
+  "packageManager": "pnpm@10.29.3",
   "engines": {
     "node": ">=20.19"
   },
   "scripts": {
-    "build": "npm --prefix frontend run build",
-    "check": "npm run check:generated && npm run typecheck && biome check . && npm run lint:ts-comments && npm run typecheck:backend && npm run lint:backend && npm run format:backend:check",
+    "build": "pnpm --filter frontend run build",
+    "check": "pnpm run check:generated && pnpm run typecheck && biome check . && pnpm run lint:ts-comments && pnpm run typecheck:backend && pnpm run lint:backend && pnpm run format:backend:check",
     "check:generated": "node scripts/check-generated.mjs",
     "db:migrate": "uv run --project backend alembic -c backend/alembic.ini upgrade head",
     "db:revision": "uv run --project backend alembic -c backend/alembic.ini revision --autogenerate",
@@ -18,17 +18,24 @@
     "generate-client": "node scripts/generate-client.mjs",
     "lint:backend": "uv run --project backend ruff check backend",
     "lint:ts-comments": "node scripts/lint-ts-comments.mjs",
-    "test": "npm run test:scripts && npm run test:deploy && npm run test:backend",
+    "test": "pnpm run test:scripts && pnpm run test:deploy && pnpm run test:backend",
     "test:backend": "uv run --project backend pytest backend/app/tests",
     "test:deploy": "bash scripts/deploy-tests/run.sh",
-    "test:e2e": "npm --prefix frontend exec -- playwright test",
+    "test:e2e": "pnpm --filter frontend exec playwright test",
     "test:e2e:container": "node scripts/test-e2e-container.mjs",
     "test:scripts": "node --test scripts/*.test.mjs",
-    "typecheck": "npm --prefix frontend run typecheck",
+    "typecheck": "pnpm --filter frontend run typecheck",
     "typecheck:backend": "uv run --project backend mypy --config-file backend/pyproject.toml backend/app",
-    "verify": "npm run check && npm run test && npm run build"
+    "verify": "pnpm run check && pnpm run test && pnpm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@tanstack/router-core": "1.171.17",
+      "immutable": "5.1.9",
+      "js-yaml": "4.3.1"
+    }
   }
 }

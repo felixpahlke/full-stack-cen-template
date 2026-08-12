@@ -47,18 +47,18 @@ nginx frontend images plus the proxy.
 
 ### Quick start
 
-Prerequisites: Node.js 20.19 or newer with npm, Python 3.10–3.12, uv, and a running
+Prerequisites: Node.js 20.19 or newer with Corepack and pnpm, Python 3.10–3.12, uv, and a running
 container runtime. Supported choices are Docker Desktop, Rancher Desktop with the dockerd/moby
 backend, native Linux Docker, and Podman. Docker requires the Compose plugin or standalone
 `docker-compose`; Podman requires `podman compose` with a provider (`podman-compose` or standalone
 `docker-compose`), or the `podman-compose` command. Start `podman machine` first where required.
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 Enter through the proxy at `http://localhost:4180`, never the direct Vite port. The local Dex
@@ -66,7 +66,7 @@ login uses `DEX_TEST_USER_EMAIL` and `DEX_TEST_USER_PASSWORD` from `.env`. The A
 `127.0.0.1:8000`; Vite is at `http://localhost:5173`, Dex at
 `http://localhost:5556/dex`, and Adminer at `http://localhost:8080`.
 
-`npm run dev` generates strong per-checkout local proxy secrets when marker values are present,
+`pnpm run dev` generates strong per-checkout local proxy secrets when marker values are present,
 starts PostgreSQL/Adminer/Dex/oauth2-proxy in Compose, and starts Uvicorn/Vite natively. Ctrl-C
 stops native children and removes development containers; worst case is about 12 seconds. A
 second Ctrl-C escalates immediately. Database data is preserved.
@@ -81,15 +81,15 @@ required.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start backing/auth services and native backend/frontend processes |
-| `npm run check` / `npm run fix` | Check or fix generated, frontend, and backend sources |
-| `npm run test` | Run supervisor, deployment-mock, and hermetic backend tests |
-| `npm run build` | Build the production frontend bundle |
-| `npm run verify` | Run `check`, `test`, and `build` |
-| `npm run db:migrate` / `npm run db:revision -- -m "message"` | Manage Alembic revisions |
-| `npm run test:deploy` | Run Code Engine/OpenShift mocks and OAuth deployment assertions |
-| `npm run test:e2e:container` | Run the real Dex/proxy Playwright flow in a matching container |
-| `npm run generate-client` | Regenerate OpenAPI, client, and routes |
+| `pnpm run dev` | Start backing/auth services and native backend/frontend processes |
+| `pnpm run check` / `pnpm run fix` | Check or fix generated, frontend, and backend sources |
+| `pnpm run test` | Run supervisor, deployment-mock, and hermetic backend tests |
+| `pnpm run build` | Build the production frontend bundle |
+| `pnpm run verify` | Run `check`, `test`, and `build` |
+| `pnpm run db:migrate` / `pnpm run db:revision -- -m "message"` | Manage Alembic revisions |
+| `pnpm run test:deploy` | Run Code Engine/OpenShift mocks and OAuth deployment assertions |
+| `pnpm run test:e2e:container` | Run the real Dex/proxy Playwright flow in a matching container |
+| `pnpm run generate-client` | Regenerate OpenAPI, client, and routes |
 
 ### OAuth behavior
 
@@ -144,7 +144,7 @@ The application screenshots show the full-stack frontend flavours; the backend-o
 ### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
 
 ```bash
-npm create cen-app@latest
+pnpm create cen-app@latest
 ```
 
 ### Or clone manually (commands may vary by flavour - check the specific branch):

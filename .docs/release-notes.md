@@ -1,6 +1,6 @@
 # Release notes — OAuth modernization
 
-Development now uses `npm run dev`: PostgreSQL, Adminer, pinned Dex, and pinned oauth2-proxy run
+Development now uses `pnpm run dev`: PostgreSQL, Adminer, pinned Dex, and pinned oauth2-proxy run
 in Compose while Uvicorn and Vite run natively. Local marker secrets are replaced by strong
 per-checkout credentials. The backend accepts identity only across the private Basic seam.
 
@@ -15,7 +15,7 @@ honors those values without Compose edits and does not start Dex for an external
 
 The backend image now runs `uvicorn app.main:create_app --factory`. The compatibility `app`,
 `settings`, and `engine` exports are lazy factory products rather than shells or eager globals, and
-strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
+strict mypy checking is part of the canonical `pnpm run check` and `pnpm run verify` gates.
 
 Frontend compatibility is restored: `ThemeProvider` accepts `defaultTheme`, keeps deprecated
 `activeTheme` beside `resolvedTheme`, and applies both `light` and `dark` DOM classes. The

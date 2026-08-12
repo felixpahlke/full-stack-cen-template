@@ -115,8 +115,9 @@ preflight_deploy_collisions() {
 }
 
 component_manifest() {
-    local component=$1 port=$2 context_dir=$3 env_from=''
+    local component=$1 port=$2 context_dir=$3 dockerfile_path=$4 env_from='' context=''
     [[ "$component" != backend ]] || env_from="          envFrom: [{secretRef: {name: $APP_NAME-env}}]"
+    [[ -z "$context_dir" ]] || context="    contextDir: $context_dir"
     cat <<EOF
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -134,9 +135,9 @@ spec:
   source:
     type: Git
     git: {uri: "$GIT_SSH_URL", ref: "$DEPLOYMENT_BRANCH_FILTER"}
-    contextDir: $context_dir
+$context
     sourceSecret: {name: git-secret}
-  strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
+  strategy: {type: Docker, dockerStrategy: {dockerfilePath: $dockerfile_path}}
   output: {to: {kind: ImageStreamTag, name: "$component:latest"}}
   triggers:
     - {type: ConfigChange}
@@ -173,12 +174,12 @@ EOF
 }
 
 apply_component() {
-    local component=$1 port=$2 context_dir=$3
+    local component=$1 port=$2 context_dir=$3 dockerfile_path=$4
     ensure_oc_resource_owned_or_absent imagestream "$component"
     ensure_oc_resource_owned_or_absent buildconfig "$component"
     ensure_oc_resource_owned_or_absent deployment "$component"
     ensure_oc_resource_owned_or_absent service "$component"
-    component_manifest "$component" "$port" "$context_dir" | apply_resource "$component multi-image workload"
+    component_manifest "$component" "$port" "$context_dir" "$dockerfile_path" | apply_resource "$component multi-image workload"
 }
 
 wait_for_build() {
@@ -218,13 +219,13 @@ configure_frontend() {
 
 deploy_frontend() {
     [[ "$HAS_FRONTEND" == true ]] || return 0
-    apply_component frontend 8080 frontend
+    apply_component frontend 8080 '' frontend/Dockerfile
     configure_frontend
     build_component frontend
 }
 
 deploy_backend() {
-    apply_component backend 8000 backend
+    apply_component backend 8000 backend Dockerfile
     build_component backend
 }
 

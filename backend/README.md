@@ -1,7 +1,7 @@
 # Backend development
 
 The FastAPI/SQLModel/PostgreSQL backend trusts identity only across the oauth2-proxy boundary.
-Install with `uv sync --project backend` and run the full stack with `npm run dev`.
+Install with `uv sync --project backend` and run the full stack with `pnpm run dev`.
 
 The proxy supplies a normalized opaque subject plus user fields and authenticates to the backend
 with the checkout-specific `OAUTH2_PROXY_UPSTREAM_PASSWORD` over Basic Auth. The backend binds to
@@ -20,13 +20,13 @@ only ASGI calls because it breaks FastAPI introspection and extension registrati
 ## Migrations and tests
 
 ```bash
-npm run db:revision -- -m "Describe the schema change"
-npm run db:migrate
-npm run test:backend
+pnpm run db:revision -- -m "Describe the schema change"
+pnpm run db:migrate
+pnpm run test:backend
 ```
 
 Do not rewrite existing revisions. Migrate-on-start serializes replicas and verifies exact bundled
 heads before readiness even when upgrades are disabled. Backend tests are hermetic Testcontainers
 tests and do not use `.env` or the development database.
 
-`npm run check` includes strict mypy, Ruff linting, and Ruff formatting checks for the backend.
+`pnpm run check` includes strict mypy, Ruff linting, and Ruff formatting checks for the backend.

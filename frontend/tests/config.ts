@@ -4,7 +4,7 @@ import process from "node:process";
 try {
   process.loadEnvFile(path.resolve(import.meta.dirname, "../../.env"));
 } catch {
-  throw new Error("Missing root .env. Copy .env.example to .env and run npm run dev once.");
+  throw new Error("Missing root .env. Copy .env.example to .env and run pnpm run dev once.");
 }
 
 function required(name: string): string {
