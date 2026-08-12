@@ -10,7 +10,9 @@ cp .env.production.example .env.production
 pnpm run test:deploy
 ```
 
-Both deployers require exact target confirmation and own a resource only when both labels match:
+An existing deployment project requires a single `y/N` confirmation; a fresh project is created
+directly from the environment configuration. Both deployers own a resource only when both labels
+match:
 
 ```text
 app.kubernetes.io/managed-by=cen-template
@@ -44,7 +46,8 @@ only when the required cluster reads are unavailable.
 
 Code Engine persists an absolute `VITE_API_URL`, merged CORS, redirect, and well-known URLs after
 nginx/Dockerfile preflight. Owned registry credentials may be reused without `_IAM_API_KEY`; setting
-the key rotates them. Application-scoped image names and existing-project-only OAuth deployment are
-intentional. `--show-env-values` is terminal-only.
+the key rotates them. Application-scoped image names prevent cross-application tag collisions.
+Fresh projects are created automatically and wait for readiness before selection.
+`--show-env-values` is terminal-only.
 
 See [Code Engine](../.docs/ce-deployment.md) and [OpenShift](../.docs/oc-deployment.md).

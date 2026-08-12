@@ -16,10 +16,10 @@ cp .env.production.example .env.production
 
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
 `BACKEND_CORS_ORIGINS`, all OAuth values listed in the example, `_APP_NAME`, and `_GIT_SSH_URL`.
-`_GITHUB_TOKEN`, `_GITHUB_HOST`, and `_DEPLOYMENT_BRANCH_FILTER` are optional. Use
-`OAUTH2_PROXY_COOKIE_SECURE=true` and real, strong cookie/client/upstream secrets; placeholders are
-refused. Keep migrate-on-start enabled and configure its lock timeout. A migration or exact-head
-failure prevents readiness.
+`_GITHUB_TOKEN` and `_DEPLOYMENT_BRANCH_FILTER` are optional; the GitHub host is derived from
+`_GIT_SSH_URL`. Use `OAUTH2_PROXY_COOKIE_SECURE=true` and real, strong
+cookie/client/upstream secrets; placeholders are refused. Keep migrate-on-start enabled and
+configure its lock timeout. A migration or exact-head failure prevents readiness.
 
 When `_DEPLOYMENT_BRANCH_FILTER` is blank, the script resolves it to `oauth-proxy`, prints it, and
 verifies that branch through the configured deploy key before creating either BuildConfig.
@@ -29,8 +29,10 @@ frontend Ready, makes the proxy Ready, applies proxy Service/Route, and only the
 direct Routes. Weighted alternate backends and numeric target ports are preserved during the
 transition. `/oauth2/sign_out` ends the proxy cookie but cannot terminate upstream IdP SSO.
 
-`--reset-prod-db` is separately confirmed and deletes only the exact owned PostgreSQL resource
-set. `--regenerate-ssh-key` rotates the deploy key. Run `pnpm run test:deploy` before script changes.
+When the configured OpenShift project already exists, the script shows it and asks for a single
+`y/N` confirmation. Fresh projects are created directly from the environment configuration.
+`--reset-prod-db` is separately confirmed and deletes only the exact owned PostgreSQL resource set.
+`--regenerate-ssh-key` rotates the deploy key. Run `pnpm run test:deploy` before script changes.
 
 Running PostgreSQL `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` values are compared
 before the shared application secret changes. Drift requires typed destructive confirmation and an

@@ -291,7 +291,7 @@ if [[ "$args" == *' apply '* && "$args" == *' -f - '* ]]; then
 fi
 if [[ "${1:-}" == get ]]; then
   kind=${2:-}; name=${3:-}; file=$(resource_file "$kind" "$name")
-  if [[ "$kind" == project && "$name" == mock-project ]]; then exit 0; fi
+  if [[ "$kind" == project && "$name" == mock-project ]]; then [[ "${MOCK_OC_PROJECT_ABSENT:-false}" != true ]]; exit; fi
   if [[ "$kind" == route && "$args" == *'.spec.host'* && -f "$file" ]]; then printf '%s-mock-project.apps.mock.example' "$name"; exit 0; fi
   [[ -f "$file" ]] || exit 1
   if [[ "$args" == *' -o json '* ]]; then cat "$MOCK_STATE/json/$(safe_kind "$kind")__${name}.json"; exit; fi
@@ -366,7 +366,7 @@ run_ce_success() {
         put_resource "$STATE" services.serving.knative.dev mock-project-frontend app-a
     fi
     local output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' bash -x ./scripts/ce-deploy.sh || { sed -n '1,220p' "$output" >&2; fail 'Code Engine success case failed'; }
+    run_with_mocks "$output" 'y\n' bash -x ./scripts/ce-deploy.sh || { sed -n '1,220p' "$output" >&2; fail 'Code Engine success case failed'; }
     assert_absent "$STATE/calls.log" ENV_LEAK
     assert_contains "$STATE/calls.log" 'app.kubernetes.io/managed-by=cen-template app.kubernetes.io/instance=app-a'
     assert_contains "$STATE/calls.log" '--password-from-file'
@@ -417,7 +417,7 @@ run_ce_collision() {
     prepare_case ce-isolation
     put_resource "$STATE" services.serving.knative.dev mock-project-backend app-b
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/ce-deploy.sh; then fail 'Code Engine mutated an app-b collision'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'Code Engine mutated an app-b collision'; fi
     assert_contains "$output" 'application/mock-project-backend exists but is not owned by this deployment'
     assert_absent "$STATE/calls.log" 'docker image build'
     assert_absent "$STATE/calls.log" 'ce application delete --name mock-project-backend'
@@ -427,7 +427,7 @@ run_ce_collision() {
 run_ce_confirmation() {
     prepare_case ce-confirmation
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'wrong\n' ./scripts/ce-deploy.sh; then fail 'Code Engine accepted wrong confirmation'; fi
+    if run_with_mocks "$output" 'n\n' ./scripts/ce-deploy.sh; then fail 'Code Engine accepted declined confirmation'; fi
     assert_absent "$STATE/calls.log" 'ce project select'
     assert_absent "$STATE/calls.log" 'docker image build'
     pass 'Code Engine target confirmation gates mutations'
@@ -444,7 +444,7 @@ run_oc_success() {
     sed -i.bak 's/POSTGRES_SERVER=external.postgres.example/POSTGRES_SERVER=postgresql/' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
     [[ "$OAUTH" != true ]] || prepare_oc_direct_fixture
     local output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' bash -x ./scripts/oc-deploy.sh || { sed -n '1,260p' "$output" >&2; fail 'OpenShift success case failed'; }
+    run_with_mocks "$output" 'y\n' bash -x ./scripts/oc-deploy.sh || { sed -n '1,260p' "$output" >&2; fail 'OpenShift success case failed'; }
     assert_absent "$STATE/calls.log" ENV_LEAK
     assert_contains "$STATE/manifests.log" 'app.kubernetes.io/instance: app-a'
     assert_contains "$STATE/manifests.log" 'app.kubernetes.io/managed-by: cen-template'
@@ -491,7 +491,7 @@ run_oc_collision() {
     prepare_case oc-isolation
     put_resource "$STATE" deployment backend app-b
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/oc-deploy.sh; then fail 'OpenShift mutated an app-b collision'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/oc-deploy.sh; then fail 'OpenShift mutated an app-b collision'; fi
     assert_contains "$output" 'deployment/backend exists but is not owned by this deployment'
     assert_absent "$STATE/calls.log" 'rollout status -n openshift-image-registry'
     assert_absent "$STATE/calls.log" 'delete deployment/backend'
@@ -503,7 +503,7 @@ run_oc_unowned_direct() {
     prepare_case oc-unowned-direct
     prepare_oc_direct_fixture; touch "$STATE/direct-unowned"; put_resource "$STATE" route weighted-direct app-b
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted unowned direct ingress'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted unowned direct ingress'; fi
     assert_contains "$output" 'route/weighted-direct exists but is not owned by this deployment'
     assert_absent "$STATE/calls.log" 'rollout status -n openshift-image-registry'
     assert_absent "$STATE/calls.log" 'MOCK_EVENT oauth-ingress-switched'
@@ -513,24 +513,31 @@ run_oc_unowned_direct() {
 run_oc_confirmation_and_reset() {
     prepare_case oc-confirmation
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'wrong\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted wrong target confirmation'; fi
-    assert_absent "$STATE/calls.log" 'project mock-project'
+    if run_with_mocks "$output" 'n\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted declined target confirmation'; fi
+    assert_absent "$STATE/calls.log" 'oc project mock-project'
+
+    prepare_case oc-fresh-project
+    output="$CASE_DIR/output.log"
+    run_with_mocks "$output" '' env MOCK_OC_PROJECT_ABSENT=true ./scripts/oc-deploy.sh || fail 'fresh OpenShift project deployment failed without confirmation'
+    assert_contains "$STATE/calls.log" 'oc new-project mock-project'
+    assert_absent "$output" 'Continue with OpenShift deployment'
+
     if [[ "$HAS_DATABASE" == true ]]; then
         prepare_case oc-reset
         sed -i.bak 's/POSTGRES_SERVER=external.postgres.example/POSTGRES_SERVER=postgresql/' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
         put_resource "$STATE" deployment postgresql app-a; put_resource "$STATE" service postgresql app-a; put_resource "$STATE" pvc postgresql-data app-a
         output="$CASE_DIR/output.log"
-        if run_with_mocks "$output" 'mock-project\nwrong\n' ./scripts/oc-deploy.sh --reset-prod-db; then fail 'database reset accepted wrong destructive confirmation'; fi
+        if run_with_mocks "$output" 'y\nwrong\n' ./scripts/oc-deploy.sh --reset-prod-db; then fail 'database reset accepted wrong destructive confirmation'; fi
         assert_absent "$STATE/calls.log" 'delete pvc/postgresql-data'
     fi
-    pass 'OpenShift target and destructive reset confirmations are enforced'
+    pass 'OpenShift confirms existing projects, creates fresh projects directly, and protects destructive resets'
 }
 
 run_oc_branch_ref_cases() {
     prepare_case oc-missing-branch
     sed -i.bak 's/^_DEPLOYMENT_BRANCH_FILTER=.*/_DEPLOYMENT_BRANCH_FILTER=does-not-exist/' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
     local output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted a nonexistent source branch'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/oc-deploy.sh; then fail 'OpenShift accepted a nonexistent source branch'; fi
     assert_contains "$output" "source branch 'does-not-exist' does not resolve"
     assert_absent "$STATE/manifests.log" 'kind: BuildConfig'
     pass 'OpenShift defaults to the flavor ref and refuses a nonexistent configured ref before BuildConfig creation'
@@ -539,7 +546,7 @@ run_oc_branch_ref_cases() {
 run_oc_webhook_cases() {
     prepare_case oc-webhook-rbac-denied
     local output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_DENIED=true ./scripts/oc-deploy.sh || {
+    run_with_mocks "$output" 'y\n' env MOCK_WEBHOOK_RBAC_DENIED=true ./scripts/oc-deploy.sh || {
         sed -n '1,260p' "$output" >&2; fail 'OpenShift failed deployment after webhook RoleBinding permission denial'
     }
     local webhook_secret
@@ -558,7 +565,7 @@ run_oc_webhook_cases() {
 
     prepare_case oc-webhook-rbac-forbidden-fallback
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=forbidden ./scripts/oc-deploy.sh || {
+    run_with_mocks "$output" 'y\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=forbidden ./scripts/oc-deploy.sh || {
         sed -n '1,260p' "$output" >&2; fail 'OpenShift failed deployment after fallback-classified RoleBinding denial'
     }
     assert_contains "$output" 'OpenShift rejected the RoleBinding as forbidden'
@@ -568,7 +575,7 @@ run_oc_webhook_cases() {
 
     prepare_case oc-webhook-rbac-apply-failure
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=invalid ./scripts/oc-deploy.sh; then
+    if run_with_mocks "$output" 'y\n' env MOCK_WEBHOOK_RBAC_APPLY_FAILURE=invalid ./scripts/oc-deploy.sh; then
         fail 'OpenShift ignored a genuine webhook RoleBinding apply failure'
     fi
     assert_contains "$output" 'error parsing STDIN: error converting YAML to JSON'
@@ -576,7 +583,7 @@ run_oc_webhook_cases() {
 
     prepare_case oc-webhook-failure
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env MOCK_WEBHOOK_POST_FAIL=true ./scripts/oc-deploy.sh; then
+    if run_with_mocks "$output" 'y\n' env MOCK_WEBHOOK_POST_FAIL=true ./scripts/oc-deploy.sh; then
         sed -n '1,220p' "$output" >&2; sed -n '1,260p' "$STATE/calls.log" >&2
         fail 'OpenShift ignored GitHub webhook POST failure'
     fi
@@ -586,7 +593,7 @@ run_oc_webhook_cases() {
     prepare_case oc-webhook-manual
     sed -i.bak '/^_GITHUB_TOKEN=/d; /^GITHUB_TOKEN=/d' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n\n' ./scripts/oc-deploy.sh || { sed -n '1,240p' "$output" >&2; fail 'manual webhook deployment failed'; }
+    run_with_mocks "$output" 'y\n\n' ./scripts/oc-deploy.sh || { sed -n '1,240p' "$output" >&2; fail 'manual webhook deployment failed'; }
     webhook_secret=$(<"$STATE/secrets/github-webhook-secret.WebHookSecretKey")
     assert_contains "$STATE/terminal.log" "webhooks/$webhook_secret/github"
     assert_absent "$output" "$webhook_secret"
@@ -611,14 +618,14 @@ run_oc_adoption_cases() {
     prepare_case oc-adoption-opt-in
     prepare_legacy_fixture
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/oc-deploy.sh; then fail 'legacy resources were adopted without the explicit flag'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/oc-deploy.sh; then fail 'legacy resources were adopted without the explicit flag'; fi
     assert_contains "$output" 'exists but is not owned by this deployment'
     assert_absent "$STATE/calls.log" 'oc label buildconfig/backend'
 
     prepare_case oc-adoption-success
     prepare_legacy_fixture
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\nadopt mock-project/app-a\n' ./scripts/oc-deploy.sh --adopt-legacy-resources || {
+    run_with_mocks "$output" 'y\nadopt mock-project/app-a\n' ./scripts/oc-deploy.sh --adopt-legacy-resources || {
         sed -n '1,240p' "$output" >&2; fail 'verified legacy adoption failed';
     }
     assert_contains "$output" 'Adopted buildconfig/backend'
@@ -629,7 +636,7 @@ run_oc_adoption_cases() {
     node -e 'const fs=require("node:fs"),p=process.argv[1],x=JSON.parse(fs.readFileSync(p));x.spec.ports[0].port=9999;fs.writeFileSync(p,JSON.stringify(x))' \
         "$STATE/json/service__backend.json"
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\nadopt mock-project/app-a\n' ./scripts/oc-deploy.sh --adopt-legacy-resources; then fail 'ambiguous legacy service was adopted'; fi
+    if run_with_mocks "$output" 'y\nadopt mock-project/app-a\n' ./scripts/oc-deploy.sh --adopt-legacy-resources; then fail 'ambiguous legacy service was adopted'; fi
     assert_contains "$output" 'service/backend is ambiguous or does not match this application'
     assert_absent "$STATE/calls.log" 'oc label buildconfig/backend'
     pass 'legacy adoption is explicit, exact, inspect-first, and ambiguity-refusing'
@@ -643,7 +650,7 @@ run_postgres_credential_cases() {
     put_resource "$STATE" deployment postgresql app-a; put_resource "$STATE" service postgresql app-a; put_resource "$STATE" pvc postgresql-data app-a
     printf 'app' > "$STATE/postgres-POSTGRES_DB"; printf 'app' > "$STATE/postgres-POSTGRES_USER"; printf 'old-database-secret' > "$STATE/postgres-POSTGRES_PASSWORD"
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\nwrong\n' ./scripts/oc-deploy.sh; then fail 'PostgreSQL credential drift continued without typed reset confirmation'; fi
+    if run_with_mocks "$output" 'y\nwrong\n' ./scripts/oc-deploy.sh; then fail 'PostgreSQL credential drift continued without typed reset confirmation'; fi
     assert_contains "$output" 'Running PostgreSQL credentials differ for: POSTGRES_PASSWORD'
     assert_absent "$STATE/calls.log" 'create secret generic app-a-env'
     assert_absent "$STATE/calls.log" 'delete pvc/postgresql-data'
@@ -653,7 +660,7 @@ run_postgres_credential_cases() {
     put_resource "$STATE" deployment postgresql app-a; put_resource "$STATE" service postgresql app-a; put_resource "$STATE" pvc postgresql-data app-a
     printf 'app' > "$STATE/postgres-POSTGRES_DB"; printf 'app' > "$STATE/postgres-POSTGRES_USER"; printf 'old-database-secret' > "$STATE/postgres-POSTGRES_PASSWORD"
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\nmock-project\n' ./scripts/oc-deploy.sh || fail 'confirmed PostgreSQL credential reset failed'
+    run_with_mocks "$output" 'y\nmock-project\n' ./scripts/oc-deploy.sh || fail 'confirmed PostgreSQL credential reset failed'
     assert_contains "$STATE/calls.log" 'delete pvc/postgresql-data --ignore-not-found'
     pass 'running PostgreSQL credential drift is detected before secret replacement and requires typed destructive confirmation'
 }
@@ -664,14 +671,14 @@ run_ce_preflight_cases() {
     prepare_case ce-nginx-preflight
     sed -i.bak '/ARG VITE_API_URL/d' "$PROJECT/frontend/Dockerfile"; rm -f "$PROJECT/frontend/Dockerfile.bak"
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/ce-deploy.sh; then fail 'CE accepted OpenShift nginx fallback without VITE_API_URL support'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'CE accepted OpenShift nginx fallback without VITE_API_URL support'; fi
     assert_contains "$output" 'nginx /api targets the OpenShift-only backend service'
     assert_absent "$STATE/calls.log" 'ibmcloud target'
 
     prepare_case ce-vite-preflight
     printf '\nVITE_UNDECLARED=value\n' >> "$PROJECT/.env.production"
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' ./scripts/ce-deploy.sh; then fail 'CE accepted a Vite variable missing from Dockerfile'; fi
+    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'CE accepted a Vite variable missing from Dockerfile'; fi
     assert_contains "$output" 'VITE_UNDECLARED is deployed as a Code Engine build argument but is missing as ARG'
     assert_absent "$STATE/calls.log" 'ibmcloud target'
     pass 'Code Engine nginx and Dockerfile/Vite mismatches fail before cloud mutation'
@@ -687,15 +694,16 @@ run_ce_registry_and_project_cases() {
         put_resource "$STATE" services.serving.knative.dev mock-project-frontend app-a
     fi
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' ./scripts/ce-deploy.sh || fail 'CE could not reuse an owned registry secret without IAM key'
+    run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh || fail 'CE could not reuse an owned registry secret without IAM key'
     assert_absent "$STATE/calls.log" 'ce registry delete'
     assert_absent "$STATE/calls.log" 'ce registry create'
 
     prepare_case ce-project-readiness
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' env MOCK_CE_PROJECT_ABSENT=true ./scripts/ce-deploy.sh || fail 'fresh CE project readiness flow failed'
+    run_with_mocks "$output" '' env MOCK_CE_PROJECT_ABSENT=true ./scripts/ce-deploy.sh || fail 'fresh CE project readiness flow failed'
     assert_before "$STATE/calls.log" 'ce project create --name mock-project' 'ce project select --name mock-project --kubecfg'
     assert_contains "$output" "Code Engine project 'mock-project' is ready."
+    assert_absent "$output" 'Continue with Code Engine deployment'
     pass 'owned CE registry secrets are reusable and fresh projects are created and gated on readiness'
 }
 
@@ -703,18 +711,18 @@ run_ce_login_cases() {
     local output
     prepare_case ce-login-sso
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' env MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh || fail 'interactive CE SSO login flow failed'
+    run_with_mocks "$output" 'y\n' env MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh || fail 'interactive CE SSO login flow failed'
     assert_contains "$STATE/calls.log" 'ibmcloud login --sso'
 
     prepare_case ce-login-non-interactive
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env CEN_DEPLOY_TERMINAL_FILE= MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh; then fail 'non-interactive CE deployment attempted SSO login'; fi
+    if run_with_mocks "$output" 'y\n' env CEN_DEPLOY_TERMINAL_FILE= MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh; then fail 'non-interactive CE deployment attempted SSO login'; fi
     assert_contains "$output" "log in with 'ibmcloud login --sso'"
     assert_absent "$STATE/calls.log" 'ibmcloud login --sso'
 
     prepare_case ce-login-wrong-account
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env MOCK_IBM_CLOUD_WRONG_ACCOUNT=true ./scripts/ce-deploy.sh; then fail 'CE accepted the wrong IBM Cloud account'; fi
+    if run_with_mocks "$output" 'y\n' env MOCK_IBM_CLOUD_WRONG_ACCOUNT=true ./scripts/ce-deploy.sh; then fail 'CE accepted the wrong IBM Cloud account'; fi
     assert_contains "$output" "IBM Cloud account mismatch: 'wrong-account' != 'mock-account'"
     assert_absent "$STATE/calls.log" 'ibmcloud login --sso'
     assert_absent "$STATE/calls.log" 'ibmcloud logout'
@@ -729,7 +737,7 @@ run_oauth_secret_cases() {
     put_resource "$STATE" secret mock-project-registry-secret app-a; touch "$STATE/registries/mock-project-registry-secret"
     put_resource "$STATE" services.serving.knative.dev mock-project-backend app-a; put_resource "$STATE" services.serving.knative.dev mock-project-frontend app-a
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' ./scripts/ce-deploy.sh || fail 'CE OAuth seam marker generation failed'
+    run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh || fail 'CE OAuth seam marker generation failed'
     generated=$(sed -n 's/^OAUTH2_PROXY_UPSTREAM_PASSWORD=//p' "$STATE/secrets/mock-project-backend-config.env")
     [[ ${#generated} -ge 32 && "$generated" != \<*\> ]] || fail 'CE did not replace the OAuth seam marker with a strong value'
     assert_absent "$STATE/calls.log" '<generate-a-random-upstream-password>'
@@ -781,12 +789,12 @@ run_registry_permission_cases() {
     local output
     prepare_case oc-registry-permission
     output="$CASE_DIR/output.log"
-    run_with_mocks "$output" 'mock-project\n' env MOCK_REGISTRY_READ_DENIED=true ./scripts/oc-deploy.sh || fail 'project-scoped OpenShift user was blocked only by registry read permissions'
+    run_with_mocks "$output" 'y\n' env MOCK_REGISTRY_READ_DENIED=true ./scripts/oc-deploy.sh || fail 'project-scoped OpenShift user was blocked only by registry read permissions'
     assert_contains "$output" 'continuing without the readiness gate'
 
     prepare_case oc-registry-unready
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'mock-project\n' env MOCK_REGISTRY_UNREADY=true ./scripts/oc-deploy.sh; then fail 'genuinely unready OpenShift registry was ignored'; fi
+    if run_with_mocks "$output" 'y\n' env MOCK_REGISTRY_UNREADY=true ./scripts/oc-deploy.sh; then fail 'genuinely unready OpenShift registry was ignored'; fi
     assert_contains "$output" 'integrated registry is not managed with configured storage'
     assert_absent "$STATE/manifests.log" 'kind: BuildConfig'
     pass 'registry read denial warns and continues while genuine readable unreadiness still fails'
