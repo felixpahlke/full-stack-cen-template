@@ -5,8 +5,8 @@ oauth2-proxy. `scripts/deploy-flavor.conf` is authoritative; topology overrides 
 
 ```bash
 cp .env.production.example .env.production
-./scripts/oc-deploy.sh --dry-run
-./scripts/ce-deploy.sh --dry-run
+pnpm deploy:oc --dry-run
+pnpm deploy:ce --dry-run
 pnpm run test:deploy
 ```
 

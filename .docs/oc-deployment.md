@@ -10,8 +10,8 @@ deploy-key and webhook automation.
 
 ```bash
 cp .env.production.example .env.production
-./scripts/oc-deploy.sh --dry-run
-./scripts/oc-deploy.sh
+pnpm deploy:oc --dry-run
+pnpm deploy:oc
 ```
 
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
