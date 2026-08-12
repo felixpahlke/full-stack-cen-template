@@ -155,34 +155,24 @@ wait_for_code_engine_project() {
     print_success "Code Engine project '$_CE_PROJECT_NAME' is ready."
 }
 
-visibility_not_found() {
-    local output=$1 name=$2
-    printf '%s\n' "$output" | grep -Eiq "(application ['\"]?${name}['\"]? (was )?not found|application ['\"]?${name}['\"]? does not exist|resource_not_found)"
-}
-
 reconcile_one_oauth_visibility() {
-    local name=$1 inspection output command_status
-    set +e
-    inspection=$(kubectl get services.serving.knative.dev "$name" -o name 2>&1)
-    command_status=$?
-    set -e
-    if ((command_status == 0)); then
-        ce_resource_is_owned services.serving.knative.dev "$name" || { warn_unowned_collision application "$name"; return 1; }
-    elif ! printf '%s\n' "$inspection" | grep -Eiq '(notfound|not found)'; then
+    local name=$1 inspection output
+    if ! inspection=$(kubectl get services.serving.knative.dev "$name" -o name --ignore-not-found 2>&1); then
         print_error "could not inspect ownership of application/$name before visibility mutation"
         [[ -z "$inspection" ]] || printf '%s\n' "$inspection" >&2
         return 1
     fi
+    if [[ -z "$inspection" ]]; then
+        print_status "application/$name is confirmed absent"
+        return 0
+    fi
+    ce_resource_is_owned services.serving.knative.dev "$name" || { warn_unowned_collision application "$name"; return 1; }
     print_status "Failing closed: attempting project visibility for application/$name before registry, build, secret, or cleanup mutations."
-    set +e
-    output=$(ibmcloud ce application update --name "$name" --visibility project 2>&1)
-    command_status=$?
-    set -e
-    ((command_status == 0)) && return 0
-    visibility_not_found "$output" "$name" && { print_status "application/$name is confirmed absent"; return 0; }
-    print_error "could not prove application/$name absent or make it project-only"
-    [[ -z "$output" ]] || printf '%s\n' "$output" >&2
-    return 1
+    if ! output=$(ibmcloud ce application update --name "$name" --visibility project 2>&1); then
+        print_error "could not make application/$name project-only"
+        [[ -z "$output" ]] || printf '%s\n' "$output" >&2
+        return 1
+    fi
 }
 
 reconcile_oauth_visibility() {
