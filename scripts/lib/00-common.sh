@@ -402,7 +402,7 @@ validate_runtime_env() {
     esac
     if [[ "$HAS_DATABASE" == true ]]; then validate_password_minimum "$POSTGRES_PASSWORD" POSTGRES_PASSWORD; fi
     if [[ "$OAUTH_ENABLED" == true ]]; then
-        validate_password_minimum "$OAUTH2_PROXY_COOKIE_SECRET" OAUTH2_PROXY_COOKIE_SECRET 16
+        validate_password_minimum "$OAUTH2_PROXY_COOKIE_SECRET" OAUTH2_PROXY_COOKIE_SECRET 32
         is_placeholder_value "$OAUTH2_PROXY_COOKIE_SECRET" && {
             print_error 'OAUTH2_PROXY_COOKIE_SECRET must not be a placeholder'
             return 1

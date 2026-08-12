@@ -740,7 +740,7 @@ run_validation_cases() {
             run_validation_case secret-key 's/^SECRET_KEY=.*/SECRET_KEY=short-secret/' 'SECRET_KEY must be at least 32 characters'
             ;;
         backend-only|backend-only-no-db) run_validation_case api-key 's/^API_KEY=.*/API_KEY=too-short/' 'API_KEY length must be one of' ;;
-        oauth-proxy|oauth-proxy-custom-ui) run_validation_case oauth-cookie 's/^OAUTH2_PROXY_COOKIE_SECRET=.*/OAUTH2_PROXY_COOKIE_SECRET=short/' 'OAUTH2_PROXY_COOKIE_SECRET must be at least 16 characters' ;;
+        oauth-proxy|oauth-proxy-custom-ui) run_validation_case oauth-cookie 's/^OAUTH2_PROXY_COOKIE_SECRET=.*/OAUTH2_PROXY_COOKIE_SECRET=short/' 'OAUTH2_PROXY_COOKIE_SECRET must be at least 32 characters' ;;
     esac
 
     prepare_case validation-ce-project
