@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — modernization
+## 2026-08-12 — Modernization
 
 - Moved JavaScript tooling to one pnpm workspace with a root lockfile and pinned dependencies.
 - Updated React 19.1 → 19.2, TanStack Query 5.81 → 5.101, Router 1.125 → 1.170,
