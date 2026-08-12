@@ -60,14 +60,24 @@ delete_owned_ce_resource() {
 }
 
 check_code_engine_preconditions() {
-    need_command ibmcloud; need_command kubectl; select_container_cli
+    need_command ibmcloud; need_command kubectl; need_command node; select_container_cli
     if ! ibmcloud plugin show container-registry >/dev/null 2>&1; then run ibmcloud plugin install -f container-registry; fi
     if ! ibmcloud plugin show code-engine >/dev/null 2>&1; then run ibmcloud plugin install -f code-engine; fi
-    ibmcloud account show >/dev/null 2>&1 || { print_error "log in with 'ibmcloud login --sso'"; return 1; }
+    if ! ibmcloud account show >/dev/null 2>&1; then
+        has_interactive_terminal || { print_error "log in with 'ibmcloud login --sso'"; return 1; }
+        print_status 'No IBM Cloud session found; starting SSO login.'
+        run ibmcloud login --sso
+        ibmcloud account show >/dev/null 2>&1 || { print_error 'IBM Cloud login did not establish an account session'; return 1; }
+    fi
     if [[ -n "${_IBM_CLOUD_ACCOUNT_NAME:-}" ]]; then
         local current_account
-        current_account=$(ibmcloud account show | awk -F': ' '/Account Name:/ {print $2; exit}')
-        [[ -z "$current_account" || "$current_account" == "$_IBM_CLOUD_ACCOUNT_NAME" ]] || {
+        current_account=$(ibmcloud account show --output JSON | node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk);
+            process.stdin.on("end", () => process.stdout.write(JSON.parse(input).name ?? ""));
+        ')
+        [[ -n "$current_account" ]] || { print_error 'could not read the current IBM Cloud account name'; return 1; }
+        [[ "$current_account" == "$_IBM_CLOUD_ACCOUNT_NAME" ]] || {
             print_error "IBM Cloud account mismatch: '$current_account' != '$_IBM_CLOUD_ACCOUNT_NAME'"
             print_error "Switch with 'ibmcloud login --sso', or correct _IBM_CLOUD_ACCOUNT_NAME in .env.production."
             return 1

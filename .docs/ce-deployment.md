@@ -14,6 +14,10 @@ cp .env.production.example .env.production
 ./scripts/ce-deploy.sh
 ```
 
+If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
+An existing session for a different configured account is never logged out or replaced
+automatically; switch it explicitly and rerun the deployment.
+
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
 `BACKEND_CORS_ORIGINS`, `OAUTH2_PROXY_COOKIE_SECRET`, `OAUTH2_PROXY_CLIENT_ID`,
 `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_OIDC_ISSUER_URL`,
