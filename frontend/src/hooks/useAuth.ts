@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+import { useCallback, useEffect } from "react";
 import type { User } from "@/client";
 import { Users } from "@/client";
 
@@ -16,18 +18,21 @@ const useAuth = () => {
     retry: false,
   });
 
-  const logout = () => {
+  const logout = useCallback(() => {
     window.location.assign(`/oauth2/sign_out?rd=${encodeURIComponent("/oauth2/sign_in")}`);
-  };
+  }, []);
 
-  if (error) {
-    logout();
-  }
+  const authenticationFailed = (error as AxiosError | null)?.response?.status === 401;
+
+  useEffect(() => {
+    if (authenticationFailed) logout();
+  }, [authenticationFailed, logout]);
 
   return {
+    error: authenticationFailed ? null : error,
     logout,
     user,
-    isLoading,
+    isLoading: isLoading || authenticationFailed,
   };
 };
 

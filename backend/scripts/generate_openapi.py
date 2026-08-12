@@ -52,8 +52,6 @@ def main() -> None:
         POSTGRES_PASSWORD="codegen-only-password",
         POSTGRES_DB="app",
         OAUTH2_PROXY_UPSTREAM_PASSWORD="codegen-only-upstream-password-0123456789abcdef",
-        OAUTH2_PROXY_COOKIE_SECRET="codegen-only-cookie-secret-0123456789abcdef",
-        OAUTH2_PROXY_CLIENT_SECRET="codegen-only-client-secret-0123456789abcdef",
     )
     schema = create_app(settings=settings).openapi()
     normalize_operation_ids(schema)

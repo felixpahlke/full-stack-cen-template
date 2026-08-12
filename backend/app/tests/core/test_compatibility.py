@@ -26,8 +26,6 @@ def factory_settings() -> Settings:
         POSTGRES_PASSWORD="database-test-password",
         POSTGRES_DB="test",
         OAUTH2_PROXY_UPSTREAM_PASSWORD="upstream-test-password-0123456789abcdef",
-        OAUTH2_PROXY_COOKIE_SECRET="cookie-test-secret-0123456789abcdef",
-        OAUTH2_PROXY_CLIENT_SECRET="client-test-secret-0123456789abcdef",
     )
 
 

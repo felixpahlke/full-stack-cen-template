@@ -76,6 +76,4 @@ def _code_settings() -> Settings:
         POSTGRES_PASSWORD="route-contract-database-password",
         POSTGRES_DB="test",
         OAUTH2_PROXY_UPSTREAM_PASSWORD="route-contract-upstream-password-0123456789",
-        OAUTH2_PROXY_COOKIE_SECRET="route-contract-cookie-secret-0123456789",
-        OAUTH2_PROXY_CLIENT_SECRET="route-contract-client-secret-0123456789",
     )

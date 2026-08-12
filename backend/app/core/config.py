@@ -20,8 +20,6 @@ ENV_FILE = REPO_ROOT / ".env"
 API_V1_STR = "/api/v1"
 
 UPSTREAM_PASSWORD_PLACEHOLDER = "changethis"
-COOKIE_SECRET_PLACEHOLDER = "changethis"
-CLIENT_SECRET_PLACEHOLDER = "changethis"
 PUBLIC_SECRET_VALUES = {
     "",
     "changethis",
@@ -77,8 +75,6 @@ class Settings(BaseSettings):
     OAUTH2_PROXY_PORT: int = 4180
 
     OAUTH2_PROXY_UPSTREAM_PASSWORD: str = UPSTREAM_PASSWORD_PLACEHOLDER
-    OAUTH2_PROXY_COOKIE_SECRET: str = COOKIE_SECRET_PLACEHOLDER
-    OAUTH2_PROXY_CLIENT_SECRET: str = CLIENT_SECRET_PLACEHOLDER
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl | Literal["*"]] | str, BeforeValidator(parse_cors)
@@ -149,12 +145,6 @@ class Settings(BaseSettings):
         self._check_secret(
             "OAUTH2_PROXY_UPSTREAM_PASSWORD",
             self.OAUTH2_PROXY_UPSTREAM_PASSWORD,
-        )
-        self._check_secret(
-            "OAUTH2_PROXY_COOKIE_SECRET", self.OAUTH2_PROXY_COOKIE_SECRET
-        )
-        self._check_secret(
-            "OAUTH2_PROXY_CLIENT_SECRET", self.OAUTH2_PROXY_CLIENT_SECRET
         )
         return self
 

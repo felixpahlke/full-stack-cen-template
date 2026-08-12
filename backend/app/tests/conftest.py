@@ -145,8 +145,6 @@ def settings(database_url: str) -> Settings:
         POSTGRES_PASSWORD=url.password or "",
         POSTGRES_DB=url.database or "test",
         OAUTH2_PROXY_UPSTREAM_PASSWORD=TEST_UPSTREAM_PASSWORD,
-        OAUTH2_PROXY_COOKIE_SECRET="test-only-cookie-secret-0123456789abcdef",
-        OAUTH2_PROXY_CLIENT_SECRET="test-only-client-secret-0123456789abcdef",
     )
 
 
