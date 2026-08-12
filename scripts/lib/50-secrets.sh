@@ -14,7 +14,7 @@ recreate_oc_env_secret() {
     ensure_oc_resource_owned_or_absent secret "$secret_name"
     if resource_exists secret "$secret_name"; then delete_owned_oc_resource secret "$secret_name"; fi
     oc create secret generic "$secret_name" --from-env-file="$env_file" \
-        --labels "$(cen_ownership_labels)" --dry-run=client -o yaml | oc apply -f - >&2
+        --dry-run=client -o yaml | apply_owned_oc_manifest
 }
 
 ensure_local_auth_secret_key() {

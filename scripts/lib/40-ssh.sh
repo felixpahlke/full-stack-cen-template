@@ -115,6 +115,5 @@ setup_ssh_keys() {
     fi
     ensure_oc_resource_owned_or_absent secret git-secret
     oc create secret generic git-secret --from-file=ssh-privatekey="$key_file" \
-        --type=kubernetes.io/ssh-auth --labels "$(cen_ownership_labels)" --dry-run=client -o yaml \
-        | oc apply -f - >&2
+        --type=kubernetes.io/ssh-auth --dry-run=client -o yaml | apply_owned_oc_manifest
 }
