@@ -91,7 +91,7 @@ function port(env, label, fallback, composeService, containerPort) {
 
 function recoveryAdvice(entries) {
   void entries;
-  return "Update the affected values in .env, then run npm run dev again.";
+  return "Update the affected values in .env, then run pnpm run dev again.";
 }
 
 function portValue(env, fallback) {

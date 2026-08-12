@@ -23,7 +23,7 @@ topology. Use descriptive target commits rather than generic merge messages.
   persistence packages, and database settings.
 - Shared deployment script bodies stay identical. Branch topology comes from
   `scripts/deploy-flavor.conf`, not a runtime-selected file tree.
-- Frontend generated files are never edited. Run `npm run generate-client` on the branch after an
+- Frontend generated files are never edited. Run `pnpm run generate-client` on the branch after an
   exposed API or route change.
 - Keep telemetry comments and branch-specific frontend/backend telemetry variable names.
 
@@ -32,15 +32,15 @@ topology. Use descriptive target commits rather than generic merge messages.
 Install dependencies using that branch's root documentation, then run:
 
 ```bash
-npm run verify
-npm run test:deploy
+pnpm run verify
+pnpm run test:deploy
 ```
 
-For frontend branches, also run the documented Playwright flow and `npm --prefix frontend audit`.
-For backend-only-no-db, prove `DOCKER_HOST=unix:///nonexistent npm run verify`. Build the relevant
+For frontend branches, also run the documented Playwright flow and `pnpm --filter frontend audit`.
+For backend-only-no-db, prove `DOCKER_HOST=unix:///nonexistent pnpm run verify`. Build the relevant
 production image(s) when Docker or deployment behavior changes. Review `git diff --cached` before
 committing each target.
 
-If a branch switch leaves dependencies stale, rerun `npm ci`, `npm ci --prefix frontend` when the
-frontend exists, and `uv sync --project backend`. Development application processes are native;
+If a branch switch leaves dependencies stale, rerun `pnpm install` at the repository root and
+`uv sync --project backend`. Development application processes are native;
 only documented backing/auth services use Compose.

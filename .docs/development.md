@@ -2,7 +2,7 @@
 
 ## Prerequisites and first run
 
-- Node.js 20.19 or newer with npm
+- Node.js 20.19 or newer with Corepack and pnpm
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
@@ -13,20 +13,20 @@
 From a fresh checkout, run in this order:
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
-Do not omit the root `npm ci`: the root command facade and Biome live there. Do not use
-`npm install` for a clean setup; `npm ci` verifies the lockfiles. The backend environment is
+Run `pnpm install` only from the repository root. It installs the root command facade, Biome, and
+the frontend workspace from the frozen lockfile in CI. The backend environment is
 `backend/.venv`; activate it only when an editor or an ad-hoc command requires activation.
 
 ## What development starts
 
-`npm run dev` validates `.env`, tools, dependencies, and ports before changing state. It:
+`pnpm run dev` validates `.env`, tools, dependencies, and ports before changing state. It:
 
 1. starts PostgreSQL 12 and Adminer in Compose;
 2. starts native reload-enabled Uvicorn and Vite;
@@ -72,8 +72,8 @@ the check.
 Use the root migration commands:
 
 ```bash
-npm run db:revision -- -m "Describe the schema change"
-npm run db:migrate
+pnpm run db:revision -- -m "Describe the schema change"
+pnpm run db:migrate
 ```
 
 Commit generated revisions. Never rewrite existing revision history.
@@ -81,11 +81,11 @@ Commit generated revisions. Never rewrite existing revision history.
 ## Testing and generation
 
 ```bash
-npm run check
-npm run test
-npm run build
-npm run verify
-npm run test:deploy
+pnpm run check
+pnpm run test
+pnpm run build
+pnpm run verify
+pnpm run test:deploy
 ```
 
 Backend pytest uses Testcontainers to create a disposable PostgreSQL 12 database, applies all
@@ -93,11 +93,11 @@ migrations, and injects isolated settings. It does not read `.env` or touch the 
 database. `TEST_DATABASE_URL` may replace Testcontainers only when the database name is clearly
 test-only (`test`, `test_*`, `test-*`, `*_test`, or `*-test`).
 
-Generated code is checked by `npm run check:generated`. Use `npm run generate-client` after an
+Generated code is checked by `pnpm run check:generated`. Use `pnpm run generate-client` after an
 API surface change; it derives OpenAPI without a running server and updates
 `frontend/src/client` and `frontend/src/routeTree.gen.ts` atomically. Never edit either output.
 
-Playwright is intentionally separate from `verify`. Start `npm run dev`, then follow the native
+Playwright is intentionally separate from `verify`. Start `pnpm run dev`, then follow the native
 or containerized command in `frontend/README.md`. A local macOS sandbox may block native browser
 launch even when the application is healthy.
 
@@ -114,7 +114,7 @@ restart the machine afterwards) or run the suite with `-- --workers=1`.
   and selects that runtime's Compose form. This branch does not need host-to-container application
   routing.
 - **Missing uv environment:** rerun `uv sync --project backend`; do not create a root venv.
-- **Stale generated client:** run `npm run generate-client`, then `npm run check:generated`.
+- **Stale generated client:** run `pnpm run generate-client`, then `pnpm run check:generated`.
 - **Backing-service logs:** use the Compose command reported by the supervisor with
   `logs db adminer`.
 - **Stale services after interruption:** run the detected Compose command with `down`, then

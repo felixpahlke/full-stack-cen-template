@@ -35,7 +35,7 @@ timeout, or failed migration deliberately prevents the backend from becoming rea
 
 The script requires an exact target confirmation. `--reset-prod-db` is destructive, requires a
 second confirmation, and targets only the named owned PostgreSQL resources. Use
-`--regenerate-ssh-key` only when rotating the deploy key. Run `npm run test:deploy` before
+`--regenerate-ssh-key` only when rotating the deploy key. Run `pnpm run test:deploy` before
 deployment-script changes.
 
 If a running in-cluster PostgreSQL instance reports a different `POSTGRES_DB`, `POSTGRES_USER`, or

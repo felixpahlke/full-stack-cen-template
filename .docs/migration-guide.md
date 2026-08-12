@@ -1,24 +1,38 @@
 # Migrating an existing local-auth-custom-ui checkout
 
-This release replaces the Compose-watch development loop with a root npm supervisor. The separate
+## Move an older checkout to the pnpm workspace
+
+After updating an npm-based checkout, remove both old installs and lockfiles, then install the
+root workspace once:
+
+```bash
+rm -rf node_modules frontend/node_modules
+rm -f package-lock.json frontend/package-lock.json
+corepack enable pnpm
+pnpm install
+```
+
+Do not run a second install in `frontend`; the root workspace install includes it.
+
+This release replaces the Compose-watch development loop with a root pnpm supervisor. The separate
 backend/frontend production images remain; the backend image now starts Uvicorn with the
 `app.main:create_app` factory so importing the module stays configuration-free.
 
 ## Upgrade
 
 1. Commit or stash application changes and update to this branch.
-2. Install the new native prerequisites: Node.js 20.19+, npm, Python 3.10–3.12, and uv.
+2. Install the new native prerequisites: Node.js 20.19+, pnpm, Python 3.10–3.12, and uv.
 3. Reinstall locked dependencies:
 
    ```bash
-   npm ci
-   npm ci --prefix frontend
+   corepack enable pnpm
+   pnpm install
    uv sync --project backend
    ```
 
 4. Compare `.env` with `.env.example`. Add `API_PORT`, `WEB_PORT`, `DB_PORT`, `ADMINER_PORT`,
    `MIGRATE_ON_START=true`, and `MIGRATION_LOCK_TIMEOUT_SECONDS=60` as needed.
-5. Start with `npm run dev`.
+5. Start with `pnpm run dev`.
 
 ## Adopting an old OpenShift deployment
 
@@ -40,7 +54,7 @@ the application secret and requires a separate typed destructive reset. Adoption
 deletes or recreates the database.
 
 Compose now runs only PostgreSQL and Adminer. Uvicorn and Vite run on the host, so host Python,
-uv, Node, npm, and frontend dependencies are breaking new development prerequisites. Port
+uv, Node, pnpm, and frontend dependencies are breaking new development prerequisites. Port
 conflicts now fail before startup. Backend startup, rather than a separate shell step, owns
 migration, exact-head verification, and initial-user seeding.
 
@@ -105,8 +119,8 @@ init_db(session, settings)
 
 ## Breaking changes
 
-- The old Compose application-process workflow is removed; use `npm run dev`.
-- npm is the only JavaScript package manager.
+- The old Compose application-process workflow is removed; use `pnpm run dev`.
+- pnpm is the only JavaScript package manager.
 - Root commands are the supported interface for checks, tests, builds, migrations, and deploy
   mocks.
 - Startup refuses remote development databases unless explicitly allowed.

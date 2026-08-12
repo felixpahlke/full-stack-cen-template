@@ -1,6 +1,6 @@
 # Release notes — development modernization
 
-Development now starts with `npm run dev`. Only PostgreSQL and Adminer run in Compose; FastAPI
+Development now starts with `pnpm run dev`. Only PostgreSQL and Adminer run in Compose; FastAPI
 and Vite run natively with reload/HMR. The first-run sequence, root commands, port contract,
 shutdown behavior, migration ownership, hermetic tests, and Playwright container pattern are
 documented in [development.md](development.md).
@@ -13,7 +13,7 @@ application instance label.
 The backend image now runs `uvicorn app.main:create_app --factory`. The compatibility `app`,
 `settings`, and `engine` exports are lazy factory products rather than shells or eager globals, so
 existing extension code keeps working while module-only imports remain safe without `.env`.
-Strict mypy checking is part of the canonical `npm run check` and `npm run verify` gates.
+Strict mypy checking is part of the canonical `pnpm run check` and `pnpm run verify` gates.
 
 Frontend compatibility is restored: `ThemeProvider` accepts `defaultTheme`, retains deprecated
 `activeTheme` beside `resolvedTheme`, and applies both `light` and `dark` DOM classes. The

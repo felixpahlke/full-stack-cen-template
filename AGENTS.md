@@ -15,7 +15,7 @@ local user and JWT model, custom UI identity, PostgreSQL backend, and separate p
 - Protected pages stay under `frontend/src/routes/_layout`; use TanStack Query and the generated
   client for API data.
 - Never hand-edit `frontend/src/client` or `frontend/src/routeTree.gen.ts`; regenerate them.
-- Preserve shadcn/ui and semantic Tailwind tokens. Use npm only and exact-pin direct dependencies.
+- Preserve shadcn/ui and semantic Tailwind tokens. Use pnpm only and exact-pin direct dependencies.
 
 ## Working guides
 

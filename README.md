@@ -47,7 +47,7 @@ separate backend image and nginx frontend image.
 
 ### Quick start
 
-Prerequisites: Node.js 20.19 or newer with npm, Python 3.10–3.12, uv, and a running
+Prerequisites: Node.js 20.19 or newer with Corepack and pnpm, Python 3.10–3.12, uv, and a running
 container runtime. Supported choices are Docker Desktop, Rancher Desktop with the dockerd/moby
 backend, native Linux Docker, and Podman. Docker requires the Compose plugin or standalone
 `docker-compose`; Podman requires `podman compose` with a provider (`podman-compose` or standalone
@@ -56,18 +56,18 @@ backend, native Linux Docker, and Podman. Docker requires the Compose plugin or 
 Run this exact sequence from a fresh checkout:
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 Open the web app at `http://localhost:5173`, the API at `http://localhost:8000`, API docs
 at `http://localhost:8000/docs`, and Adminer at `http://localhost:8080`. Log in with
 `FIRST_SUPERUSER` and `FIRST_SUPERUSER_PASSWORD` from `.env`.
 
-`npm run dev` starts PostgreSQL and Adminer in Compose, then runs reload-enabled Uvicorn
+`pnpm run dev` starts PostgreSQL and Adminer in Compose, then runs reload-enabled Uvicorn
 and Vite as native processes. It migrates the database and seeds the initial superuser
 during backend startup. A backend source change also checks and regenerates the OpenAPI
 client and route tree. Press Ctrl-C once for graceful shutdown; the supervisor forcibly
@@ -78,17 +78,17 @@ Ctrl-C escalates immediately. The PostgreSQL volume is preserved.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start backing services plus native backend/frontend development processes |
-| `npm run check` | Check generated files, types, JavaScript/CSS, and Python |
-| `npm run fix` | Apply supported Biome and Ruff fixes |
-| `npm run test` | Run supervisor, deployment-mock, and hermetic backend tests |
-| `npm run build` | Build the production frontend bundle |
-| `npm run verify` | Run `check`, `test`, and `build` |
-| `npm run db:migrate` | Upgrade the configured database to the bundled Alembic head |
-| `npm run db:revision -- -m "message"` | Generate a migration after model changes |
-| `npm run test:deploy` | Run Code Engine and OpenShift deployment mocks |
-| `npm run test:e2e` | Run Playwright; see the container pattern in the frontend guide |
-| `npm run generate-client` | Regenerate OpenAPI, the TypeScript client, and route tree |
+| `pnpm run dev` | Start backing services plus native backend/frontend development processes |
+| `pnpm run check` | Check generated files, types, JavaScript/CSS, and Python |
+| `pnpm run fix` | Apply supported Biome and Ruff fixes |
+| `pnpm run test` | Run supervisor, deployment-mock, and hermetic backend tests |
+| `pnpm run build` | Build the production frontend bundle |
+| `pnpm run verify` | Run `check`, `test`, and `build` |
+| `pnpm run db:migrate` | Upgrade the configured database to the bundled Alembic head |
+| `pnpm run db:revision -- -m "message"` | Generate a migration after model changes |
+| `pnpm run test:deploy` | Run Code Engine and OpenShift deployment mocks |
+| `pnpm run test:e2e` | Run Playwright; see the container pattern in the frontend guide |
+| `pnpm run generate-client` | Regenerate OpenAPI, the TypeScript client, and route tree |
 
 ## Sample Applications & Tutorials
 
@@ -135,7 +135,7 @@ The application screenshots show the full-stack frontend flavours; the backend-o
 ### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
 
 ```bash
-npm create cen-app@latest
+pnpm create cen-app@latest
 ```
 
 ### Or clone manually (commands may vary by flavour - check the specific branch):

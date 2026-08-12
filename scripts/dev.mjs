@@ -15,7 +15,7 @@ import {
 import { buildEffectiveEnvironment } from "./dev-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const uv = process.platform === "win32" ? "uv.exe" : "uv";
 const signalExitCodes = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 };
 const children = new Set();
@@ -82,13 +82,12 @@ try {
     ),
     run(
       "frontend",
-      npm,
+      pnpm,
       [
-        "--prefix",
+        "--filter",
         "frontend",
         "run",
         "dev",
-        "--",
         "--host",
         "0.0.0.0",
         "--port",
@@ -131,7 +130,13 @@ function checkEnvironment() {
     fail(`Node 20.19 or newer is required (found ${process.versions.node}).`);
   }
 
-  checkCommand(npm, ["--version"], "npm", "Install npm with Node.js 20.19 or newer.", environment);
+  checkCommand(
+    pnpm,
+    ["--version"],
+    "pnpm",
+    "Run `corepack enable pnpm`, then `pnpm install` from the repository root.",
+    environment,
+  );
   checkCommand(
     uv,
     ["--version"],
@@ -150,7 +155,7 @@ function checkEnvironment() {
 
   const vite = path.join(root, "frontend", "node_modules", ".bin", "vite");
   if (!existsSync(vite)) {
-    fail("Frontend dependencies are missing. Run `npm --prefix frontend ci`.");
+    fail("Frontend dependencies are missing. Run `pnpm install` from the repository root.");
   }
   return environment;
 }
@@ -194,7 +199,7 @@ function startClientWatcher() {
       return;
     }
     console.log("[client] regenerating OpenAPI client and route tree…");
-    activeRegeneration = run("client", npm, ["run", "generate-client"], {
+    activeRegeneration = run("client", pnpm, ["run", "generate-client"], {
       processGroup: true,
     });
     const result = await activeRegeneration;

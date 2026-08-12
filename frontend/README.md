@@ -1,56 +1,50 @@
 # Frontend development
 
 This frontend uses React 19, TypeScript, Vite, TanStack Router/Query, shadcn/ui, and Tailwind
-CSS 4. Dependencies are exact-pinned and managed only with npm.
+CSS 4. Dependencies are exact-pinned and managed through the root pnpm workspace.
 
 ## Install and run
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 Open `http://localhost:5173`. Vite runs natively with HMR. To run only Vite against a compatible
-API, use `npm --prefix frontend run dev` and configure `VITE_API_URL` in the root `.env`.
+API, use `pnpm --filter frontend run dev` and configure `VITE_API_URL` in the root `.env`.
 
 ## Generated API client and routes
 
 ```bash
-npm run generate-client
-npm run check:generated
+pnpm run generate-client
+pnpm run check:generated
 ```
 
 Generation imports the backend application directly, needs no running API or network download,
 and atomically updates `frontend/src/client` plus `frontend/src/routeTree.gen.ts`. Never edit
 those outputs manually. When only file routes change, use
-`npm --prefix frontend run generate-routes`.
+`pnpm --filter frontend run generate-routes`.
 
 ## Playwright
 
-Start `npm run dev` in one terminal. Native browsers can run with:
+Start `pnpm run dev` in one terminal. Native browsers can run with:
 
 ```bash
-PLAYWRIGHT_EXTERNAL_SERVER=true npm run test:e2e
+PLAYWRIGHT_EXTERNAL_SERVER=true pnpm run test:e2e
 ```
 
 If local browser binaries are missing or macOS blocks browser launch, use the verified
-containerized pattern in a second terminal:
+container wrapper in a second terminal:
 
 ```bash
-docker run --rm --network host --ipc=host \
-  -v "$PWD:/work" -w /work/frontend \
-  -e PLAYWRIGHT_EXTERNAL_SERVER=true \
-  -e PLAYWRIGHT_CONTAINER=true \
-  mcr.microsoft.com/playwright:v1.62.1-noble \
-  npx playwright test
+pnpm run test:e2e:container
 ```
 
-Use `podman` instead of `docker` in that command when Podman is the active runtime.
-
-The image version must match `@playwright/test` in `frontend/package-lock.json`.
+The wrapper selects Docker or Podman and reads the exact Playwright image version from the
+`@playwright/test` pin in `frontend/package.json`.
 `PLAYWRIGHT_CONTAINER=true` maps container `localhost` to the host application; native runs do not
 apply that rewrite. The suite covers login/logout, protected routes, settings, signup, and
 light/dark/system theme persistence.
@@ -58,9 +52,9 @@ light/dark/system theme persistence.
 ## Quality
 
 ```bash
-npm run check
-npm run build
-npm --prefix frontend audit
+pnpm run check
+pnpm run build
+pnpm --filter frontend audit
 ```
 
 Tailwind CSS 4 is configured in CSS and through the Vite plugin. Shared UI primitives live
