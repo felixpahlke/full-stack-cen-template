@@ -36,9 +36,10 @@ new login can be silent.
 Before cloud mutation, the deployer validates the nginx fallback and every active Vite Dockerfile
 `ARG`. It persists the absolute proxy-backed `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, OAuth
 redirect, and well-known URL in mode-0600 `.env.production`. Public entry and redirect URLs appear
-in the summary; private workloads remain hidden. Application-scoped image names and the requirement
-for an existing readable OAuth Code Engine project are intentional isolation properties.
-`--show-env-values` is terminal-only and refuses non-interactive use.
+in the summary; private workloads remain hidden. Fresh projects are created automatically and
+polled until readable before selection; their workloads are project-only from creation.
+Application-scoped image names remain an intentional isolation property. `--show-env-values` is
+terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
