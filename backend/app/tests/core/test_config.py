@@ -5,11 +5,7 @@ from pydantic import ValidationError
 
 from app.core.config import REPO_ROOT, Environment, Settings
 
-OAUTH_SECRET_NAMES = (
-    "OAUTH2_PROXY_UPSTREAM_PASSWORD",
-    "OAUTH2_PROXY_COOKIE_SECRET",
-    "OAUTH2_PROXY_CLIENT_SECRET",
-)
+BACKEND_SECRET_NAMES = ("OAUTH2_PROXY_UPSTREAM_PASSWORD",)
 
 
 def settings_values(**overrides: object) -> dict[str, object]:
@@ -21,8 +17,6 @@ def settings_values(**overrides: object) -> dict[str, object]:
         "POSTGRES_PASSWORD": "database-test-password",
         "POSTGRES_DB": "test",
         "OAUTH2_PROXY_UPSTREAM_PASSWORD": "upstream-test-password-0123456789abcdef",
-        "OAUTH2_PROXY_COOKIE_SECRET": "cookie-test-secret-0123456789abcdef",
-        "OAUTH2_PROXY_CLIENT_SECRET": "client-test-secret-0123456789abcdef",
         **overrides,
     }
 
@@ -38,10 +32,10 @@ def test_settings_use_the_repository_env_path_independent_of_working_directory(
 
 @pytest.mark.parametrize(
     "name",
-    OAUTH_SECRET_NAMES,
+    BACKEND_SECRET_NAMES,
 )
 @pytest.mark.parametrize("environment", Environment)
-def test_every_runtime_rejects_placeholder_or_weak_oauth_secrets(
+def test_every_runtime_rejects_placeholder_or_weak_backend_secrets(
     name: str, environment: Environment
 ) -> None:
     with pytest.raises(
@@ -64,7 +58,7 @@ def example_secret_placeholders() -> list[tuple[str, str, str]]:
                 name, value = line.split("=", 1)
                 values[name] = value.strip().strip('"').strip("'")
         placeholders.extend(
-            (filename, name, values[name]) for name in OAUTH_SECRET_NAMES
+            (filename, name, values[name]) for name in BACKEND_SECRET_NAMES
         )
     return placeholders
 
@@ -83,3 +77,11 @@ def test_every_example_oauth_secret_placeholder_is_refused(
                 ENVIRONMENT=Environment.LOCAL, **{name: placeholder}
             )
         )
+
+
+def test_production_backend_does_not_require_proxy_only_secrets() -> None:
+    settings = Settings(
+        **settings_values(ENVIRONMENT=Environment.PRODUCTION)  # type: ignore[arg-type]
+    )
+
+    assert settings.OAUTH2_PROXY_UPSTREAM_PASSWORD.startswith("upstream-test-")

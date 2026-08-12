@@ -73,8 +73,6 @@ def _startup_env(
         "POSTGRES_PASSWORD": url.password or "",
         "POSTGRES_DB": url.database or "startup_test",
         "OAUTH2_PROXY_UPSTREAM_PASSWORD": "migration-startup-upstream-password",
-        "OAUTH2_PROXY_COOKIE_SECRET": "migration-startup-cookie-secret-32b",
-        "OAUTH2_PROXY_CLIENT_SECRET": "migration-startup-client-secret-32b",
         "MIGRATE_ON_START": str(migrate).lower(),
         "MIGRATION_LOCK_TIMEOUT_SECONDS": str(lock_timeout),
     }
