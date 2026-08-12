@@ -14,6 +14,10 @@ cp .env.production.example .env.production
 ./scripts/ce-deploy.sh
 ```
 
+If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
+An existing session for a different configured account is never logged out or replaced
+automatically; switch it explicitly and rerun the deployment.
+
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, and `BACKEND_CORS_ORIGINS`. Code Engine
 requires `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and
 `_CR_REGISTRY`; account name and registry namespace are optional. `_IAM_API_KEY` is required to

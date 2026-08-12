@@ -139,7 +139,13 @@ for argument in "$@"; do
 done
 safe_kind() { printf '%s' "$1" | tr './' '__'; }
 resource_file() { printf '%s/resources/%s__%s' "$MOCK_STATE" "$(safe_kind "$1")" "$2"; }
-if [[ "$args" == *' account show '* ]]; then printf 'Account Name: mock-account\n'; exit 0; fi
+if [[ "$args" == *' account show '* ]]; then
+  if [[ "${MOCK_IBM_CLOUD_LOGGED_OUT:-false}" == true && ! -f "$MOCK_STATE/ibmcloud-logged-in" ]]; then exit 1; fi
+  account_name=mock-account; [[ "${MOCK_IBM_CLOUD_WRONG_ACCOUNT:-false}" != true ]] || account_name=wrong-account
+  if [[ "$args" == *' --output JSON '* ]]; then printf '{"name":"%s"}\n' "$account_name"; else printf 'Kontoname: %s\n' "$account_name"; fi
+  exit 0
+fi
+if [[ "$args" == *' login --sso '* ]]; then touch "$MOCK_STATE/ibmcloud-logged-in"; exit 0; fi
 if [[ "$args" == *' ce project current '* ]]; then
   if [[ "$args" == *' --output jsonpath={.subdomain} '* ]]; then printf 'mock.mockcluster'; else printf 'Subdomäne: mock.mockcluster\n'; fi
   exit 0
@@ -693,6 +699,28 @@ run_ce_registry_and_project_cases() {
     pass 'owned CE registry secrets are reusable and fresh projects are created and gated on readiness'
 }
 
+run_ce_login_cases() {
+    local output
+    prepare_case ce-login-sso
+    output="$CASE_DIR/output.log"
+    run_with_mocks "$output" 'mock-project\n' env MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh || fail 'interactive CE SSO login flow failed'
+    assert_contains "$STATE/calls.log" 'ibmcloud login --sso'
+
+    prepare_case ce-login-non-interactive
+    output="$CASE_DIR/output.log"
+    if run_with_mocks "$output" 'mock-project\n' env CEN_DEPLOY_TERMINAL_FILE= MOCK_IBM_CLOUD_LOGGED_OUT=true ./scripts/ce-deploy.sh; then fail 'non-interactive CE deployment attempted SSO login'; fi
+    assert_contains "$output" "log in with 'ibmcloud login --sso'"
+    assert_absent "$STATE/calls.log" 'ibmcloud login --sso'
+
+    prepare_case ce-login-wrong-account
+    output="$CASE_DIR/output.log"
+    if run_with_mocks "$output" 'mock-project\n' env MOCK_IBM_CLOUD_WRONG_ACCOUNT=true ./scripts/ce-deploy.sh; then fail 'CE accepted the wrong IBM Cloud account'; fi
+    assert_contains "$output" "IBM Cloud account mismatch: 'wrong-account' != 'mock-account'"
+    assert_absent "$STATE/calls.log" 'ibmcloud login --sso'
+    assert_absent "$STATE/calls.log" 'ibmcloud logout'
+    pass 'Code Engine starts SSO for a missing session and never replaces an existing wrong-account session'
+}
+
 run_oauth_secret_cases() {
     [[ "$OAUTH" == true ]] || return 0
     local output generated
@@ -796,6 +824,7 @@ run_ce_collision
 run_ce_confirmation
 run_ce_preflight_cases
 run_ce_registry_and_project_cases
+run_ce_login_cases
 run_oauth_secret_cases
 run_oc_success
 run_oc_collision
