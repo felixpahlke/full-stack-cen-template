@@ -29,7 +29,7 @@ spinner_wait() {
     if [[ ! -t 1 ]]; then sleep "$seconds"; return; fi
     while ((seconds-- > 0)); do
         for frame in 0 1 2 3; do
-            printf '\r%b %s' "${TEAL}${frames:frame:1}${NC}" "$message"
+            printf '\r%b%s%b %s' "$TEAL" "${frames:frame:1}" "$NC" "$message"
             sleep 0.25
         done
     done
