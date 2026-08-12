@@ -45,7 +45,7 @@ resolution in this repository.
 
 ## Validation
 
-- Frontend flavors: `cd frontend && npm run typecheck`
+- Frontend flavors: `cd frontend && pnpm run typecheck`
 - Backend-only flavors:
   - `backend/.venv/bin/ruff check backend/app backend/tests`
   - `backend/.venv/bin/ruff format backend/app backend/tests --check`

@@ -13,7 +13,7 @@ container-free development path and backend-only production image.
 - Keep example and weak secrets unusable in every environment; never hardcode credentials.
 - Only health checks belong outside the API-key-protected router.
 - Do not introduce generated-client, route-tree, Playwright, or frontend files.
-- Use npm only and exact-pin direct dependencies.
+- Use pnpm only and exact-pin direct dependencies.
 
 ## Working guides
 

@@ -20,7 +20,7 @@ if (!Number.isInteger(apiPort) || apiPort < 1 || apiPort > 65535) {
 }
 
 if (!(await isFree(apiPort))) {
-  fail(`API_PORT=${apiPort} is occupied. Update API_PORT in .env, then run npm run dev again.`);
+  fail(`API_PORT=${apiPort} is occupied. Update API_PORT in .env, then run pnpm run dev again.`);
 }
 
 console.log(`local port ready: API ${apiPort}`);

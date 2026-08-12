@@ -47,13 +47,14 @@ are Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux 
 
 ### Quick start
 
-Prerequisites: Node.js 20.19+ with npm, Python 3.10–3.12, and uv.
+Prerequisites: Node.js 20.19+ with Corepack and pnpm, Python 3.10–3.12, and uv.
 
 ```bash
-npm ci
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 Open the API at `http://localhost:8000`, docs at `http://localhost:8000/docs`, public health at
@@ -64,12 +65,12 @@ Open the API at `http://localhost:8000`, docs at `http://localhost:8000/docs`, p
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start native reload-enabled Uvicorn; no containers |
-| `npm run check` / `npm run fix` | Check or fix JavaScript and Python |
-| `npm run test` | Run supervisor, deploy mocks, and Docker-free pytest |
-| `npm run build` | Build the production backend image; this command needs Docker or Podman |
-| `npm run verify` | Run all Docker-free checks and tests |
-| `npm run test:deploy` | Run mock-only Code Engine/OpenShift tests |
+| `pnpm run dev` | Start native reload-enabled Uvicorn; no containers |
+| `pnpm run check` / `pnpm run fix` | Check or fix JavaScript and Python |
+| `pnpm run test` | Run supervisor, deploy mocks, and Docker-free pytest |
+| `pnpm run build` | Build the production backend image; this command needs Docker or Podman |
+| `pnpm run verify` | Run all Docker-free checks and tests |
+| `pnpm run test:deploy` | Run mock-only Code Engine/OpenShift tests |
 
 There is no frontend install, browser test, code generation, `db:migrate`, or `db:revision`
 command because the branch has neither frontend nor database. See
@@ -109,7 +110,7 @@ The application screenshots show the full-stack frontend flavours; the backend-o
 ### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
 
 ```bash
-npm create cen-app@latest
+pnpm create cen-app@latest
 ```
 
 ### Or clone manually (commands may vary by flavour - check the specific branch):

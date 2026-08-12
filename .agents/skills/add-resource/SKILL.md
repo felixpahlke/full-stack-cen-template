@@ -21,5 +21,5 @@ users, ownership model, generated client, or frontend; do not introduce them.
    validation, missing/wrong API keys, and meaningful error cases. Reuse `client` and
    `api_key_headers` from `backend/app/tests/conftest.py`.
 
-Finish with `DOCKER_HOST=unix:///nonexistent npm run verify` and exercise one authenticated API
+Finish with `DOCKER_HOST=unix:///nonexistent pnpm run verify` and exercise one authenticated API
 request. Stop there: no table, migration, CRUD persistence, generated client, or page applies.

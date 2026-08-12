@@ -9,8 +9,8 @@ database engine, Alembic tree, persistence dependencies, user accounts, or beare
 - `app/core/config.py`: root `.env` settings
 - `app/tests/` and `tests/`: Docker-free tests
 
-Install with `uv sync --project backend`, run with root `npm run dev`, and verify with
-`npm run verify`. Do not add database settings or migration commands unless intentionally moving
+Install with `uv sync --project backend`, run with root `pnpm run dev`, and verify with
+`pnpm run verify`. Do not add database settings or migration commands unless intentionally moving
 to a different branch/product shape.
 
 Use `create_app` and `get_settings` for injected code. Historical module-level `app` and `settings`

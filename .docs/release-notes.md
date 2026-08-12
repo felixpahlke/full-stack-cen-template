@@ -1,6 +1,6 @@
 # Release notes — stateless backend modernization
 
-Development and tests are now fully native and Docker-free. `npm run dev` runs reload-enabled
+Development and tests are now fully native and Docker-free. `pnpm run dev` runs reload-enabled
 Uvicorn; the root command facade handles checks, tests, deploy mocks, and the optional Docker image
 build. Obsolete database, Compose, and token-printer residue has been removed without changing the
 public health or API-key example routes.
