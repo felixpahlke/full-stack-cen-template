@@ -1,7 +1,18 @@
 # Working conventions
 
-This is the stateless backend-only, API-key flavor of the FastAPI template. Preserve its
+This is the stateless backend-only, API-key flavour of the FastAPI template. Preserve its
 container-free development path and backend-only production image.
+
+## Repository map
+
+- `package.json` exposes the supported root commands; `scripts/` contains development,
+  verification, image-build, and deployment automation.
+- `backend/app/models.py` contains API models, `backend/app/api/routes/` contains endpoints, and
+  `backend/app/core/config.py` contains settings; reusable business logic stays outside routes.
+- Backend tests live in `backend/app/tests/` and `backend/tests/`; there is no frontend, database,
+  Alembic, or Compose configuration.
+- `.docs/` contains detailed development, maintenance, and deployment guides.
+- `.agents/skills/` contains task-specific workflows.
 
 ## Invariants
 
@@ -10,14 +21,19 @@ container-free development path and backend-only production image.
   and ownership models.
 - Keep API models in `backend/app/models.py`, thin routes in `backend/app/api/routes/`, registration
   in `backend/app/api/main.py`, and reusable business logic outside routes.
-- Keep example and weak secrets unusable in every environment; never hardcode credentials.
+- Keep settings in `backend/app/core/config.py`, mirror environment keys in `.env.example`, and
+  never hardcode credentials or permit example/weak secrets.
 - Only health checks belong outside the API-key-protected router.
 - Do not introduce generated-client, route-tree, Playwright, or frontend files.
 - Use pnpm only and exact-pin direct dependencies.
 
-## Working guides
+## Verification
 
-Use the task checklists in `.agents/skills/`. Start with `prepare-workstation`, `add-resource`, the
-deploy/debug pair for the target, or `update-from-template`; database/page skills do not apply.
-Key references are `.docs/development.md`, `.docs/maintenance.md`, and the deployment guides in
-`.docs/`; cross-flavor maintainers must also read `cen-template-maintenance`.
+Use focused checks while developing. Before handing off a completed change, run `pnpm verify`;
+normal verification must remain container-free. When the production image changes, also run
+`pnpm build` with a working container runtime.
+
+## Task workflows
+
+Use the matching repository skill when available. For changes intended for more than one flavour,
+use `cen-template-maintenance` before editing.

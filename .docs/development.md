@@ -3,14 +3,14 @@
 ## First run
 
 ```bash
-corepack enable pnpm
 pnpm install
 uv sync --project backend
 cp .env.example .env
 pnpm run dev
 ```
 
-Node.js 20.19+, pnpm, Python 3.10–3.12, and uv are required. Docker and Compose are not required
+Node.js 20.19+, [pnpm](https://pnpm.io/installation), Python 3.10–3.12, and uv are required. The
+repository pins the supported pnpm version. Docker and Compose are not required
 for development, `check`, `test`, `verify`, or `test:deploy`. There is no frontend dependency
 installation.
 

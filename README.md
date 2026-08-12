@@ -1,177 +1,82 @@
 # Full Stack Client Engineering Template
 
-## Technology Stack and Features
+A flexible starting point for full-stack web applications and APIs, from a complete React
+application to a stateless FastAPI backend. Choose a flavour, create the project, and start
+developing.
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for database interactions on the flavours with relational persistence.
-  - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for data validation and settings management.
-  - 💾 [PostgreSQL](https://www.postgresql.org) on every database-backed flavour.
-  - 📦 [uv](https://docs.astral.sh/uv/) for Python dependency management.
-- 🚀 [React 19](https://react.dev) for the full-stack flavours' frontend.
-  - 💃 TypeScript, [Vite](https://vite.dev), [TanStack Router](https://tanstack.com/router), and [TanStack Query](https://tanstack.com/query) form the modern frontend stack.
-  - 🎨 [Carbon](https://carbondesignsystem.com/) or [shadcn/ui](https://ui.shadcn.com/), depending on the flavour, for frontend components.
-  - 🤖 An automatically generated frontend client.
-  - 🦇 Dark mode support.
-- 🧹 [Biome](https://biomejs.dev/) for JavaScript and TypeScript linting and formatting.
-- 🛠️ Native reload-enabled Uvicorn and Vite processes for development. [Docker Compose](https://www.docker.com) runs only the infrastructure a flavour needs: PostgreSQL and Adminer, plus Dex and oauth2-proxy on OAuth flavours. The stateless `backend-only-no-db` flavour needs no development containers.
-- 🔒 Authentication via OAuth proxy with an IdP, in-app user management, or API key, depending on the flavour.
-- 🚢 Deployment instructions for OpenShift and IBM Cloud Code Engine.
+## Technology stack
 
-_This Template is based on [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template)_
+- ⚡ [FastAPI](https://fastapi.tiangolo.com/) for the Python backend API.
+  - [SQLModel](https://sqlmodel.tiangolo.com/) and [PostgreSQL](https://www.postgresql.org/) on
+    database-backed flavours.
+  - [Pydantic](https://docs.pydantic.dev/) for validation and settings.
+  - [Alembic](https://alembic.sqlalchemy.org/) for migrations and
+    [uv](https://docs.astral.sh/uv/) for Python dependencies.
+- 🚀 [React 19](https://react.dev/) for full-stack flavours.
+  - TypeScript, [Vite](https://vite.dev/), [TanStack Router](https://tanstack.com/router), and
+    [TanStack Query](https://tanstack.com/query).
+  - [IBM Carbon](https://carbondesignsystem.com/) or [shadcn/ui](https://ui.shadcn.com/), an
+    automatically generated API client, and dark mode.
+- 🧹 [Biome](https://biomejs.dev/) for JavaScript and TypeScript quality.
+- 🛠️ Native development with automatic reload; containers run only the required backing services.
+- 🔒 Local accounts, OAuth/OIDC, or API-key authentication depending on the flavour.
+- 🚢 Deployment support for IBM Cloud Code Engine and OpenShift.
 
 ## Flavours
 
-This template is available in different flavours, which are represented by different branches, make sure to pull the correct branch for your use case:
+| Branch | Authentication | UI | Best fit |
+| --- | --- | --- | --- |
+| `oauth-proxy` | OAuth proxy with OIDC | Carbon | Production-oriented SSO application |
+| `oauth-proxy-custom-ui` | OAuth proxy with OIDC | shadcn/ui | Adaptable SSO application |
+| `local-auth` | Built-in email/password | Carbon | Self-contained application |
+| `local-auth-custom-ui` | Built-in email/password | shadcn/ui | Adaptable self-contained application |
+| `backend-only` | API key | None | PostgreSQL-backed API |
+| `backend-only-no-db` | API key | None | Minimal stateless API |
 
-| Branch | Auth | UI | Pros | Cons |
-| --- | --- | --- | --- | --- |
-| `oauth-proxy` | OAuth proxy with IdP | Carbon | Production-oriented SSO boundary | Requires an OIDC provider in production |
-| `oauth-proxy-custom-ui` | OAuth proxy with IdP | shadcn/ui | Adaptable UI with a production-oriented SSO boundary | Requires an OIDC provider in production |
-| `local-auth` | In-app user management | Carbon | Self-contained and easy to start | The application owns password and account security |
-| `local-auth-custom-ui` | In-app user management | shadcn/ui | Adaptable UI and easy local startup | The application owns password and account security |
-| `backend-only` | API key | — | Focused API with PostgreSQL persistence | No bundled frontend |
-| `backend-only-no-db` | API key | — | Minimal stateless API with Docker-free development | No bundled frontend or persistence |
+Use a custom-UI flavour when Carbon is not the right fit. For full-stack applications, prefer an
+OAuth-proxy flavour unless the application should own account and password security.
 
-<br />
+You are viewing the `backend-only-no-db` flavour: a stateless API secured with `X-API-Key`, with
+no frontend, database, migrations, or development containers.
 
-> The custom-ui flavours are easily adaptable to look like any customers UI, so choose those if Carbon is not the right fit.
+## Get started
 
-> For full-stack applications, prefer the `oauth-proxy` flavours, unless you have a specific reason not to use them.
-
-## Flavour: `backend-only-no-db` — stateless backend-only API
-
-This branch is a FastAPI API secured with `X-API-Key`. It has no frontend, database, migrations,
-Compose file, generated client, or Playwright suite. Development and tests are Docker-free;
-a container runtime is needed only to build the production image or deploy it. Supported choices
-are Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, and Podman.
-
-### Quick start
-
-Prerequisites: Node.js 20.19+ with Corepack and pnpm, Python 3.10–3.12, and uv.
+Create a project and select the flavour interactively:
 
 ```bash
-corepack enable pnpm
-pnpm install
-uv sync --project backend
-cp .env.example .env
-pnpm run dev
+pnpm create cen-app@latest my-app
+cd my-app
+pnpm dev
 ```
 
-Open the API at `http://localhost:8000`, docs at `http://localhost:8000/docs`, public health at
-`http://localhost:8000/api/v1/utils/health-check/`, and the protected example endpoint at
-`http://localhost:8000/api/v1/example/hello` with `X-API-Key` from `.env`.
+The generator prepares the environment and dependencies. [pnpm](https://pnpm.io/installation) is
+required; for manual setup or missing prerequisites, see the
+[development guide](.docs/development.md).
 
-### Root commands
+## Sample applications and tutorials
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm run dev` | Start native reload-enabled Uvicorn; no containers |
-| `pnpm run check` / `pnpm run fix` | Check or fix JavaScript and Python |
-| `pnpm run test` | Run supervisor, deploy mocks, and Docker-free pytest |
-| `pnpm run build` | Build the production backend image; this command needs Docker or Podman |
-| `pnpm run verify` | Run all Docker-free checks and tests |
-| `pnpm run test:deploy` | Run mock-only Code Engine/OpenShift tests |
+- [Client Engineering DACH examples](https://github.ibm.com/client-engineering-dach/)
+- [Full Stack CEN Template tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
 
-There is no frontend install, browser test, code generation, `db:migrate`, or `db:revision`
-command because the branch has neither frontend nor database. See
-[development](.docs/development.md), [backend](backend/README.md), and the
-[consumer migration guide](.docs/migration-guide.md).
+## AI-assisted development
 
-## Sample Applications & Tutorials
+[AGENTS.md](AGENTS.md) and the included project skills describe the repository conventions and
+common workflows for compatible coding agents.
 
-Check out our Collection of Sample Applications (AI-Chat, Agents, RAG, etc.) built on top of the template:
+## Screenshot
 
-- [Client Engineering DACH 🚀](https://github.ibm.com/client-engineering-dach/)
-- [Tutorials](https://github.ibm.com/client-engineering-dach/full-stack-cen-template-tutorials)
+### API documentation
 
-## AI-Assisted Development
+![FastAPI documentation](.docs/img/docs.png)
 
-This project includes an [AGENTS.md](./AGENTS.md) file that provides comprehensive guidelines for agentic AI assistants like [**Bob**](https://www.ibm.com/products/bob) to autonomously implement new features. The file contains:
+## Documentation
 
-- 📋 Project structure and conventions
-- 🔧 Backend and frontend development rules
-- 🚀 Essential workflows for common tasks
-- ⚠️ Common mistakes to avoid
+- [Development, testing, commands, and troubleshooting](.docs/development.md)
+- [Backend development](backend/README.md)
+- [Updating from the template](.agents/skills/update-from-template/SKILL.md)
+- [Code Engine](.docs/ce-deployment.md) and [OpenShift](.docs/oc-deployment.md) deployment
+- [Migration guide](.docs/migration-guide.md), [release notes](.docs/release-notes.md), and
+  [changelog](CHANGELOG.md)
 
-These guidelines enable AI assistants to understand the codebase and its conventions which leads to more robust and consistent code.
-
-> **NOTE:** You can customize or delete the AGENTS.md file to influence the behavior of your coding assistant.
-
-## Screenshots
-
-The application screenshots show the full-stack frontend flavours; the backend-only flavours do not include a frontend.
-
-### Interactive API Documentation
-
-![API docs](.docs/img/docs.png)
-
-## How to Use It
-
-### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
-
-```bash
-pnpm create cen-app@latest
-```
-
-### Or clone manually (commands may vary by flavour - check the specific branch):
-
-- Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
-
-```bash
-git clone -b backend-only-no-db git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git my-full-stack
-```
-
-- Enter into the new directory:
-
-```bash
-cd my-full-stack
-```
-
-- Set the new origin to your new repository (copy from GitHub interface):
-
-```bash
-git remote set-url origin git@github.ibm.com:my-username/my-full-stack.git
-```
-
-- Add the template repository as upstream to get future updates:
-
-```bash
-git remote add upstream git@github.ibm.com:client-engineering-dach/full-stack-cen-template.git
-```
-
-- Rename the branch if your new repository should use a different branch name:
-
-```bash
-git branch -m my-template-branch
-```
-
-- Push the code to your new repository:
-
-```bash
-git push -u origin my-template-branch
-```
-
-## Update From the Original Template
-
-Follow [the update-from-template skill](./.agents/skills/update-from-template/SKILL.md) for the
-upstream pull, conflict handling, and verification before completing the merge.
-
-## Development
-
-General development docs: [development.md](./.docs/development.md).
-
-Consumer migration guidance: [migration-guide.md](./.docs/migration-guide.md).
-
-## Deployment
-
-OpenShift Deployment docs: [oc-deployment.md](./.docs/oc-deployment.md).
-
-Code Engine Deployment docs: [ce-deployment.md](./.docs/ce-deployment.md).
-
-## Backend Development
-
-Backend docs: [backend/README.md](./backend/README.md).
-
-## Release Notes
-
-Check the file [release-notes.md](./.docs/release-notes.md) and the [changelog](./CHANGELOG.md).
+This template is based on
+[full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template).
