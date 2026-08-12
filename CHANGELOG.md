@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased — development modernization
+## Unreleased — modernization
 
-- Added a Docker-free native Uvicorn/root pnpm development loop.
-- Removed Compose, persistence, password/JWT, and token-printer residue.
-- Added a consistent root command facade and Docker-free verification.
-- Hardened Code Engine/OpenShift ownership, secrets, cleanup, and absence assertions.
+- Moved JavaScript tooling to pnpm with a root lockfile and consistent root commands.
+- Added a native `pnpm dev` loop and kept normal development and verification container-free.
+- Removed obsolete frontend, database, migration, password/JWT, and token-printer residue.
+- Made backend tests isolated and reproducible without Docker or PostgreSQL.
+- Hardened Code Engine and OpenShift deployment ownership, secrets, cleanup, and topology checks.
 
-See [.docs/migration-guide.md](.docs/migration-guide.md).
+The stateless API-key boundary and backend-only production image remain. Existing projects should
+follow the [migration guide](.docs/migration-guide.md).
