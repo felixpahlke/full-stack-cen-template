@@ -141,10 +141,9 @@ target_code_engine_project() {
         wait_for_code_engine_project
         run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     fi
-    CE_SUBDOMAIN=$(ibmcloud ce project current --output 'jsonpath={.subdomain}')
+    CE_SUBDOMAIN=$(kubectl config current-context)
     [[ -n "$CE_SUBDOMAIN" ]] || { print_error 'could not read Code Engine project subdomain'; return 1; }
-    CLUSTER_ID=${CE_SUBDOMAIN#*.}
-    CLUSTER_ID=${CLUSTER_ID%%.*}
+    CLUSTER_ID=$CE_SUBDOMAIN
 }
 
 wait_for_code_engine_project() {
