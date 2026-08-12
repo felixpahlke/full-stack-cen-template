@@ -46,7 +46,7 @@ def test_every_runtime_rejects_placeholder_or_weak_oauth_secrets(
 ) -> None:
     with pytest.raises(
         ValidationError,
-        match=rf"{name}.*Run `npm run dev` to generate local values",
+        match=rf"{name}.*Run `pnpm run dev` to generate local values",
     ):
         Settings(
             **settings_values(  # type: ignore[arg-type]

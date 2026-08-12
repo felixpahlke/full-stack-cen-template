@@ -7,11 +7,11 @@ Run the CLI from `frontend` so it reads `components.json`:
 
 ```bash
 cd frontend
-npx carboncn add button
+pnpm dlx carboncn add button
 ```
 
 Generated components go to `src/components/carboncn` and may use `@/lib/utils`. Review generated
-dependencies before committing them and keep every direct dependency exact-pinned with npm.
+dependencies before committing them and keep every direct dependency exact-pinned with pnpm.
 
 This template uses Tailwind CSS 4, so `components.json` intentionally has an empty Tailwind config
 path and points at `src/styles/index.css`. Do not recreate `tailwind.config.js`; theme tokens belong

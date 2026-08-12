@@ -134,7 +134,7 @@ class Settings(BaseSettings):
             return
         message = (
             f"{var_name} must be a non-placeholder random value of at least "
-            f"{minimum_length} characters. Run `npm run dev` to generate local values."
+            f"{minimum_length} characters. Run `pnpm run dev` to generate local values."
         )
         raise ValueError(message)
 

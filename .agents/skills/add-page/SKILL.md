@@ -18,11 +18,11 @@ introduces a database entity or API surface, use `add-resource` before this skil
    and invalidate the affected keys after mutations.
 4. Use IBM Carbon components and semantic Carbon tokens. Use Tailwind only for layout, spacing,
    and the existing token bridge. Reuse components rather than recreating controls inline.
-5. Run `npm run generate-client` to regenerate the route tree. Never edit
+5. Run `pnpm run generate-client` to regenerate the route tree. Never edit
    `frontend/src/routeTree.gen.ts` or `frontend/src/client` manually.
 
 6. Update the expected route list in `scripts/route-parity.test.mjs`. Template maintenance must add
    the same page to `oauth-proxy-custom-ui`; the test deliberately keeps both route surfaces equal.
 
-Done means navigation works, loading/empty/error states are intentional, and `npm run verify`
+Done means navigation works, loading/empty/error states are intentional, and `pnpm run verify`
 passes.

@@ -1,15 +1,29 @@
 # Migrating an existing oauth-proxy checkout
 
+## Move an older checkout to the pnpm workspace
+
+After updating an npm-based checkout, remove both old installs and lockfiles, then install the
+root workspace once:
+
+```bash
+rm -rf node_modules frontend/node_modules
+rm -f package-lock.json frontend/package-lock.json
+corepack enable pnpm
+pnpm install
+```
+
+Do not run a second install in `frontend`; the root workspace install includes it.
+
 This release replaces the Compose application-process loop with native Uvicorn/Vite supervised by
-`npm run dev`. The separate backend/frontend/proxy artifacts remain; the backend image now starts
+`pnpm run dev`. The separate backend/frontend/proxy artifacts remain; the backend image now starts
 Uvicorn with the `app.main:create_app` factory.
 
 ```bash
-npm ci
-npm ci --prefix frontend
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 Existing `.env` files must gain native ports, Dex test-user settings,
@@ -75,7 +89,7 @@ Compose now runs PostgreSQL, Adminer, pinned Dex, and pinned oauth2-proxy. Uvico
 the host. Browser entry is now explicitly `http://localhost:4180`. The backend trusts only the
 private Basic identity seam. Proxy sign-out ends its cookie but does not end the IdP SSO session.
 
-Breaking changes include npm-only JavaScript tooling, new host prerequisites, preflight port
+Breaking changes include pnpm-only JavaScript tooling, new host prerequisites, preflight port
 refusal, exact Alembic-head startup checks, and containerized real-proxy Playwright. Production
 images remain separate and unchanged in topology.
 

@@ -27,7 +27,7 @@ const lock = path.join(root, ".generate-client.lock");
 const lockOwner = path.join(lock, "owner.json");
 const lockToken = randomUUID();
 let ownsLock = false;
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const uv = process.platform === "win32" ? "uv.exe" : "uv";
 const check = process.argv.includes("--check");
 const generatedPaths = ["frontend/src/client", "frontend/src/routeTree.gen.ts"];
@@ -55,16 +55,12 @@ try {
     "--output",
     stagedOpenapi,
   ]);
-  required(
-    npm,
-    ["--prefix", "frontend", "exec", "--", "openapi-ts", "--file", "frontend/openapi-ts.config.ts"],
-    {
-      ...process.env,
-      OPENAPI_INPUT: stagedOpenapi,
-      OPENAPI_OUTPUT: stagedClient,
-    },
-  );
-  required(npm, ["exec", "--", "biome", "format", "--write", stagedClient]);
+  required(pnpm, ["--filter", "frontend", "exec", "openapi-ts", "--file", "openapi-ts.config.ts"], {
+    ...process.env,
+    OPENAPI_INPUT: stagedOpenapi,
+    OPENAPI_OUTPUT: stagedClient,
+  });
+  required(pnpm, ["exec", "biome", "format", "--write", stagedClient]);
   writeFileSync(
     stagedTsconfig,
     `${JSON.stringify(
@@ -77,8 +73,8 @@ try {
       2,
     )}\n`,
   );
-  required(npm, ["--prefix", "frontend", "exec", "--", "tsc", "--project", stagedTsconfig]);
-  required(npm, ["--prefix", "frontend", "run", "generate-routes"]);
+  required(pnpm, ["--filter", "frontend", "exec", "tsc", "--project", stagedTsconfig]);
+  required(pnpm, ["--filter", "frontend", "run", "generate-routes"]);
   interrupted();
   publish();
   generatedWasStale = check && before !== fingerprint(generatedPaths);
@@ -90,7 +86,7 @@ try {
 if (generatedWasStale) {
   console.error(
     "\nGenerated client or route tree was stale and has been refreshed. " +
-      "Review and commit the generated changes, then run `npm run check` again.",
+      "Review and commit the generated changes, then run `pnpm run check` again.",
   );
   process.exitCode = 1;
 }

@@ -16,7 +16,7 @@ authentication boundary, PostgreSQL backend, Carbon UI, and separate production 
   `MIGRATE_ON_START=false`.
 - Protected pages stay under `frontend/src/routes/_layout`; use TanStack Query and the generated
   client. Never hand-edit `frontend/src/client` or `frontend/src/routeTree.gen.ts`.
-- Preserve IBM Carbon and the Tailwind token bridge. Use npm only and exact-pin direct dependencies.
+- Preserve IBM Carbon and the Tailwind token bridge. Use pnpm only and exact-pin direct dependencies.
 
 ## Working guides
 

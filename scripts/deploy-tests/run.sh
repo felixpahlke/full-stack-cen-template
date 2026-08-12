@@ -309,7 +309,10 @@ prepare_case() {
     CASE_DIR="$TEST_TMP/$name"; STATE="$CASE_DIR/state"; PROJECT="$CASE_DIR/project"
     mkdir -p "$STATE/resources" "$STATE/registries" "$STATE/secrets" "$STATE/ssh" "$STATE/json" "$PROJECT/frontend"
     cp -R "$ROOT/scripts" "$PROJECT/scripts"
-    if [[ "$HAS_FRONTEND" == true ]]; then cp "$ROOT/frontend/Dockerfile" "$ROOT/frontend/nginx.conf" "$PROJECT/frontend/"; fi
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        cp "$ROOT/package.json" "$ROOT/pnpm-lock.yaml" "$ROOT/pnpm-workspace.yaml" "$PROJECT/"
+        cp "$ROOT/frontend/Dockerfile" "$ROOT/frontend/nginx.conf" "$ROOT/frontend/package.json" "$PROJECT/frontend/"
+    fi
     make_env "$PROJECT/.env.production"
     printf 'private\n' > "$STATE/ssh/ocp-key"
     printf 'ssh-ed25519 AAAATEST mock\n' > "$STATE/ssh/ocp-key.pub"
@@ -366,6 +369,8 @@ run_ce_success() {
     assert_absent "$STATE/secrets/mock-project-backend-config.env" OAUTH2_PROXY_CLIENT_SECRET
     assert_contains "$STATE/secrets/mock-project-backend-config.env" "CEN_FLAVOR=$FLAVOR"
     if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc "$build_command" "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
+        assert_contains "$STATE/calls.log" "-f frontend/Dockerfile $PROJECT"
+        assert_absent "$STATE/calls.log" "$PROJECT/frontend"
         if [[ "$OAUTH" == true ]]; then
             assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
             assert_contains "$PROJECT/.env.production" 'VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
@@ -450,6 +455,13 @@ run_oc_success() {
     if [[ "$OAUTH" == true ]]; then assert_contains "$STATE/secrets/app-a-env.env" 'oauth-proxy-mock-project.apps.mock.example'; fi
     if [[ "$HAS_FRONTEND" != true ]]; then assert_absent "$STATE/secrets/app-a-env.env" 'BACKEND_CORS_ORIGINS=*'; fi
     if [[ "$HAS_FRONTEND" == true ]]; then assert_contains "$STATE/manifests.log" 'name: frontend'; else assert_absent "$STATE/manifests.log" 'name: frontend'; fi
+    assert_contains "$STATE/manifests.log" 'contextDir: backend'
+    assert_contains "$STATE/manifests.log" 'dockerfilePath: Dockerfile'
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        assert_contains "$STATE/manifests.log" 'dockerfilePath: frontend/Dockerfile'
+        assert_absent "$STATE/manifests.log" 'contextDir: frontend'
+        [[ $(grep -Fc 'contextDir:' "$STATE/manifests.log") == 1 ]] || fail 'frontend BuildConfig must use the repository root context'
+    fi
     if [[ "$HAS_DATABASE" == true ]]; then assert_contains "$STATE/manifests.log" 'kind: PersistentVolumeClaim'; else assert_absent "$STATE/manifests.log" 'kind: PersistentVolumeClaim'; fi
     if [[ "$OAUTH" == true ]]; then
         assert_before "$STATE/calls.log" 'rollout status deployment/oauth-proxy --timeout=15m' 'MOCK_EVENT oauth-ingress-switched'
