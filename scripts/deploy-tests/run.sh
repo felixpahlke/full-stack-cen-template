@@ -257,7 +257,22 @@ fi
 if [[ "$args" == *' get deployments.apps '* && "$args" == *'app.kubernetes.io/instance=app-a'* ]]; then printf 'backend\nfrontend\n'; exit 0; fi
 if [[ "$args" == *' get build/'* && "$args" == *'.status.phase'* ]]; then printf 'Complete'; exit 0; fi
 if [[ "$args" == *' start-build '* ]]; then name='backend'; [[ "$args" == *' frontend '* ]] && name=frontend; printf 'build.build.openshift.io/%s-1\n' "$name"; exit 0; fi
+if [[ "$args" == *' label --local -f - '* ]]; then
+  input=$(cat)
+  printf '%s\n' "$input" | awk '
+    $0 == "metadata:" {
+      print
+      print "  labels:"
+      print "    app.kubernetes.io/managed-by: cen-template"
+      print "    app.kubernetes.io/instance: app-a"
+      next
+    }
+    { print }
+  '
+  exit 0
+fi
 if [[ "$args" == *' create secret generic '* && "$args" == *' -o yaml '* ]]; then
+  [[ "$args" != *' --labels '* ]] || { printf 'error: unknown flag: --labels\n' >&2; exit 1; }
   name=''; previous=''; key=''; file=''
   for argument in "$@"; do
     [[ "$previous" != generic ]] || name=$argument
@@ -267,7 +282,6 @@ if [[ "$args" == *' create secret generic '* && "$args" == *' -o yaml '* ]]; the
     esac
     previous=$argument
   done
-  printf 'cen-template|app-a\n' > "$(resource_file secret "$name")"
   printf 'apiVersion: v1\nkind: Secret\nmetadata:\n  name: %s\n' "$name"
   exit 0
 fi
@@ -448,6 +462,8 @@ run_oc_success() {
     assert_absent "$STATE/calls.log" ENV_LEAK
     assert_contains "$STATE/manifests.log" 'app.kubernetes.io/instance: app-a'
     assert_contains "$STATE/manifests.log" 'app.kubernetes.io/managed-by: cen-template'
+    assert_absent "$STATE/calls.log" ' --labels '
+    [[ $(grep -Fc 'oc label --local -f -' "$STATE/calls.log") -ge 3 ]] || fail 'OpenShift secrets were not labeled through portable local manifests'
     assert_contains "$output" "Resolved source branch: $FLAVOR"
     assert_contains "$STATE/calls.log" "git ls-remote --exit-code --heads git@github.com:owner/repository.git refs/heads/$FLAVOR"
     assert_contains "$STATE/manifests.log" "ref: \"$FLAVOR\""
