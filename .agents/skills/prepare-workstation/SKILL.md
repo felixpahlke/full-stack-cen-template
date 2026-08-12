@@ -33,9 +33,10 @@ kubectl version --client
 Node must satisfy `package.json` (20.19 or newer), pnpm must satisfy its `packageManager` field,
 and uv must find a Python satisfying `backend/pyproject.toml` (3.10 through 3.12); the system
 `python3` may differ. No container runtime is needed
-for development or `pnpm run verify`. Docker Desktop, Rancher Desktop with dockerd/moby, native
-Linux Docker, or Podman is needed only for image builds and Code Engine deployment; audit one when
-that work is in scope. Compose is not used.
+for development or `pnpm run verify`. Docker Desktop, Rancher Desktop with dockerd/moby, Colima,
+native Linux Docker, or Podman is needed only for image builds and Code Engine deployment; audit
+one when that work is in scope. Podman Desktop's Docker compatibility socket is supported even
+when it presents through the `docker` CLI and the `default` context. Compose is not used.
 
 Use official platform installers for missing tools. The executable and IBM Cloud plugin names
 above are canonical. Do not log in to OpenShift or IBM Cloud during workstation preparation.

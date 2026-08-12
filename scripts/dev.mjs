@@ -28,7 +28,13 @@ try {
   await required(process.execPath, ["scripts/check-ports.mjs"], "ports");
 
   const apiPort = effectiveEnv.API_PORT;
-  console.log(`\nDevelopment ready: API http://localhost:${apiPort}`);
+  console.log(`
+Development ready
+
+  API  http://localhost:${apiPort}
+
+  Press Ctrl+C to stop
+`);
 
   const backend = run(
     "backend",

@@ -10,9 +10,10 @@ pnpm run dev
 ```
 
 Node.js 20.19+, [pnpm](https://pnpm.io/installation), Python 3.10–3.12, and uv are required. The
-repository pins the supported pnpm version. Docker and Compose are not required
-for development, `check`, `test`, `verify`, or `test:deploy`. There is no frontend dependency
-installation.
+repository pins the supported pnpm version. Docker and Compose are not required for development,
+`check`, `test`, `verify`, or `test:deploy`. Docker Desktop, Rancher Desktop, Colima, or Podman
+(including Podman Desktop's Docker compatibility mode) is needed only for image builds and
+deployment. There is no frontend dependency installation.
 
 `pnpm run dev` validates `.env`, uv, `backend/.venv`, and `API_PORT`, then starts native Uvicorn
 with reload. It starts no backing service. Required non-empty keys are `CEN_FLAVOR`,
