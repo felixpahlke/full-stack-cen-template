@@ -21,9 +21,9 @@ create or rotate the registry secret; an existing correctly owned secret can be 
 There are no `POSTGRES_*`, migration, or frontend values.
 
 The configured CORS value is persisted without introducing `*`, and the final summary always
-prints the backend URL. Fresh projects are polled until readable before selection. Default image
-names remain application-scoped intentionally. `--show-env-values` is terminal-only and refuses
-non-interactive use.
+prints the backend URL. Fresh projects are created automatically and polled until readable before
+selection. Default image names remain application-scoped intentionally. `--show-env-values` is
+terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
