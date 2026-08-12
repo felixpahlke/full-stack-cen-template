@@ -267,11 +267,11 @@ build_and_push_images() {
         done < "$ENV_FILE"
         if [[ "$CONTAINER_CLI" == docker ]]; then
             run docker image build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
-                --build-arg "NODE_ENV=${NODE_ENV:-production}" --load "$PROJECT_ROOT/frontend"
+                --build-arg "NODE_ENV=${NODE_ENV:-production}" --load -f frontend/Dockerfile "$PROJECT_ROOT"
             run docker image push "$frontend_image"
         else
             run podman build --platform linux/amd64 -t "$frontend_image" "${build_args[@]}" \
-                --build-arg "NODE_ENV=${NODE_ENV:-production}" "$PROJECT_ROOT/frontend"
+                --build-arg "NODE_ENV=${NODE_ENV:-production}" -f frontend/Dockerfile "$PROJECT_ROOT"
             run podman push "$frontend_image"
         fi
     fi

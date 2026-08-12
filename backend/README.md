@@ -7,7 +7,7 @@ authentication. Install its locked environment from the repository root:
 uv sync --project backend
 ```
 
-The supported development entry point is `npm run dev`; PostgreSQL/Adminer run in Compose and
+The supported development entry point is `pnpm run dev`; PostgreSQL/Adminer run in Compose and
 Uvicorn runs natively. See [the development guide](../.docs/development.md).
 
 ## Structure and conventions
@@ -32,8 +32,8 @@ only ASGI calls because it breaks FastAPI introspection and extension registrati
 After changing a table, keep the development database running and use:
 
 ```bash
-npm run db:revision -- -m "Describe the schema change"
-npm run db:migrate
+pnpm run db:revision -- -m "Describe the schema change"
+pnpm run db:migrate
 ```
 
 Never delete or squash shipped revisions. Backend startup owns migration execution: with
@@ -45,12 +45,12 @@ is a startup failure, not a warning.
 ## Tests
 
 ```bash
-npm run test:backend
-npm run verify
+pnpm run test:backend
+pnpm run verify
 ```
 
 Tests are hermetic and use a disposable Testcontainers PostgreSQL instance. They do not require
 the development Compose stack or read the repository `.env`. See the development guide before
 using `TEST_DATABASE_URL`; unsafe database names are rejected by default.
 
-`npm run check` includes strict mypy, Ruff linting, and Ruff formatting checks for the backend.
+`pnpm run check` includes strict mypy, Ruff linting, and Ruff formatting checks for the backend.

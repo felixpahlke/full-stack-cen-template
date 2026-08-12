@@ -9,7 +9,7 @@ Use `Item` as the working reference; read every file named below before editing.
 singular/plural names, fields and constraints, whether records are user-owned, and whether a UI is
 required. User ownership is the default. Keep database work in `backend/app/crud.py`, not routes.
 
-If the checkout is not prepared, run `prepare-workstation`. Start `npm run dev` and keep it running
+If the checkout is not prepared, run `prepare-workstation`. Start `pnpm run dev` and keep it running
 before the migration step.
 
 ## Backend
@@ -24,8 +24,8 @@ before the migration step.
 
    ```bash
    uv run --project backend alembic -c backend/alembic.ini current --check-heads
-   npm run db:revision -- -m "add <resources>"
-   npm run db:migrate
+   pnpm run db:revision -- -m "add <resources>"
+   pnpm run db:migrate
    uv run --project backend alembic -c backend/alembic.ini current --check-heads
    ```
 
@@ -39,7 +39,7 @@ before the migration step.
 
 ## Generated client and Carbon UI
 
-1. Run `npm run generate-client`; commit its changes, but never edit `frontend/src/client` or
+1. Run `pnpm run generate-client`; commit its changes, but never edit `frontend/src/client` or
    `frontend/src/routeTree.gen.ts` by hand.
 2. Build the page under `frontend/src/routes/_layout/<resources>.tsx`. Follow the existing Items
    split: route file plus focused components under `frontend/src/components/<resources>/`.
@@ -51,4 +51,4 @@ before the migration step.
 Update the expected route list in `scripts/route-parity.test.mjs`. During template maintenance,
 add the same page to the shadcn `local-auth-custom-ui` twin.
 
-Finish with `npm run generate-client` and `npm run verify`. Exercise one create/list round trip.
+Finish with `pnpm run generate-client` and `pnpm run verify`. Exercise one create/list round trip.

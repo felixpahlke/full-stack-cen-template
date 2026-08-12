@@ -15,7 +15,7 @@ local user and JWT model, Carbon identity, PostgreSQL backend, and separate prod
 - Protected pages stay under `frontend/src/routes/_layout`; use TanStack Query and the generated
   client for API data.
 - Never hand-edit `frontend/src/client` or `frontend/src/routeTree.gen.ts`; regenerate them.
-- Preserve IBM Carbon and the Tailwind token bridge. Use npm only and exact-pin direct dependencies.
+- Preserve IBM Carbon and the Tailwind token bridge. Use pnpm only and exact-pin direct dependencies.
 
 ## Working guides
 

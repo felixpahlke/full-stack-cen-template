@@ -41,7 +41,7 @@ Review the plan, then deploy:
 ```
 
 The script asks for the exact target name before mutating cloud state. It builds and pushes
-separate images and creates the backend/frontend applications. Run `npm run test:deploy` before
+separate images and creates the backend/frontend applications. Run `pnpm run test:deploy` before
 changing deployment code.
 
 For non-OAuth frontends, the deployer always embeds an absolute Code Engine backend URL through

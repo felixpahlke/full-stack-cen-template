@@ -56,7 +56,7 @@ prevent stale keys.
 Run all deployment mocks with:
 
 ```bash
-npm run test:deploy
+pnpm run test:deploy
 ```
 
 See [Code Engine](../.docs/ce-deployment.md) and

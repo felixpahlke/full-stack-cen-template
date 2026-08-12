@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 try {
   process.loadEnvFile(path.resolve(import.meta.dirname, "../.env"));
 } catch {
-  // `npm run dev` prints the actionable missing-env message.
+  // `pnpm run dev` prints the actionable missing-env message.
 }
 
 const webPort = process.env.WEB_PORT || "5173";
@@ -39,7 +39,7 @@ export default defineConfig({
   webServer: externalServer
     ? undefined
     : {
-        command: "npm --prefix .. run dev",
+        command: "pnpm --dir .. run dev",
         url: `http://localhost:${apiPort}/api/v1/utils/health-check/`,
         timeout: 180_000,
         reuseExistingServer: !process.env.CI,

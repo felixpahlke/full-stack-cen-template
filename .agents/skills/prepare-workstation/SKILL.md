@@ -1,6 +1,6 @@
 ---
 name: prepare-workstation
-description: Prepare a workstation for this npm, uv, PostgreSQL, and deployment toolchain by auditing prerequisites and installing only what is missing.
+description: Prepare a workstation for this pnpm, uv, PostgreSQL, and deployment toolchain by auditing prerequisites and installing only what is missing.
 ---
 
 # Prepare workstation
@@ -14,7 +14,8 @@ proxies, certificates, endpoint protection, or approved software catalogues.
 ```bash
 git --version
 node --version
-npm --version
+corepack --version
+pnpm --version
 python3 --version
 uv --version
 uv python find '>=3.10,<3.13'
@@ -31,7 +32,8 @@ ibmcloud plugin show container-registry
 kubectl version --client
 ```
 
-Node must satisfy `package.json` (20.19 or newer), npm must match its `packageManager` field, and
+Node must satisfy `package.json` (20.19 or newer), Corepack must provision the exact pnpm version
+in its `packageManager` field, and
 uv must find a Python satisfying `backend/pyproject.toml` (3.10 through 3.12); the system
 `python3` may differ. Only one supported container
 runtime must work: Docker Desktop, Rancher Desktop with dockerd/moby, native Linux Docker, or
@@ -41,18 +43,30 @@ Compose checks must succeed.
 Use official platform installers for missing tools. The executable and IBM Cloud plugin names
 above are canonical. Do not log in to OpenShift or IBM Cloud during workstation preparation.
 
+Enable the package manager shim before preparing the checkout:
+
+```bash
+corepack enable pnpm
+```
+
+If Corepack reports a pnpm signature error, update Corepack and retry:
+
+```bash
+npm install --global corepack@latest
+corepack enable pnpm
+```
+
 ## Prepare this checkout
 
 ```bash
-npm ci
-npm ci --prefix frontend
+pnpm install
 uv sync --project backend
 uv run --project backend python --version
 test -e .env || cp .env.example .env
 ```
 
 Before starting, confirm another checkout is not using the configured ports; stop only that
-checkout's supervisor and verify its prefixed containers are gone. Run `npm run dev` only when the
+checkout's supervisor and verify its prefixed containers are gone. Run `pnpm run dev` only when the
 application should start. It launches PostgreSQL and Adminer via
 the detected Compose provider and runs Uvicorn and Vite natively. Stop it with Ctrl-C and confirm
 only this checkout's containers were removed.
