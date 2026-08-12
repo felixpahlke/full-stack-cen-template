@@ -146,10 +146,7 @@ if [[ "$args" == *' account show '* ]]; then
   exit 0
 fi
 if [[ "$args" == *' login --sso '* ]]; then touch "$MOCK_STATE/ibmcloud-logged-in"; exit 0; fi
-if [[ "$args" == *' ce project current '* ]]; then
-  if [[ "$args" == *' --output jsonpath={.subdomain} '* ]]; then printf 'mock.mockcluster'; else printf 'Subdomäne: mock.mockcluster\n'; fi
-  exit 0
-fi
+if [[ "$args" == *' ce project current '* ]]; then printf 'Keine Übereinstimmungen für jsonpath-Angabe\n' >&2; exit 1; fi
 if [[ "$args" == *' ce project get '* ]]; then
   [[ "${MOCK_CE_PROJECT_ABSENT:-false}" != true || -f "$MOCK_STATE/ce-project-created" ]]; exit
 fi
@@ -181,6 +178,7 @@ EOF
 printf 'kubectl' >> "$MOCK_LOG"; printf ' %q' "$@" >> "$MOCK_LOG"; printf '\n' >> "$MOCK_LOG"
 safe_kind() { printf '%s' "$1" | tr './' '__'; }
 resource_file() { printf '%s/resources/%s__%s' "$MOCK_STATE" "$(safe_kind "$1")" "$2"; }
+if [[ " $* " == *' config current-context '* ]]; then printf 'mockcluster\n'; exit 0; fi
 action=${1:-}; kind=${2:-}; name=${3:-}; file=$(resource_file "$kind" "$name")
 if [[ "$action" == label ]]; then printf 'cen-template|app-a\n' > "$file"; exit 0; fi
 if [[ "$action" != get || ! -f "$file" ]]; then
@@ -382,6 +380,8 @@ run_ce_success() {
     local output="$CASE_DIR/output.log"
     run_with_mocks "$output" 'y\n' bash -x ./scripts/ce-deploy.sh || { sed -n '1,220p' "$output" >&2; fail 'Code Engine success case failed'; }
     assert_absent "$STATE/calls.log" ENV_LEAK
+    assert_contains "$STATE/calls.log" 'kubectl config current-context'
+    assert_absent "$STATE/calls.log" 'ce project current'
     assert_contains "$STATE/calls.log" 'app.kubernetes.io/managed-by=cen-template app.kubernetes.io/instance=app-a'
     assert_contains "$STATE/calls.log" '--password-from-file'
     assert_absent "$STATE/calls.log" '--password registry-secret-value'
