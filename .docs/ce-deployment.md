@@ -18,6 +18,9 @@ If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login
 An existing session for a different configured account is never logged out or replaced
 automatically; switch it explicitly and rerun the deployment.
 
+When the configured Code Engine project already exists, the script shows it and asks for a single
+`y/N` confirmation. Fresh projects are created directly from the environment configuration.
+
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, all five `POSTGRES_*` values,
 `BACKEND_CORS_ORIGINS`, `OAUTH2_PROXY_COOKIE_SECRET`, `OAUTH2_PROXY_CLIENT_ID`,
 `OAUTH2_PROXY_CLIENT_SECRET`, `OAUTH2_PROXY_OIDC_ISSUER_URL`,
@@ -86,5 +89,5 @@ Real cluster smoke tests are pending and remain a release blocker for a deployme
     existing PVC for recovery.
 15. Persisted Vite, CORS, redirect, and well-known values match the public proxy URL, while private
     workload URLs remain absent from the summary.
-16. OAuth project absence fails before creation, and the documented seam marker is generated while
-    arbitrary placeholders fail before cloud work.
+16. Fresh Code Engine project creation waits for readiness, while the documented seam marker is
+    generated and arbitrary placeholders fail before cloud work.

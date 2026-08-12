@@ -65,7 +65,6 @@ main() {
     if [[ "$DEPLOY_DRY_RUN" == true ]]; then dry_run_plan; return 0; fi
     check_oc_version
     check_oc_login
-    confirm_target 'OpenShift deployment' "$PROJECT_NAME"
     setup_project
     adopt_legacy_resources
 
