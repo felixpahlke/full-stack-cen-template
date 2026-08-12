@@ -1,11 +1,14 @@
 # Changelog
 
-## Unreleased — development modernization
+## Unreleased — modernization
 
-- Added the native Uvicorn/root pnpm development loop; Compose now runs only PostgreSQL/Adminer.
-- Removed dead local-user and item-ownership residue.
-- Added hermetic Testcontainers tests and serialized exact-head migrate-on-start.
-- Added a consistent command facade and production image `build` command.
-- Hardened Code Engine/OpenShift ownership, secrets, cleanup, and topology absence checks.
+- Moved JavaScript tooling to pnpm with a root lockfile and consistent root commands.
+- Replaced the Compose application loop with `pnpm dev`: Uvicorn runs natively while Compose
+  provides PostgreSQL and Adminer.
+- Removed obsolete frontend, local-user, and ownership residue from the API-only flavour.
+- Made backend tests reproducible with disposable PostgreSQL and serialized startup migrations
+  across replicas.
+- Hardened Code Engine and OpenShift deployment ownership, secrets, cleanup, and topology checks.
 
-See [.docs/migration-guide.md](.docs/migration-guide.md).
+The API-key boundary and backend-only production image remain. Existing projects should follow the
+[migration guide](.docs/migration-guide.md).
