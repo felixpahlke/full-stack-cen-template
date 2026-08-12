@@ -17,23 +17,30 @@ DEPLOY_DRY_RUN=false
 DEPLOY_MOCK=false
 DEPLOY_TMP_FILES=()
 CONTAINER_CLI=
+SPINNER_ACTIVE=false
 
-print_status() { printf '%b\n' "${TEAL}==>${NC} $1"; }
-print_success() { printf '%b\n' "${GREEN}==>${NC} $1"; }
-print_warning() { printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
-print_error() { printf '%b\n' "${RED}error:${NC} $1" >&2; }
-print_section_header() { printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
+clear_spinner_line() {
+    [[ "$SPINNER_ACTIVE" == true ]] || return 0
+    printf '\r\033[K'
+    SPINNER_ACTIVE=false
+}
+
+print_status() { clear_spinner_line; printf '%b\n' "${TEAL}==>${NC} $1"; }
+print_success() { clear_spinner_line; printf '%b\n' "${GREEN}==>${NC} $1"; }
+print_warning() { clear_spinner_line; printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
+print_error() { clear_spinner_line; printf '%b\n' "${RED}error:${NC} $1" >&2; }
+print_section_header() { clear_spinner_line; printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
 
 spinner_wait() {
     local seconds=$1 message=$2 frames='|/-\\' frame
     if [[ ! -t 1 ]]; then sleep "$seconds"; return; fi
+    SPINNER_ACTIVE=true
     while ((seconds-- > 0)); do
         for frame in 0 1 2 3; do
-            printf '\r%b%s%b %s' "$TEAL" "${frames:frame:1}" "$NC" "$message"
+            printf '\r\033[K%b%s%b %s' "$TEAL" "${frames:frame:1}" "$NC" "$message"
             sleep 0.25
         done
     done
-    printf '\r\033[K'
 }
 
 has_interactive_terminal() {
@@ -97,6 +104,7 @@ warn_unowned_collision() {
 }
 
 cleanup_deploy_tmp_files() {
+    clear_spinner_line
     if ((${#DEPLOY_TMP_FILES[@]})); then rm -f -- "${DEPLOY_TMP_FILES[@]}"; fi
 }
 
