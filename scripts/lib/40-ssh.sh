@@ -108,7 +108,8 @@ setup_ssh_keys() {
     fi
     public_key=$(<"$public_file")
     fingerprint=$(printf '%s' "$public_key" | awk '{print $2}')
-    if ! github_deploy_key_present "$fingerprint" && ! add_github_deploy_key "$public_key"; then
+    if ! run_quiet_with_spinner 'Checking the GitHub deploy key' github_deploy_key_present "$fingerprint" \
+        && ! run_quiet_with_spinner 'Configuring the GitHub deploy key' add_github_deploy_key "$public_key"; then
         print_warning 'GitHub deploy key could not be configured automatically.'
         printf 'Add this read-only deploy key to %s/%s:\n%s\n' "$GIT_OWNER" "$GIT_REPO" "$public_key" >&2
         read -r -p 'Press Enter after adding the deploy key...'
