@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — modernization
+## 2026-08-12 — Modernization
 
 - Moved JavaScript tooling to pnpm with a root lockfile and consistent root commands.
 - Added pnpm 10.29.3 and Biome 2.5.4 as the JavaScript toolchain, plus mypy ≥1.18 for strict
