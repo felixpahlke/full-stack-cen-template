@@ -15,7 +15,8 @@ cp .env.production.example .env.production
 Set `PROJECT_NAME`, `ENVIRONMENT=production`, `FIRST_SUPERUSER`,
 `FIRST_SUPERUSER_PASSWORD`, `SIGNUP_ACCESS_PASSWORD`, `SECRET_KEY`, all five `POSTGRES_*`
 values, and `BACKEND_CORS_ORIGINS`. OpenShift additionally requires `_APP_NAME` and
-`_GIT_SSH_URL`; `_GITHUB_TOKEN`, `_GITHUB_HOST`, and `_DEPLOYMENT_BRANCH_FILTER` are optional.
+`_GIT_SSH_URL`; `_GITHUB_TOKEN` and `_DEPLOYMENT_BRANCH_FILTER` are optional. The GitHub host is
+derived from `_GIT_SSH_URL`.
 Replace every example secret.
 
 When `_DEPLOYMENT_BRANCH_FILTER` is blank, the script uses this checkout's fixed flavor branch
@@ -33,8 +34,10 @@ timeout, or failed migration deliberately prevents the backend from becoming rea
 ./scripts/oc-deploy.sh
 ```
 
-The script requires an exact target confirmation. `--reset-prod-db` is destructive, requires a
-second confirmation, and targets only the named owned PostgreSQL resources. Use
+When the configured OpenShift project already exists, the script shows it and requires a single
+`y/N` confirmation. Fresh projects are created directly from the environment configuration.
+`--reset-prod-db` is destructive, requires a second confirmation, and targets only the named
+owned PostgreSQL resources. Use
 `--regenerate-ssh-key` only when rotating the deploy key. Run `pnpm run test:deploy` before
 deployment-script changes.
 

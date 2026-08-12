@@ -134,6 +134,7 @@ target_code_engine_project() {
     run ibmcloud target -g "$_IBM_CLOUD_RESOURCE_GROUP"
     run ibmcloud target -r "$_IBM_CLOUD_REGION"
     if ibmcloud ce project get --name "$_CE_PROJECT_NAME" >/dev/null 2>&1; then
+        confirm_target 'Code Engine deployment' "$_CE_PROJECT_NAME"
         run ibmcloud ce project select --name "$_CE_PROJECT_NAME" --kubecfg
     else
         run ibmcloud ce project create --name "$_CE_PROJECT_NAME"
@@ -416,7 +417,6 @@ main() {
     check_nginx_config
     check_vite_vars_in_dockerfile
     check_code_engine_preconditions
-    confirm_target 'Code Engine deployment' "$_CE_PROJECT_NAME"
     target_code_engine_project
     reconcile_oauth_visibility
     preflight_ce_collisions

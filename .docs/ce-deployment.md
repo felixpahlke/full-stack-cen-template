@@ -44,9 +44,10 @@ If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login
 An existing session for a different configured account is never logged out or replaced
 automatically; switch it explicitly and rerun the deployment.
 
-The script asks for the exact target name before mutating cloud state. It builds and pushes
-separate images and creates the backend/frontend applications. Run `pnpm run test:deploy` before
-changing deployment code.
+When the configured Code Engine project already exists, the script shows it and asks for a single
+`y/N` confirmation. Fresh projects are created directly from the environment configuration. The
+script builds and pushes separate images and creates the backend/frontend applications. Run
+`pnpm run test:deploy` before changing deployment code.
 
 For non-OAuth frontends, the deployer always embeds an absolute Code Engine backend URL through
 `VITE_API_URL`; nginx's `http://backend:8000` fallback is OpenShift-only. Before cloud mutation it
@@ -110,8 +111,7 @@ real-cluster deployment claim. Complete and record all items:
     existing PVC for recovery.
 15. Non-OAuth frontends contain the persisted absolute `VITE_API_URL`, reach the CE backend, and
     preserve configured CORS; backend-only summaries show the backend URL.
-16. Fresh non-OAuth project creation waits for readiness, while OAuth still refuses to create a
-    project automatically.
+16. Fresh Code Engine project creation waits for readiness for every flavor.
 
 OAuth-only checklist items are cross-branch release checks and are not exercised by this
 local-auth-custom-ui topology.
