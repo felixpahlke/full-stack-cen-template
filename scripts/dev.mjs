@@ -48,10 +48,14 @@ try {
   await waitForTcp(Number(effectiveEnv.DB_PORT), "PostgreSQL");
   await waitForHttp(Number(effectiveEnv.ADMINER_PORT), "Adminer");
   const apiPort = effectiveEnv.API_PORT;
-  console.log(
-    `\nDevelopment ready: API http://localhost:${apiPort}, ` +
-      `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
-  );
+  console.log(`
+Development ready
+
+  API      http://localhost:${apiPort}
+  Adminer  http://localhost:${effectiveEnv.ADMINER_PORT}
+
+  Press Ctrl+C to stop
+`);
 
   const backend = await run(
     "backend",

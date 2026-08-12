@@ -6,7 +6,8 @@
 - [pnpm](https://pnpm.io/installation) (the repository pins the supported version)
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
+- Docker Desktop, Rancher Desktop with the dockerd/moby backend, Colima, native Linux Docker, or
+  Podman (including Podman Desktop's Docker compatibility mode)
 - Docker: `docker compose` or standalone `docker-compose`
 - Podman: `podman compose` with `podman-compose` or standalone `docker-compose` as its provider,
   or the `podman-compose` command; start `podman machine` first where required
