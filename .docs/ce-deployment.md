@@ -25,9 +25,9 @@ The deployer builds only the backend image and asserts that no frontend resource
 It requires exact target confirmation.
 
 The generated backend URL and configured `BACKEND_CORS_ORIGINS` are persisted without introducing
-`*`, and the final summary always prints the backend URL. Fresh projects are polled until readable
-before selection. Default image names remain application-scoped intentionally. `--show-env-values`
-is terminal-only and refuses non-interactive use.
+`*`, and the final summary always prints the backend URL. Fresh projects are created automatically
+and polled until readable before selection. Default image names remain application-scoped
+intentionally. `--show-env-values` is terminal-only and refuses non-interactive use.
 
 ## Ownership and cleanup
 
