@@ -12,6 +12,8 @@
     "check:generated": "node scripts/check-generated.mjs",
     "db:migrate": "uv run --project backend alembic -c backend/alembic.ini upgrade head",
     "db:revision": "uv run --project backend alembic -c backend/alembic.ini revision --autogenerate",
+    "deploy:ce": "./scripts/ce-deploy.sh",
+    "deploy:oc": "./scripts/oc-deploy.sh",
     "dev": "node scripts/dev.mjs",
     "fix": "biome check --write . && uv run --project backend ruff check --fix backend && uv run --project backend ruff format backend",
     "format:backend:check": "uv run --project backend ruff format --check backend",
