@@ -10,7 +10,7 @@ user table, ownership field, bearer authentication, frontend, or generated brows
 - `app/core/config.py`: root `.env` settings
 - `app/alembic/`: migration history
 
-Install with `uv sync --project backend`; run with root `npm run dev`. Keep database work in CRUD,
+Install with `uv sync --project backend`; run with root `pnpm run dev`. Keep database work in CRUD,
 routes thin, and settings mirrored in `.env.example`.
 
 Use `create_app`, `get_settings`, and `get_engine` for injected code. Historical module-level
@@ -22,7 +22,7 @@ exact bundled heads and optionally migrates under an advisory lock. Tests use a 
 Testcontainers PostgreSQL instance:
 
 ```bash
-npm run verify
+pnpm run verify
 ```
 
 The verification gate includes strict mypy, Ruff linting, and Ruff formatting checks.

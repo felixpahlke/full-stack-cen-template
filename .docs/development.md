@@ -2,7 +2,7 @@
 
 ## Prerequisites and first run
 
-- Node.js 20.19 or newer with npm
+- Node.js 20.19 or newer with Corepack and pnpm
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
@@ -13,17 +13,18 @@
 From a fresh checkout, run in this order:
 
 ```bash
-npm ci
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
 There is no frontend install step.
 
 ## Runtime and ports
 
-`npm run dev` validates `.env`, tools, the uv environment, Docker, and ports; starts PostgreSQL 12
+`pnpm run dev` validates `.env`, tools, the uv environment, Docker, and ports; starts PostgreSQL 12
 and Adminer in Compose; and runs reload-enabled Uvicorn natively.
 
 | Key | Default | Meaning |
@@ -50,11 +51,11 @@ not exact-head verification. A timeout, unreachable database, bad migration, or 
 readiness.
 
 ```bash
-npm run db:revision -- -m "Describe the schema change"
-npm run db:migrate
-npm run verify
-npm run test:deploy
-npm run build
+pnpm run db:revision -- -m "Describe the schema change"
+pnpm run db:migrate
+pnpm run verify
+pnpm run test:deploy
+pnpm run build
 ```
 
 Backend tests provision a disposable PostgreSQL 12 Testcontainers database, apply migrations,

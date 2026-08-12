@@ -46,20 +46,21 @@ natively while Compose runs PostgreSQL and Adminer. Production is one backend im
 
 ### Quick start
 
-Prerequisites: Node.js 20.19 or newer with npm, Python 3.10–3.12, uv, and a running
+Prerequisites: Node.js 20.19 or newer with Corepack and pnpm, Python 3.10–3.12, uv, and a running
 container runtime. Supported choices are Docker Desktop, Rancher Desktop with the dockerd/moby
 backend, native Linux Docker, and Podman. Docker requires the Compose plugin or standalone
 `docker-compose`; Podman requires `podman compose` with a provider (`podman-compose` or standalone
 `docker-compose`), or the `podman-compose` command. Start `podman machine` first where required.
 
 ```bash
-npm ci
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
-There is intentionally no `npm ci --prefix frontend`. Open the API at
+There is intentionally no second frontend install. Open the API at
 `http://localhost:8000`, docs at `http://localhost:8000/docs`, health at
 `http://localhost:8000/api/v1/utils/health-check/`, and Adminer at
 `http://localhost:8080`. Protected routes require `X-API-Key` matching `.env`.
@@ -68,13 +69,13 @@ There is intentionally no `npm ci --prefix frontend`. Open the API at
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start PostgreSQL/Adminer and native reload-enabled Uvicorn |
-| `npm run check` / `npm run fix` | Check or fix root JavaScript and Python |
-| `npm run test` | Run supervisor, deploy mocks, and hermetic backend tests |
-| `npm run build` | Build the production backend image |
-| `npm run verify` | Run checks and tests; image build is separate |
-| `npm run db:migrate` / `npm run db:revision -- -m "message"` | Manage Alembic |
-| `npm run test:deploy` | Run Code Engine/OpenShift deployment mocks |
+| `pnpm run dev` | Start PostgreSQL/Adminer and native reload-enabled Uvicorn |
+| `pnpm run check` / `pnpm run fix` | Check or fix root JavaScript and Python |
+| `pnpm run test` | Run supervisor, deploy mocks, and hermetic backend tests |
+| `pnpm run build` | Build the production backend image |
+| `pnpm run verify` | Run checks and tests; image build is separate |
+| `pnpm run db:migrate` / `pnpm run db:revision -- -m "message"` | Manage Alembic |
+| `pnpm run test:deploy` | Run Code Engine/OpenShift deployment mocks |
 
 Frontend-specific commands (`typecheck`, `generate-client`, Playwright) do not exist because this
 branch has no frontend. See [.docs/development.md](.docs/development.md),
@@ -127,7 +128,7 @@ The application screenshots show the full-stack frontend flavours; the backend-o
 ### Setup with [create-cen-app](https://github.com/felixpahlke/create-cen-app) and choose "full-stack-cen-template"
 
 ```bash
-npm create cen-app@latest
+pnpm create cen-app@latest
 ```
 
 ### Or clone manually (commands may vary by flavour - check the specific branch):

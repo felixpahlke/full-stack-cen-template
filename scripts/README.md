@@ -7,7 +7,7 @@ or OAuth proxy. Branch identity comes from `scripts/deploy-flavor.conf`; overrid
 cp .env.production.example .env.production
 ./scripts/oc-deploy.sh --dry-run
 ./scripts/ce-deploy.sh --dry-run
-npm run test:deploy
+pnpm run test:deploy
 ```
 
 Ownership requires both `app.kubernetes.io/managed-by=cen-template` and

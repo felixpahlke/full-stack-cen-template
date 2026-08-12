@@ -15,7 +15,7 @@ frontend-free API and backend-only production image.
 - Keep backend tests hermetic: disposable Testcontainers PostgreSQL or an explicitly safe test
   database, never the developer `.env` database.
 - Do not introduce generated-client, route-tree, Playwright, or frontend files.
-- Use npm only and exact-pin direct dependencies.
+- Use pnpm only and exact-pin direct dependencies.
 
 ## Working guides
 

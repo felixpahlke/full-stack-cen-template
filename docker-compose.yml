@@ -1,4 +1,4 @@
-# Development backing services only. The API runs natively via `npm run dev`.
+# Development backing services only. The API runs natively via `pnpm run dev`.
 services:
   db:
     image: postgres:12

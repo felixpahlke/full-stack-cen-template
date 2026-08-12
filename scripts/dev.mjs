@@ -15,7 +15,7 @@ import {
 import { buildEffectiveEnvironment } from "./dev-environment.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const uv = process.platform === "win32" ? "uv.exe" : "uv";
 const signalExitCodes = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 };
 const children = new Set();
@@ -100,7 +100,13 @@ function checkEnvironment() {
     fail(`Node 20.19 or newer is required (found ${process.versions.node}).`);
   }
 
-  checkCommand(npm, ["--version"], "npm", "Install npm with Node.js 20.19 or newer.", environment);
+  checkCommand(
+    pnpm,
+    ["--version"],
+    "pnpm",
+    "Run `corepack enable pnpm`, then `pnpm install` from the repository root.",
+    environment,
+  );
   checkCommand(
     uv,
     ["--version"],

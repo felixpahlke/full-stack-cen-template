@@ -1,17 +1,31 @@
 # Migrating an existing backend-only checkout
 
-Development now uses a native Uvicorn process supervised by root npm. Compose runs only
+## Move an older checkout to pnpm
+
+After updating an npm-based checkout, remove the old root install and lockfile, then install once:
+
+```bash
+rm -rf node_modules
+rm -f package-lock.json
+corepack enable pnpm
+pnpm install
+```
+
+This flavor has no frontend package and therefore no workspace manifest or second install.
+
+Development now uses a native Uvicorn process supervised by root pnpm. Compose runs only
 PostgreSQL and Adminer. The backend image now starts Uvicorn with the
 `app.main:create_app` factory.
 
 ```bash
-npm ci
+corepack enable pnpm
+pnpm install
 uv sync --project backend
 cp .env.example .env
-npm run dev
+pnpm run dev
 ```
 
-Node/npm, Python, and uv are new host prerequisites. Update `.env` with native ports,
+Node/pnpm, Python, and uv are new host prerequisites. Update `.env` with native ports,
 `MIGRATE_ON_START=true`, and `MIGRATION_LOCK_TIMEOUT_SECONDS=60`. Startup refuses occupied ports,
 unsafe remote databases, and schemas not exactly at bundled Alembic heads. Backend tests now use a
 disposable Testcontainers database.
@@ -33,8 +47,8 @@ project. The deployer fingerprints and prints the exact legacy set, refuses ambi
 labels, and changes ownership only after `adopt <PROJECT_NAME>/<APP_NAME>`. PostgreSQL credential
 drift has a separate typed destructive reset; adoption itself never deletes data.
 
-Breaking changes: the old Compose application loop is removed; root npm commands are canonical;
-npm is the only JavaScript tool; application startup owns migrations; the dead user/owner surface
+Breaking changes: the old Compose application loop is removed; root pnpm commands are canonical;
+pnpm is the only JavaScript tool; application startup owns migrations; the dead user/owner surface
 has been removed. No frontend command should be added for this branch.
 
 Blank OpenShift branch filters now resolve to `backend-only` and must exist remotely before the
