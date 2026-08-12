@@ -150,7 +150,7 @@ wait_for_code_engine_project() {
     local deadline=$((SECONDS + 300))
     until ibmcloud ce project get --name "$_CE_PROJECT_NAME" >/dev/null 2>&1; do
         ((SECONDS < deadline)) || { print_error "timed out waiting for Code Engine project '$_CE_PROJECT_NAME' to become ready"; return 1; }
-        sleep 5
+        spinner_wait 5 "Waiting for Code Engine project '$_CE_PROJECT_NAME'"
     done
     print_success "Code Engine project '$_CE_PROJECT_NAME' is ready."
 }
