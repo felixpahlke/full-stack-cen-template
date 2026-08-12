@@ -140,8 +140,6 @@ $context
   strategy: {type: Docker, dockerStrategy: {dockerfilePath: $dockerfile_path}}
   output: {to: {kind: ImageStreamTag, name: "$component:latest"}}
   triggers:
-    - {type: ConfigChange}
-    - {type: ImageChange}
     - {type: GitHub, github: {secretReference: {name: github-webhook-secret}}}
 ---
 apiVersion: apps/v1
@@ -182,21 +180,45 @@ apply_component() {
     component_manifest "$component" "$port" "$context_dir" "$dockerfile_path" | apply_resource "$component multi-image workload"
 }
 
-wait_for_build() {
-    local build_ref=$1 phase deadline=$((SECONDS + 900))
+start_component_build() {
+    local component=$1 result_name=$2 build_ref
+    oc_resource_is_owned buildconfig "$component" || { warn_unowned_collision buildconfig "$component"; return 1; }
+    build_ref=$(oc start-build "$component" -o name)
+    build_ref="build/${build_ref##*/}"
+    printf -v "$result_name" '%s' "$build_ref"
+    print_status "Started $build_ref."
+}
+
+wait_for_builds() {
+    local build_refs=("$@") build_ref phase summary all_complete
+    local deadline=$((SECONDS + 900)) last_report=$((SECONDS - 15))
+    print_status "Waiting for builds: ${build_refs[*]}"
     while true; do
-        phase=$(oc get "$build_ref" -o jsonpath='{.status.phase}' 2>/dev/null || true)
-        case "$phase" in Complete) return 0 ;; Failed|Error|Cancelled) print_error "$build_ref ended with $phase"; return 1 ;; esac
-        ((SECONDS < deadline)) || { print_error "timed out waiting for $build_ref"; return 1; }
+        summary=''; all_complete=true
+        for build_ref in "${build_refs[@]}"; do
+            [[ -n "$build_ref" ]] || continue
+            phase=$(oc get "$build_ref" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+            [[ -n "$summary" ]] && summary+=', '
+            summary+="$build_ref=${phase:-Pending}"
+            case "$phase" in
+                Complete) ;;
+                Failed|Error|Cancelled)
+                    print_error "$build_ref ended with $phase"
+                    oc logs "$build_ref" --tail=80 >&2 || true
+                    return 1
+                    ;;
+                *) all_complete=false ;;
+            esac
+        done
+        if [[ "$all_complete" == true ]]; then print_success "Builds completed: $summary"; return 0; fi
+        if ((SECONDS - last_report >= 15)); then print_status "Build progress: $summary"; last_report=$SECONDS; fi
+        ((SECONDS < deadline)) || { print_error "timed out waiting for builds: $summary"; return 1; }
         sleep 5
     done
 }
 
-build_component() {
-    local component=$1 build_ref
-    oc_resource_is_owned buildconfig "$component" || { warn_unowned_collision buildconfig "$component"; return 1; }
-    build_ref=$(oc start-build "$component" -o name)
-    wait_for_build "build/${build_ref##*/}"
+rollout_component() {
+    local component=$1
     oc_resource_is_owned deployment "$component" || { warn_unowned_collision deployment "$component"; return 1; }
     run oc rollout restart "deployment/$component"
     run oc rollout status "deployment/$component" --timeout=15m
@@ -217,16 +239,20 @@ configure_frontend() {
     run oc patch buildconfig/frontend --type=merge --patch "{\"spec\":{\"strategy\":{\"dockerStrategy\":{\"buildArgs\":$build_args}}}}"
 }
 
-deploy_frontend() {
-    [[ "$HAS_FRONTEND" == true ]] || return 0
-    apply_component frontend 8080 '' frontend/Dockerfile
-    configure_frontend
-    build_component frontend
-}
-
-deploy_backend() {
+deploy_components() {
+    local backend_build frontend_build=''
     apply_component backend 8000 backend Dockerfile
-    build_component backend
+    if [[ "$HAS_FRONTEND" == true ]]; then
+        apply_component frontend 8080 '' frontend/Dockerfile
+        configure_frontend
+    fi
+
+    start_component_build backend backend_build
+    if [[ "$HAS_FRONTEND" == true ]]; then start_component_build frontend frontend_build; fi
+    wait_for_builds "$backend_build" "$frontend_build"
+
+    rollout_component backend
+    if [[ "$HAS_FRONTEND" == true ]]; then rollout_component frontend; fi
 }
 
 apply_direct_route() {
