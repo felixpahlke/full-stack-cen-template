@@ -54,10 +54,15 @@ try {
   effectiveEnv.FRONTEND_HOST ||= `http://localhost:${webPort}`;
   effectiveEnv.VITE_API_URL = `http://localhost:${apiPort}`;
 
-  console.log(
-    `\nDevelopment ready: web http://localhost:${webPort}, API http://localhost:${apiPort}, ` +
-      `Adminer http://localhost:${effectiveEnv.ADMINER_PORT}`,
-  );
+  console.log(`
+Development ready
+
+  Application  http://localhost:${webPort}
+  API          http://localhost:${apiPort}
+  Adminer      http://localhost:${effectiveEnv.ADMINER_PORT}
+
+  Press Ctrl+C to stop
+`);
 
   const servers = [
     run(
