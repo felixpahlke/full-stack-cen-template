@@ -10,8 +10,8 @@ log in to the intended account.
 
 ```bash
 cp .env.production.example .env.production
-./scripts/ce-deploy.sh --dry-run
-./scripts/ce-deploy.sh
+pnpm deploy:ce --dry-run
+pnpm deploy:ce
 ```
 
 If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.

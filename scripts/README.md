@@ -5,8 +5,8 @@ database, and no OAuth proxy. Branch identity comes from `scripts/deploy-flavor.
 
 ```bash
 cp .env.production.example .env.production
-./scripts/oc-deploy.sh --dry-run
-./scripts/ce-deploy.sh --dry-run
+pnpm deploy:oc --dry-run
+pnpm deploy:ce --dry-run
 pnpm run test:deploy
 ```
 
