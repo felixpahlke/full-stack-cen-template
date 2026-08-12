@@ -2,7 +2,8 @@
 
 ## Prerequisites and first run
 
-- Node.js 20.19+ with Corepack and pnpm
+- Node.js 20.19 or newer
+- [pnpm](https://pnpm.io/installation) (the repository pins the supported version)
 - Python 3.10–3.12 and uv
 - Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
 - Docker: `docker compose` or standalone `docker-compose`
@@ -10,7 +11,6 @@
   or the `podman-compose` command; start `podman machine` first where required
 
 ```bash
-corepack enable pnpm
 pnpm install
 uv sync --project backend
 cp .env.example .env
