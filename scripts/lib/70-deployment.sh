@@ -189,7 +189,7 @@ apply_component() {
 start_component_build() {
     local component=$1 result_name=$2 build_ref
     oc_resource_is_owned buildconfig "$component" || { warn_unowned_collision buildconfig "$component"; return 1; }
-    build_ref=$(oc start-build "$component" -o name)
+    capture_with_spinner build_ref "Starting $component build" oc start-build "$component" -o name
     build_ref="build/${build_ref##*/}"
     printf -v "$result_name" '%s' "$build_ref"
     print_status "Started $build_ref."
@@ -231,7 +231,8 @@ rollout_component() {
     local component=$1
     oc_resource_is_owned deployment "$component" || { warn_unowned_collision deployment "$component"; return 1; }
     run oc rollout restart "deployment/$component"
-    run oc rollout status "deployment/$component" --timeout=15m
+    run_quiet_with_spinner "Waiting for $component rollout" run oc rollout status "deployment/$component" --timeout=15m
+    print_success "$component rollout completed."
 }
 
 verify_service_endpoint() {

@@ -79,14 +79,17 @@ main() {
     run_with_spinner 'Verifying the source branch' validate_remote_branch_ref
     print_status 'Checking the integrated image registry.'
     setup_image_registry
+    print_status 'Preparing application configuration.'
     if [[ "$OAUTH_ENABLED" == true ]]; then update_app_env_secret_with_urls; else create_initial_app_env_secret; fi
 
+    print_status 'Preparing PostgreSQL.'
     if [[ "$RESET_PROD_DB" == true ]]; then reset_production_database; print_deployment_summary; return 0
     elif [[ "${DB_CREDENTIAL_RESET:-false}" == true ]]; then reset_production_database true
     else deploy_database
     fi
     ensure_webhook_secret
 
+    print_status 'Preparing application builds.'
     deploy_components
     if [[ "$OAUTH_ENABLED" == true ]]; then
         create_oauth_proxy_secret
@@ -96,7 +99,8 @@ main() {
         update_app_env_secret_with_urls
         oc_resource_is_owned deployment backend || { warn_unowned_collision deployment backend; return 1; }
         run oc rollout restart deployment/backend
-        run oc rollout status deployment/backend --timeout=15m
+        run_quiet_with_spinner 'Waiting for backend rollout' run oc rollout status deployment/backend --timeout=15m
+        print_success 'Backend rollout completed.'
     fi
     setup_webhooks
     reconcile_obsolete_resources
