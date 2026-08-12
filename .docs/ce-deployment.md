@@ -36,8 +36,8 @@ error, or head mismatch means the release is not safe to serve and leaves readin
 Review the plan, then deploy:
 
 ```bash
-./scripts/ce-deploy.sh --dry-run
-./scripts/ce-deploy.sh
+pnpm deploy:ce --dry-run
+pnpm deploy:ce
 ```
 
 If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.

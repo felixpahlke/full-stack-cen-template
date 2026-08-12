@@ -8,12 +8,12 @@ Use `.env.production.example` as the source for configuration:
 
 ```bash
 cp .env.production.example .env.production
-./scripts/oc-deploy.sh --dry-run
-./scripts/ce-deploy.sh --dry-run
+pnpm deploy:oc --dry-run
+pnpm deploy:ce --dry-run
 ```
 
-OpenShift deployment uses `./scripts/oc-deploy.sh`; Code Engine uses
-`./scripts/ce-deploy.sh`. Both accept `--env-file PATH`, `--show-env-values`, and `--dry-run`.
+OpenShift deployment uses `pnpm deploy:oc`; Code Engine uses `pnpm deploy:ce`. Both accept
+`--env-file PATH`, `--show-env-values`, and `--dry-run`.
 OpenShift additionally supports `--reset-prod-db` and `--regenerate-ssh-key`. Legacy topology
 flags are accepted only when they name this branch and cannot change its component set.
 
