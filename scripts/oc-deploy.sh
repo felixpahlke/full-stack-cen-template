@@ -85,8 +85,7 @@ main() {
     fi
     ensure_webhook_secret
 
-    deploy_frontend
-    deploy_backend
+    deploy_components
     if [[ "$OAUTH_ENABLED" == true ]]; then
         create_oauth_proxy_secret
         deploy_oauth_proxy
