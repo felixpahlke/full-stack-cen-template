@@ -18,29 +18,61 @@ DEPLOY_MOCK=false
 DEPLOY_TMP_FILES=()
 CONTAINER_CLI=
 SPINNER_ACTIVE=false
+SPINNER_PID=
+SPINNER_MESSAGE=
 
-clear_spinner_line() {
+stop_spinner() {
     [[ "$SPINNER_ACTIVE" == true ]] || return 0
+    if [[ -n "$SPINNER_PID" ]]; then
+        kill "$SPINNER_PID" 2>/dev/null || true
+        wait "$SPINNER_PID" 2>/dev/null || true
+    fi
     printf '\r\033[K'
     SPINNER_ACTIVE=false
+    SPINNER_PID=
+    SPINNER_MESSAGE=
 }
 
-print_status() { clear_spinner_line; printf '%b\n' "${TEAL}==>${NC} $1"; }
-print_success() { clear_spinner_line; printf '%b\n' "${GREEN}==>${NC} $1"; }
-print_warning() { clear_spinner_line; printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
-print_error() { clear_spinner_line; printf '%b\n' "${RED}error:${NC} $1" >&2; }
-print_section_header() { clear_spinner_line; printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
-
-spinner_wait() {
-    local seconds=$1 message=$2 frames='|/-\\' frame
-    if [[ ! -t 1 ]]; then sleep "$seconds"; return; fi
-    SPINNER_ACTIVE=true
-    while ((seconds-- > 0)); do
-        for frame in 0 1 2 3; do
+start_spinner() {
+    local message=$1
+    [[ -t 1 ]] || return 0
+    if [[ "$SPINNER_ACTIVE" == true && "$SPINNER_MESSAGE" == "$message" ]]; then return 0; fi
+    stop_spinner
+    SPINNER_MESSAGE=$message
+    (
+        local frames='|/-\\' frame=0
+        trap 'exit 0' TERM INT
+        while true; do
             printf '\r\033[K%b%s%b %s' "$TEAL" "${frames:frame:1}" "$NC" "$message"
+            frame=$(((frame + 1) % 4))
             sleep 0.25
         done
-    done
+    ) &
+    SPINNER_PID=$!
+    SPINNER_ACTIVE=true
+}
+
+print_status() { stop_spinner; printf '%b\n' "${TEAL}==>${NC} $1"; }
+print_success() { stop_spinner; printf '%b\n' "${GREEN}==>${NC} $1"; }
+print_warning() { stop_spinner; printf '%b\n' "${YELLOW}warning:${NC} $1" >&2; }
+print_error() { stop_spinner; printf '%b\n' "${RED}error:${NC} $1" >&2; }
+print_section_header() { stop_spinner; printf '\n%b\n' "${BLUE}== $1 ==${NC}"; }
+
+spinner_wait() {
+    local seconds=$1 message=$2
+    if [[ ! -t 1 ]]; then sleep "$seconds"; return; fi
+    start_spinner "$message"
+    sleep "$seconds"
+}
+
+run_with_spinner() {
+    local message=$1 status
+    shift
+    if [[ ! -t 1 ]]; then "$@"; return; fi
+    start_spinner "$message"
+    if "$@"; then status=0; else status=$?; fi
+    stop_spinner
+    return "$status"
 }
 
 has_interactive_terminal() {
@@ -104,7 +136,7 @@ warn_unowned_collision() {
 }
 
 cleanup_deploy_tmp_files() {
-    clear_spinner_line
+    stop_spinner
     if ((${#DEPLOY_TMP_FILES[@]})); then rm -f -- "${DEPLOY_TMP_FILES[@]}"; fi
 }
 
