@@ -6,7 +6,8 @@
 - [pnpm](https://pnpm.io/installation) (the repository pins the supported version)
 - Python 3.10–3.12
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- Docker Desktop, Rancher Desktop with the dockerd/moby backend, native Linux Docker, or Podman
+- Docker Desktop, Rancher Desktop with the dockerd/moby backend, Colima, native Linux Docker, or
+  Podman (including Podman Desktop's Docker compatibility mode)
 - Docker: `docker compose` or standalone `docker-compose`
 - Podman: `podman compose` with `podman-compose` or standalone `docker-compose` as its provider,
   or the `podman-compose` command; start `podman machine` first where required
@@ -110,9 +111,9 @@ restart the machine afterwards) or run the suite with `-- --workers=1`.
 
 - **Occupied port:** the preflight names every occupied port before Compose starts. Stop the
   process/container or change the paired values in `.env`.
-- **Container command mismatch:** the supervisor prefers a working Docker runtime, then Podman,
-  and selects that runtime's Compose form. This branch does not need host-to-container application
-  routing.
+- **Container command mismatch:** the supervisor prefers a working Docker-compatible endpoint,
+  including Podman Desktop's compatibility socket, then the native Podman CLI, and selects that
+  runtime's Compose form. This branch does not need host-to-container application routing.
 - **Missing uv environment:** rerun `uv sync --project backend`; do not create a root venv.
 - **Stale generated client:** run `pnpm run generate-client`, then `pnpm run check:generated`.
 - **Backing-service logs:** use the Compose command reported by the supervisor with
