@@ -28,7 +28,8 @@ setup_image_registry() {
         print_error 'integrated registry is not managed with configured storage; ask a cluster administrator to configure it'
         return 1
     fi
-    run oc rollout status -n openshift-image-registry deployment/image-registry --timeout=10m
+    run_quiet_with_spinner 'Waiting for the integrated image registry' \
+        run oc rollout status -n openshift-image-registry deployment/image-registry --timeout=10m
     endpoints=$(oc get endpoints image-registry -n openshift-image-registry -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null || true)
     [[ -n "$endpoints" ]] || { print_error 'integrated registry has no ready endpoints'; return 1; }
     oc registry info >/dev/null 2>&1 || { print_error 'oc could not resolve the integrated registry'; return 1; }

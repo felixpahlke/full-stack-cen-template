@@ -81,7 +81,8 @@ spec:
   selector: {app: postgresql}
   ports: [{name: postgresql, port: 5432, targetPort: postgresql}]
 EOF
-    run oc rollout status deployment/postgresql --timeout=10m
+    run_quiet_with_spinner 'Waiting for PostgreSQL' run oc rollout status deployment/postgresql --timeout=10m
+    print_success 'PostgreSQL is ready.'
 }
 
 reset_production_database() {
@@ -109,6 +110,7 @@ reset_production_database() {
     if resource_exists deployment backend; then
         oc_resource_is_owned deployment backend || { warn_unowned_collision deployment backend; return 1; }
         run oc rollout restart deployment/backend
-        run oc rollout status deployment/backend --timeout=15m
+        run_quiet_with_spinner 'Waiting for backend rollout' run oc rollout status deployment/backend --timeout=15m
+        print_success 'Backend rollout completed.'
     fi
 }
