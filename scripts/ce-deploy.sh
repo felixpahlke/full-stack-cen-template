@@ -93,7 +93,9 @@ validate_code_engine_env() {
     done
     ((${#missing[@]} == 0)) || { print_error "missing required Code Engine values: ${missing[*]}"; return 1; }
     if [[ "$HAS_DATABASE" == true && "$POSTGRES_SERVER" == postgresql ]]; then
-        print_error 'Code Engine requires an external POSTGRES_SERVER'
+        print_error 'Code Engine does not provision PostgreSQL.'
+        print_error 'Set POSTGRES_SERVER and the remaining POSTGRES_* values to an externally reachable database.'
+        print_error 'See .docs/ce-deployment.md#database-prerequisite'
         return 1
     fi
 }

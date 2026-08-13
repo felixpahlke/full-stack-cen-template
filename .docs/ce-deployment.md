@@ -3,6 +3,14 @@
 This branch deploys separate backend/frontend images behind a public oauth2-proxy. PostgreSQL is
 external to Code Engine. Backend and frontend applications are project-private from creation.
 
+## Database prerequisite
+
+> [!IMPORTANT]
+> Code Engine does not deploy PostgreSQL. Before running this deployment, provision a PostgreSQL
+> database that is reachable from Code Engine and collect its host, port, database name, username,
+> and password. `POSTGRES_SERVER=postgresql` names the internal database service created only by
+> the OpenShift deployment and is rejected by the Code Engine preflight.
+
 ## Configure and deploy
 
 Install Docker or Podman, `ibmcloud` with Code Engine/Container Registry plugins, and `kubectl`;
