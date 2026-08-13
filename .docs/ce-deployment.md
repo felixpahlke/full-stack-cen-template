@@ -14,6 +14,13 @@ pnpm deploy:ce --dry-run
 pnpm deploy:ce
 ```
 
+To keep a dedicated Code Engine environment file, pass it through the root command:
+
+```bash
+pnpm deploy:ce --env-file .env.code-engine.production --dry-run
+pnpm deploy:ce --env-file .env.code-engine.production
+```
+
 If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
 An existing session for a different configured account is never logged out or replaced
 automatically; switch it explicitly and rerun the deployment.
@@ -22,8 +29,11 @@ Set `PROJECT_NAME`, `ENVIRONMENT=production`, `API_KEY`, `BACKEND_CORS_ORIGINS`,
 `POSTGRES_*` values. Code Engine requires `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`,
 `_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and `_CR_REGISTRY`; account name and registry namespace
 are optional constraints. `_IAM_API_KEY` is required to create or rotate the registry secret; an
-existing correctly owned secret can be reused without it. Keep migrate-on-start enabled and set
-its lock timeout: each replica must verify exact bundled Alembic heads before readiness.
+existing correctly owned secret can be reused without it. The key must authenticate an identity
+authorized in the same IBM Cloud account selected by `_IBM_CLOUD_ACCOUNT_NAME`, with access to the
+configured Container Registry namespace; a personal-account key does not authorize another
+account. Prefer a purpose-specific service ID key where available. Keep migrate-on-start enabled
+and set its lock timeout: each replica must verify exact bundled Alembic heads before readiness.
 
 The deployer builds only the backend image and asserts that no frontend resources are created.
 When the configured project already exists, it asks for a single `y/N` confirmation; a fresh
