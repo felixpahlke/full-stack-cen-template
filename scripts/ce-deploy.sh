@@ -289,9 +289,8 @@ ensure_ce_application() {
     if [[ "$name" == "$_CE_BACKEND_APPLICATION_NAME" ]]; then
         arguments+=(--cpu 1 --memory 4G --ephemeral-storage 1.5G \
             --probe-live type=http --probe-live path=/api/v1/utils/health-check/ --probe-live port=8000 \
-            --probe-live initial-delay=60 --probe-live timeout=5 --probe-live failure-threshold=3 \
-            --probe-ready type=http --probe-ready path=/api/v1/utils/health-check/ --probe-ready port=8000 \
-            --probe-ready initial-delay=5 --probe-ready timeout=2)
+            --probe-live initial-delay=10 --probe-live interval=10 --probe-live failure-threshold=3 \
+            --probe-ready type=http --probe-ready path=/api/v1/utils/health-check/ --probe-ready port=8000)
     else
         arguments+=(--cpu 0.5 --memory 1G --probe-live type=http --probe-live path=/healthz --probe-live port=8080 \
             --probe-ready type=http --probe-ready path=/healthz --probe-ready port=8080)
