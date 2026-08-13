@@ -51,7 +51,7 @@ def setup_logging(log_level: LogLevel | str | None = None) -> None:
         root_logger.removeHandler(handler)
         handler.close()
 
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
