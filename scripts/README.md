@@ -26,7 +26,9 @@ bind `system:webhook` is missing; other RoleBinding apply failures and GitHub AP
 fatal. Registry readiness skips only for missing reads.
 
 Code Engine preserves configured CORS without adding `*`, reports the backend URL, waits for
-fresh-project readiness, and reuses an owned registry secret without `_IAM_API_KEY`. App-scoped
-image names are intentional. `--show-env-values` is terminal-only.
+fresh-project readiness, and reuses an owned registry secret without `_IAM_API_KEY`. The key must
+be authorized in the configured IBM Cloud account and target Container Registry namespace; a
+personal-account key does not authorize another account. App-scoped image names are intentional.
+`--show-env-values` is terminal-only.
 
 See [Code Engine](../.docs/ce-deployment.md) and [OpenShift](../.docs/oc-deployment.md).
