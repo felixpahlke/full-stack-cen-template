@@ -12,6 +12,7 @@ trap cleanup_deploy_tmp_files EXIT
 
 ENV_FILE="$PROJECT_ROOT/.env.production"
 SHOW_ENV_VALUES=false
+CE_NGINX_CONFIG=frontend/nginx.code-engine.conf
 # The sourced CE proxy pin is quay.io/oauth2-proxy/oauth2-proxy:v7.15.3@sha256:10a1165743a192e1940b4708fb9647027185ce11a681a1c5519b442ff7f1f561.
 # OAuth secrets store OAUTH2_PROXY_BASIC_AUTH_PASSWORD via --from-env-file only.
 
@@ -118,16 +119,18 @@ check_vite_vars_in_dockerfile() {
 
 check_nginx_config() {
     [[ "$HAS_FRONTEND" == true ]] || return 0
-    local nginx="$PROJECT_ROOT/frontend/nginx.conf"
-    [[ -f "$nginx" ]] || { print_error "frontend nginx configuration not found: $nginx"; return 1; }
-    if grep -Eq '^[[:space:]]*location[[:space:]]+/api' "$nginx" && \
-        grep -Eq 'proxy_pass[[:space:]]+http://backend:8000' "$nginx"; then
-        grep -Eq '^[[:space:]]*ARG[[:space:]]+VITE_API_URL([=[:space:]]|$)' "$PROJECT_ROOT/frontend/Dockerfile" || {
-            print_error 'nginx /api targets the OpenShift-only backend service and the frontend cannot consume Code Engine VITE_API_URL'
-            return 1
-        }
-        print_status 'nginx same-origin /api fallback targets OpenShift; Code Engine will embed an absolute VITE_API_URL.'
+    local nginx="$PROJECT_ROOT/$CE_NGINX_CONFIG" dockerfile="$PROJECT_ROOT/frontend/Dockerfile"
+    [[ -f "$nginx" ]] || { print_error "Code Engine nginx configuration not found: $nginx"; return 1; }
+    if grep -Eq 'proxy_pass[[:space:]]' "$nginx"; then
+        print_error 'Code Engine nginx configuration must not proxy to an OpenShift service'
+        return 1
     fi
+    grep -Fq 'ARG NGINX_CONFIG=' "$dockerfile" && \
+        grep -Fq 'COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf' "$dockerfile" || {
+        print_error 'frontend Dockerfile does not support the Code Engine nginx configuration build argument'
+        return 1
+    }
+    print_success 'Code Engine nginx configuration is isolated from the OpenShift backend service.'
 }
 
 target_code_engine_project() {
@@ -254,7 +257,7 @@ build_and_push_images() {
     fi
     if [[ "$HAS_FRONTEND" == true ]]; then
         local frontend_image="$_CR_REGISTRY/$_CR_NAMESPACE/$_CE_FRONTEND_IMAGE_NAME:latest" line name value
-        local build_args=("--build-arg=VITE_API_URL=$BACKEND_URL")
+        local build_args=("--build-arg=VITE_API_URL=$BACKEND_URL" "--build-arg=NGINX_CONFIG=$CE_NGINX_CONFIG")
         while IFS= read -r line || [[ -n "$line" ]]; do
             [[ "$line" =~ ^(VITE_[A-Za-z0-9_]+)=(.*)$ ]] || continue
             name=${BASH_REMATCH[1]}; value=${!name-}
