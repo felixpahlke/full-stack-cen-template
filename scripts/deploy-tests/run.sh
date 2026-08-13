@@ -334,7 +334,8 @@ prepare_case() {
     cp -R "$ROOT/scripts" "$PROJECT/scripts"
     if [[ "$HAS_FRONTEND" == true ]]; then
         cp "$ROOT/package.json" "$ROOT/pnpm-lock.yaml" "$ROOT/pnpm-workspace.yaml" "$PROJECT/"
-        cp "$ROOT/frontend/Dockerfile" "$ROOT/frontend/nginx.conf" "$ROOT/frontend/package.json" "$PROJECT/frontend/"
+        cp "$ROOT/frontend/Dockerfile" "$ROOT/frontend/nginx.conf" "$ROOT/frontend/nginx.code-engine.conf" \
+            "$ROOT/frontend/package.json" "$PROJECT/frontend/"
     fi
     make_env "$PROJECT/.env.production"
     printf 'private\n' > "$STATE/ssh/ocp-key"
@@ -395,6 +396,7 @@ run_ce_success() {
     assert_contains "$STATE/secrets/mock-project-backend-config.env" "CEN_FLAVOR=$FLAVOR"
     if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc "$build_command" "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
         assert_contains "$STATE/calls.log" "-f frontend/Dockerfile $PROJECT"
+        assert_contains "$STATE/calls.log" '--build-arg=NGINX_CONFIG=frontend/nginx.code-engine.conf'
         assert_absent "$STATE/calls.log" "$PROJECT/frontend"
         if [[ "$OAUTH" == true ]]; then
             assert_contains "$STATE/calls.log" '--build-arg=VITE_API_URL=https://oauth-proxy.mockcluster.eu-de.codeengine.appdomain.cloud'
@@ -705,10 +707,17 @@ run_ce_preflight_cases() {
     [[ "$HAS_FRONTEND" == true ]] || return 0
     local output
     prepare_case ce-nginx-preflight
-    sed -i.bak '/ARG VITE_API_URL/d' "$PROJECT/frontend/Dockerfile"; rm -f "$PROJECT/frontend/Dockerfile.bak"
+    printf '\nlocation /api { proxy_pass http://backend:8000; }\n' >> "$PROJECT/frontend/nginx.code-engine.conf"
     output="$CASE_DIR/output.log"
-    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'CE accepted OpenShift nginx fallback without VITE_API_URL support'; fi
-    assert_contains "$output" 'nginx /api targets the OpenShift-only backend service'
+    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'CE accepted an OpenShift service proxy in its nginx configuration'; fi
+    assert_contains "$output" 'Code Engine nginx configuration must not proxy to an OpenShift service'
+    assert_absent "$STATE/calls.log" 'ibmcloud target'
+
+    prepare_case ce-nginx-dockerfile-preflight
+    sed -i.bak '/ARG NGINX_CONFIG=/d' "$PROJECT/frontend/Dockerfile"; rm -f "$PROJECT/frontend/Dockerfile.bak"
+    output="$CASE_DIR/output.log"
+    if run_with_mocks "$output" 'y\n' ./scripts/ce-deploy.sh; then fail 'CE accepted a Dockerfile without nginx configuration selection'; fi
+    assert_contains "$output" 'frontend Dockerfile does not support the Code Engine nginx configuration build argument'
     assert_absent "$STATE/calls.log" 'ibmcloud target'
 
     prepare_case ce-vite-preflight
