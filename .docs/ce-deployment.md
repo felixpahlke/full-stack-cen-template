@@ -4,6 +4,14 @@ This branch deploys separate backend and nginx frontend images. Code Engine does
 PostgreSQL; provide a reachable production database. Local development remains documented in
 [development.md](development.md).
 
+## Database prerequisite
+
+> [!IMPORTANT]
+> Code Engine does not deploy PostgreSQL. Before running this deployment, provision a PostgreSQL
+> database that is reachable from Code Engine and collect its host, port, database name, username,
+> and password. `POSTGRES_SERVER=postgresql` names the internal database service created only by
+> the OpenShift deployment and is rejected by the Code Engine preflight.
+
 ## Prerequisites and configuration
 
 Install Docker or Podman, `ibmcloud`, the Code Engine and Container Registry plugins, and
