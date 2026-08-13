@@ -14,6 +14,13 @@ pnpm deploy:ce --dry-run
 pnpm deploy:ce
 ```
 
+To keep a dedicated Code Engine environment file, pass it through the root command:
+
+```bash
+pnpm deploy:ce --env-file .env.code-engine.production --dry-run
+pnpm deploy:ce --env-file .env.code-engine.production
+```
+
 If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
 An existing session for a different configured account is never logged out or replaced
 automatically; switch it explicitly and rerun the deployment.
@@ -32,8 +39,12 @@ only by proxy and backend.
 Set `_APP_NAME`, `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`, `_CE_PROJECT_NAME`, and
 `_CR_REGISTRY`; account name and registry namespace are optional constraints. `_IAM_API_KEY` is
 required when creating or rotating the registry secret; an existing correctly owned secret can be
-reused without it. Keep `MIGRATE_ON_START=true` and choose a migration lock timeout. Exact Alembic-head
-verification runs before readiness; failure means the release must not serve traffic.
+reused without it. The key must authenticate an identity authorized in the same IBM Cloud account
+selected by `_IBM_CLOUD_ACCOUNT_NAME`, with access to the configured Container Registry namespace;
+a key created in a different personal account does not grant access to the deployment account.
+Prefer a purpose-specific service ID key where available. Keep `MIGRATE_ON_START=true` and choose a
+migration lock timeout. Exact Alembic-head verification runs before readiness; failure means the
+release must not serve traffic.
 
 The deployer first makes existing owned application workloads project-private (or proves them
 absent), then builds images and reconciles secrets/workloads, and exposes only oauth2-proxy.
