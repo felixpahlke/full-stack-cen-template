@@ -23,8 +23,12 @@ Required Code Engine values are `_IBM_CLOUD_RESOURCE_GROUP`, `_IBM_CLOUD_REGION`
 constraints. `_APP_NAME` is the resource-ownership identity.
 
 `_IAM_API_KEY` is required to create or rotate the registry secret. Later deployments can reuse an
-existing correctly owned secret without the key; supplying it rotates deliberately. Default image
-names are application-scoped to avoid cross-application tag collisions.
+existing correctly owned secret without the key; supplying it rotates deliberately. The key must
+authenticate an identity authorized in the same IBM Cloud account selected by
+`_IBM_CLOUD_ACCOUNT_NAME`, with access to the configured Container Registry namespace. A key
+created in a different personal account does not grant access to the deployment account. Prefer a
+purpose-specific service ID key where available. Default image names are application-scoped to
+avoid cross-application tag collisions.
 
 Keep `MIGRATE_ON_START=true` for application-owned migrations and set
 `MIGRATION_LOCK_TIMEOUT_SECONDS` for the maximum replica lock wait. Every backend replica checks
@@ -38,6 +42,13 @@ Review the plan, then deploy:
 ```bash
 pnpm deploy:ce --dry-run
 pnpm deploy:ce
+```
+
+To keep a dedicated Code Engine environment file, pass it through the root command:
+
+```bash
+pnpm deploy:ce --env-file .env.code-engine.production --dry-run
+pnpm deploy:ce --env-file .env.code-engine.production
 ```
 
 If no IBM Cloud session exists, an interactive deployment starts `ibmcloud login --sso`.
