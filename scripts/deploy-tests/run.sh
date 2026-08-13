@@ -394,6 +394,11 @@ run_ce_success() {
     assert_absent "$STATE/secrets/mock-project-backend-config.env" IAM_API_KEY
     assert_absent "$STATE/secrets/mock-project-backend-config.env" OAUTH2_PROXY_CLIENT_SECRET
     assert_contains "$STATE/secrets/mock-project-backend-config.env" "CEN_FLAVOR=$FLAVOR"
+    assert_contains "$STATE/calls.log" '--probe-live initial-delay=60'
+    assert_contains "$STATE/calls.log" '--probe-live timeout=5'
+    assert_contains "$STATE/calls.log" '--probe-live failure-threshold=3'
+    assert_contains "$STATE/calls.log" '--probe-ready initial-delay=5'
+    assert_contains "$STATE/calls.log" '--probe-ready timeout=2'
     if [[ "$HAS_FRONTEND" == true ]]; then [[ $(grep -Fc "$build_command" "$STATE/calls.log") == 2 ]] || fail 'expected two Code Engine images';
         assert_contains "$STATE/calls.log" "-f frontend/Dockerfile $PROJECT"
         assert_contains "$STATE/calls.log" '--build-arg=NGINX_CONFIG=frontend/nginx.code-engine.conf'
