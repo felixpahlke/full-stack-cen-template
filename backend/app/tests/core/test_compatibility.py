@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections.abc import Awaitable, Callable
 
 import pytest
@@ -100,4 +101,7 @@ def test_legacy_settings_engine_and_logging_use_factories(
     assert namespace["settings"] is settings
     assert namespace["engine"] is engine
     assert logging.getLogger().level == logging.WARNING
+    handler = logging.getLogger().handlers[0]
+    assert isinstance(handler, logging.StreamHandler)
+    assert handler.stream is sys.stderr
     engine.dispose()
