@@ -42,11 +42,12 @@ binding or bind the ClusterRole disables webhooks without failing the applicatio
 other apply failures and GitHub API failures remain fatal. Manual credential-bearing URLs are
 terminal-only.
 
-Code Engine always persists and supplies an absolute `VITE_API_URL`, validates nginx/Dockerfile
-compatibility before cloud mutation, preserves configured CORS, and reports all public application
-URLs. Existing owned registry secrets can be reused without `_IAM_API_KEY`; supplying the key
-rotates them. The key must be authorized in the configured IBM Cloud account and for the target
-Container Registry namespace; a personal-account key does not authorize another account.
+Code Engine always persists and supplies an absolute `VITE_API_URL`, automatically builds with
+`frontend/nginx.code-engine.conf`, and validates that the Code Engine image cannot use OpenShift's
+`backend` service fallback before cloud mutation. It preserves configured CORS and reports all
+public application URLs. Existing owned registry secrets can be reused without `_IAM_API_KEY`;
+supplying the key rotates them. The key must be authorized in the configured IBM Cloud account and
+for the target Container Registry namespace; a personal-account key does not authorize another account.
 Application-scoped image names prevent cross-application tag collisions. Fresh Code Engine projects
 are created automatically and wait for readiness before selection.
 

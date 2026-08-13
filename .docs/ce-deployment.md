@@ -61,8 +61,10 @@ script builds and pushes separate images and creates the backend/frontend applic
 `pnpm run test:deploy` before changing deployment code.
 
 For non-OAuth frontends, the deployer always embeds an absolute Code Engine backend URL through
-`VITE_API_URL`; nginx's `http://backend:8000` fallback is OpenShift-only. Before cloud mutation it
-checks nginx compatibility and requires a Dockerfile `ARG` for every active `VITE_*` value. It
+`VITE_API_URL`. It automatically builds with `frontend/nginx.code-engine.conf`, while OpenShift
+keeps the same-origin `http://backend:8000` fallback in `frontend/nginx.conf`. Before cloud mutation
+it validates that the Code Engine config has no service proxy and requires a Dockerfile `ARG` for
+every active `VITE_*` value. It
 persists `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, and OAuth redirect/well-known URLs in the
 mode-0600 `.env.production`. Configured CORS entries are retained; backend-only deployment never
 adds `*` unless it was explicitly configured.

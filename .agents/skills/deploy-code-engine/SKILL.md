@@ -10,7 +10,8 @@ description: Deploy this branch to IBM Cloud Code Engine through scripts/ce-depl
 
 Read `.docs/ce-deployment.md`, `.env.production.example`, and `scripts/deploy-flavor.conf` first.
 This script builds images locally with Docker or Podman, pushes them to IBM Container Registry,
-then creates or updates Code Engine applications. It does not create Code Engine build runs.
+automatically selects `frontend/nginx.code-engine.conf` for frontend images, then creates or updates
+Code Engine applications. It does not create Code Engine build runs.
 
 1. Require working `ibmcloud`, `kubectl`, and Docker or Podman. Confirm IBM Cloud login, account,
    region, resource group, and Code Engine project. The script installs missing `code-engine` and
