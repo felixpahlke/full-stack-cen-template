@@ -44,12 +44,13 @@ apply failures and GitHub API failures remain fatal. Usable manual URLs are term
 PostgreSQL credential drift stops before secret replacement and requires typed reset confirmation.
 Registry readiness skips only when the required reads are unavailable.
 
-Code Engine persists an absolute `VITE_API_URL`, merged CORS, redirect, and well-known URLs after
-nginx/Dockerfile preflight. Owned registry credentials may be reused without `_IAM_API_KEY`; setting
-the key rotates them. The key must be authorized in the configured IBM Cloud account and for the
-target Container Registry namespace; a personal-account key does not authorize another account.
-Application-scoped image names prevent cross-application tag collisions. Fresh projects are created
-automatically and wait for readiness before selection.
+Code Engine automatically builds with `frontend/nginx.code-engine.conf`, validates that the image
+cannot use OpenShift's `backend` service fallback, and persists an absolute `VITE_API_URL`, merged
+CORS, redirect, and well-known URLs. Owned registry credentials may be reused without
+`_IAM_API_KEY`; setting the key rotates them. The key must be authorized in the configured IBM Cloud
+account and for the target Container Registry namespace; a personal-account key does not authorize
+another account. Application-scoped image names prevent cross-application tag collisions. Fresh
+projects are created automatically and wait for readiness before selection.
 `--show-env-values` is terminal-only.
 
 See [Code Engine](../.docs/ce-deployment.md) and [OpenShift](../.docs/oc-deployment.md).

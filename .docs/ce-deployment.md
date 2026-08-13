@@ -51,11 +51,14 @@ absent), then builds images and reconciles secrets/workloads, and exposes only o
 OAuth2-proxy is digest-pinned. Proxy logout ends the proxy session but not upstream IdP SSO, so a
 new login can be silent.
 
-Before cloud mutation, the deployer validates the nginx fallback and every active Vite Dockerfile
-`ARG`. It persists the absolute proxy-backed `VITE_API_URL`, merged `BACKEND_CORS_ORIGINS`, OAuth
-redirect, and well-known URL in mode-0600 `.env.production`. Public entry and redirect URLs appear
-in the summary; private workloads remain hidden. Fresh projects are created automatically and
-polled until readable before selection; their workloads are project-only from creation.
+The deployer automatically builds the frontend with `frontend/nginx.code-engine.conf`, while
+OpenShift keeps the same-origin `http://backend:8000` fallback in `frontend/nginx.conf`. Before
+cloud mutation, it validates that the Code Engine config has no service proxy and checks every
+active Vite Dockerfile `ARG`. It persists the absolute proxy-backed `VITE_API_URL`, merged
+`BACKEND_CORS_ORIGINS`, OAuth redirect, and well-known URL in mode-0600 `.env.production`. Public
+entry and redirect URLs appear in the summary; private workloads remain hidden. Fresh projects are
+created automatically and polled until readable before selection; their workloads are project-only
+from creation.
 Application-scoped image names remain an intentional isolation property. `--show-env-values` is
 terminal-only and refuses non-interactive use.
 
