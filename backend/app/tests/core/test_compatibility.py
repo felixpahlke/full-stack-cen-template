@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import timedelta
 
 import jwt
@@ -22,6 +23,9 @@ def test_setup_logging_uses_environment_derived_default(
     logger_module.setup_logging()
 
     assert logging.getLogger().level == logging.WARNING
+    handler = logging.getLogger().handlers[0]
+    assert isinstance(handler, logging.StreamHandler)
+    assert handler.stream is sys.stderr
 
 
 def test_create_access_token_keeps_legacy_two_argument_call(
