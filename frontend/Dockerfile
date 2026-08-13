@@ -30,8 +30,10 @@ RUN pnpm --filter frontend run build
 # FROM nginx:1
 FROM ghcr.io/nginxinc/nginx-unprivileged:stable-alpine
 
+ARG NGINX_CONFIG=frontend/nginx.conf
+
 EXPOSE 8080
 COPY --from=build-stage /app/frontend/dist/ /usr/share/nginx/html
 
-COPY ./frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY ./frontend/nginx-backend-not-found.conf /etc/nginx/extra-conf.d/backend-not-found.conf
