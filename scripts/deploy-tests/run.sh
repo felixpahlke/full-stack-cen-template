@@ -839,6 +839,17 @@ run_validation_cases() {
     if run_with_mocks "$output" '' ./scripts/ce-deploy.sh; then fail 'CE accepted an overlong project name'; fi
     assert_contains "$output" '_CE_PROJECT_NAME must be a lowercase DNS label of at most 20 characters'
     assert_absent "$STATE/calls.log" 'ibmcloud account show'
+
+    if [[ "$HAS_DATABASE" == true ]]; then
+        prepare_case validation-ce-external-postgres
+        sed -i.bak 's/^POSTGRES_SERVER=.*/POSTGRES_SERVER=postgresql/' "$PROJECT/.env.production"; rm -f "$PROJECT/.env.production.bak"
+        output="$CASE_DIR/output.log"
+        if run_with_mocks "$output" '' ./scripts/ce-deploy.sh; then fail 'CE accepted the OpenShift-only PostgreSQL service name'; fi
+        assert_contains "$output" 'Code Engine does not provision PostgreSQL.'
+        assert_contains "$output" 'Set POSTGRES_SERVER and the remaining POSTGRES_* values to an externally reachable database.'
+        assert_contains "$output" 'See .docs/ce-deployment.md#database-prerequisite'
+        assert_absent "$STATE/calls.log" 'ibmcloud account show'
+    fi
     pass 'restored name, Git URL, email, API-key, password, and OAuth cookie validations run before cluster mutation'
 }
 
